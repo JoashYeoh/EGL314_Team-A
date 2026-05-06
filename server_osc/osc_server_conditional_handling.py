@@ -12,15 +12,10 @@ grandma_ip = "192.168.254.252"
 grandma_port = 8080
 grandma_client = udp_client.SimpleUDPClient(grandma_ip, grandma_port)
 
-# REAPER 
+# REAPER n L-ISA
 reaper_ip = "192.168.254.97"
 reaper_port = 8000
 reaper_client = udp_client.SimpleUDPClient(reaper_ip, reaper_port)
-
-# L-ISA
-lisa_ip = "192.168.254.192"
-lisa_port = 8880
-lisa_client = udp_client.SimpleUDPClient(lisa_ip, lisa_port)
 
 
 def route_message(address, *args):
@@ -32,9 +27,9 @@ def route_message(address, *args):
         reaper_client.send_message(address, args if args else None)
         print(f"[REAPER] {address} {args}")
 
-    elif address.startswith("/ext"):
-        reaper_client.send_message(address, args if args else None)
-        print(f"[REAPER -MIDI- L-ISA] {address} {args}")
+    # elif address.startswith("/ext"):
+    #     reaper_client.send_message(address, args if args else None)
+    #     print(f"[REAPER -MIDI- L-ISA] {address} {args}")
 
     else:
         print(f"[UNKNOWN] {address} {args}")
