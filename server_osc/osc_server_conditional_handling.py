@@ -12,14 +12,16 @@ grandma_ip = "192.168.254.252"
 grandma_port = 8080
 grandma_client = udp_client.SimpleUDPClient(grandma_ip, grandma_port)
 
+"""
 # REAPER n L-ISA
-reaper_ip = "192.168.254.97"
+reaper_ip = "192.168.254.12"
 reaper_port = 8000
 reaper_client = udp_client.SimpleUDPClient(reaper_ip, reaper_port)
+"""
 
 
 def route_message(address, *args):
-    if address.startswith("/gma"):
+    if address.startswith("/gma3"):
         grandma_client.send_message(address, args if args else None)
         print(f"[GRANDMA] {address} {args}")
 
@@ -28,12 +30,11 @@ def route_message(address, *args):
         print(f"[REAPER] {address} {args}")
 
     # elif address.startswith("/ext"):
-    #     reaper_client.send_message(address, args if args else None)
+    #     lisa_client.send_message(address, args if args else None)
     #     print(f"[REAPER -MIDI- L-ISA] {address} {args}")
 
     else:
         print(f"[UNKNOWN] {address} {args}")
-
 
 
 # ---- DISPATCHER ----
@@ -49,3 +50,6 @@ server = osc_server.ThreadingOSCUDPServer(
 
 print(f"Serving on {server.server_address}")
 server.serve_forever() 
+
+
+
