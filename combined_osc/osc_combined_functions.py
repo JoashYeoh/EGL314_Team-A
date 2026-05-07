@@ -135,6 +135,8 @@ reaper_play()
 # ───────── CALLING OF FUNTIONS ─────────
 
 # From 00:00:00:00
+reaper_marker(9) # Initialise Marker on Reaper
+time.sleep(1)
 handle_input("test", "play") # Reaper Start tracks
 gma_cue(1,1) # Trigger cue 1 of sequence 1
 time.sleep(7)
