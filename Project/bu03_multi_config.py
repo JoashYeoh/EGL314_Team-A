@@ -29,7 +29,7 @@ import sys
 # --- Pick which board you are configuring right now ---
 # Anchors:  "ANCHOR0", "ANCHOR1", "ANCHOR2"   (extend as needed)
 # Tags:     "TAG0" .. "TAG9"   (firmware accepts IDs 0-9)
-DEVICE = "ANCHOR3"
+DEVICE = "ANCHOR4"
 
 # --- Common UWB settings (must match across all boards) ---
 CHANNEL = 1     # 1 = Channel 5 (6489.6 MHz)
@@ -44,6 +44,8 @@ DEVICE_TABLE = {
     "ANCHOR1": (1, 1),
     "ANCHOR2": (2, 1),
     "ANCHOR3": (3, 1),
+    "ANCHOR4": (4, 1),
+    "ANCHOR5": (5, 1),
     # Tags (IDs 0-9 confirmed accepted by firmware)
     "TAG0":    (0, 0),
     "TAG1":    (1, 0),

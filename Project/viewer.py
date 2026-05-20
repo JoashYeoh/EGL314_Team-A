@@ -36,6 +36,8 @@ ANCHORS = {
     1: (1.8, 0.20),
     2: (1.8, -0.69),
     3: (0.0, -0.69),
+    4: (0.0, 0.0),
+    5: (0.0, 0.0),
 }
 
 # To enter calibrated value
@@ -44,9 +46,11 @@ ANCHOR_OFFSETS = {
     1: 0.0,
     2: 0.0,
     3: 0.0,
+    4: 0.0,
+    5: 0.0,
 }
 
-# To enter plot limit
+# To enter plot limit (x_min, x_max, y_min, y_max)
 VIEW_BOUNDS = (0.0, 2.0, -1.0, 0.5)
 
 TAG_COLORS = [
@@ -120,6 +124,7 @@ def trilaterate_2d(anchor_positions, distances):
     return x, y
 
 
+#Kalman Filtering (form of predictive smoothing)
 class Kalman2D:
     def __init__(self, dt=0.10, q=0.12, r=1.1):
         self.dt = dt
@@ -243,6 +248,7 @@ def reader_thread(state, csv_writer=None):
     print("Reader thread exited")
 
 
+# Viewer Window
 class ViewerApp:
     def __init__(self, root, state, show_circles, fullscreen):
         self.root = root
