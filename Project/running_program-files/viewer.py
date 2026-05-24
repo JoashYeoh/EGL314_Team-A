@@ -12,6 +12,7 @@ Run:
     python3 viewer.py --tags 2 --windowed (Disable Fullscreen)
 """
 
+# Import standard Python libraries (argparse, csv, struct, sys, threading, time, tkinter, ttk, dataclasses)
 import argparse
 import csv
 import struct
@@ -22,6 +23,7 @@ import tkinter as tk
 from tkinter import ttk
 from dataclasses import dataclass, field
 
+# Import serial communication and matplotlib for plotting
 import serial
 import matplotlib
 matplotlib.use("TkAgg")
@@ -69,7 +71,7 @@ FRAME_HEADER = b"\xaa\x25\x01"
 FRAME_SIZE   = 37
 TRAILER      = 0x55
 
-
+# Checks if frame size is exactly 37 bytes and returns distance value (in m)
 def parse_frame(frame):
     if len(frame) != FRAME_SIZE:
         return None
@@ -77,23 +79,23 @@ def parse_frame(frame):
         return None
     distances = []
     for i in range(8):
-        off = 3 + i * 4
-        (mm,) = struct.unpack_from("<I", frame, off)
-        distances.append(mm / 1000.0)
+        off = 3 + i * 4     # some offset
+        (mm,) = struct.unpack_from("<I", frame, off)    # a function that unpacks the distance value in mm from the frame variable
+        distances.append(mm / 1000.0)   # converts mm distance to m by dividing by 1000
     return distances
 
 
 def find_frames(buf):
     frames = []
     while True:
-        idx = buf.find(FRAME_HEADER)
+        idx = buf.find(FRAME_HEADER)    # finds frame with the given header "\xaa\x25\x01", and limits the buffer (prevent RAM exhaustion)
         if idx < 0:
-            if len(buf) > 2:
+            if len(buf) > 2:    # if the length of the frame with header found is more than 2, it will remove 2 characters
                 del buf[:-2]
             break
-        if idx > 0:
+        if idx > 0:     # if the length of the frame with header found is more than 0 (but less than 2), it will delete the frame (the frame contains no useful characters)
             del buf[:idx]
-        if len(buf) < FRAME_SIZE:
+        if len(buf) < FRAME_SIZE:   # if the length of the frame with header found is less than the stated frame size, it will end the while loop
             break
         candidate = bytes(buf[:FRAME_SIZE])
         if candidate[-1] == TRAILER:
@@ -104,10 +106,11 @@ def find_frames(buf):
     return frames
 
 
+# Triangulation Calcuation based off distance value returned from parse_frame()
 def trilaterate_2d(anchor_positions, distances):
     valid = [(p[0], p[1], d) for p, d in zip(anchor_positions, distances)
-             if p is not None and 0.05 < d < 50.0]
-    if len(valid) < 3:
+             if p is not None and 0.05 < d < 50.0]      # Filter valid anchors (distance between 0.05m and 50m)
+    if len(valid) < 3:      # this considers only the first three anchors to create equations to determine position based on distance.
         return None
     x1, y1, r1 = valid[0]
     A, b = [], []
