@@ -52,6 +52,41 @@ ANCHORS = {
 
 VIEW_BOUNDS = (-0.50, 1.50, -0.50, 1.50)
 
+# ---------------------------------------------------------------------------
+# Zone configs
+# ---------------------------------------------------------------------------
+ZONE_HIT_TOLERANCE = 0.0
+
+ZONES = [
+    {
+        "center": (0.5, 0.5),
+        "radius": 0.35,
+        "min_radius": 0.10,
+        "shrink_rate": 0.002,
+        "color": "#00e5ff",
+        "label": "ZONE A",
+        "active": True,
+    },
+    {
+        "center": (0.2, 0.8),
+        "radius": 0.25,
+        "min_radius": 0.10,
+        "shrink_rate": 0.010,
+        "color": "#ff4081",
+        "label": "ZONE B",
+        "active": True,
+    },
+    {
+        "center": (0.8, 0.2),
+        "radius": 0.25,
+        "min_radius": 0.10,
+        "shrink_rate": 0.006,
+        "color": "#66ff66",
+        "label": "ZONE C",
+        "active": True,
+    },
+]
+
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",
     "#ab47bc", "#26a69a", "#ec407a", "#bdbdbd",
@@ -70,7 +105,7 @@ DEFAULT_PORT = 5005   # UDP port to listen on
 # ---------------------------------------------------------------------------
 def trilaterate_2d(anchor_positions, distances):
     valid = [(p[0], p[1], d) for p, d in zip(anchor_positions, distances)
-             if p is not None and 0.05 < d < 50.0]
+            if p is not None and 0.05 < d < 50.0]
     if len(valid) < 3:
         return None
 
@@ -96,30 +131,46 @@ def trilaterate_2d(anchor_positions, distances):
     y = -(m00 * v1 - m01 * v0) / det
     return x, y
 
+# ---------------------------------------------------------------------------
+# Zone detection
+# ---------------------------------------------------------------------------
+def point_in_zone(point, zone):
+    if point is None:
+        return False
+
+    px, py = point
+    zx, zy = zone["center"]
+    r = zone["radius"] + ZONE_HIT_TOLERANCE
+
+    dx = px - zx
+    dy = py - zy   # calculates tag dist from center of zone
+
+    return (dx * dx + dy * dy) <= (r * r)  # checks if tag is in zone 
 
 # ---------------------------------------------------------------------------
 # Kalman filter (position + velocity, 2-D)
 # ---------------------------------------------------------------------------
 class Kalman2D:
     def __init__(self, dt=0.10, q=0.12, r=1.1):
-        self.dt = dt
-        self.q  = q
-        self.r  = r
+        self.dt = dt    # distance travelled prediction
+        self.q  = q     # process noise
+        self.r  = r     # measurement noise
         self.state = [0.0, 0.0, 0.0, 0.0]
         self.P = [[1.0, 0, 0, 0], [0, 1.0, 0, 0],
-                  [0, 0, 1.0, 0], [0, 0, 0, 1.0]]
+                [0, 0, 1.0, 0], [0, 0, 0, 1.0]]
         self.initialized = False
 
-    def predict(self):
-        if not self.initialized:
+    def predict(self):     # Prediction based on velocity
+        if not self.initialized:      # If not initialised, return self. (no prediction required to be carried out) exit early.
             return
-        self.state[0] += self.state[2] * self.dt
-        self.state[1] += self.state[3] * self.dt
+        self.state[0] += self.state[2] * self.dt      # vx * dt = distance travelled in x
+        self.state[1] += self.state[3] * self.dt      # vy * dt = distance travelled in y
         for i in range(4):
-            self.P[i][i] += self.q
+            self.P[i][i] += self.q     # 'p' is uncertainty. this function is increasing the uncertainty of the prediction. (higher more uncertain)
+
 
     def update(self, mx, my):
-        if not self.initialized:
+        if not self.initialized:       # If not initialised, return the given x and y distance valuie. (no prediction carried out)
             self.state = [mx, my, 0.0, 0.0]
             self.initialized = True
             return mx, my
@@ -139,14 +190,16 @@ class Kalman2D:
 # Per-tag state and shared state container
 # ---------------------------------------------------------------------------
 @dataclass
+# Stores per-tag information
 class TagState:
     last_distances: list = field(default_factory=lambda: [0.0] * 8)
-    raw_position:   tuple = None
-    filt_position:  tuple = None
-    last_update:    float = 0.0
-    kalman: Kalman2D = field(default_factory=Kalman2D)
+    raw_position:   tuple = None    # unfilted (x, y) position from triangulation
+    filt_position:  tuple = None    # Kalman-filtered (x, y) position
+    last_update:    float = 0.0     # Timestamp
+    kalman: Kalman2D = field(default_factory=Kalman2D)   # Kalman filter instance
+    zones_inside: set = field(default_factory=set)  # store zones for each tag indivly, and when new tag is added, default set is empty 
 
-
+# Thread-safe container for all tags
 class SharedState:
     def __init__(self, n_tags):
         self.n_tags = n_tags
@@ -157,12 +210,37 @@ class SharedState:
         self.start_time  = time.time()
         self.stop = False
 
+# ---------------------------------------------------------------------------
+# Zone shrinking - only if no tag is in the zone
+# ---------------------------------------------------------------------------
+def update_zones(tags):
+    for zone in ZONES:
+        if not zone["active"]:
+            continue
+
+        occupied = zone_is_occupied(zone, tags)
+
+        # ONLY shrink if empty
+        if not occupied:
+            if zone["radius"] > zone["min_radius"]:
+                zone["radius"] -= zone["shrink_rate"]
+
+                if zone["radius"] < zone["min_radius"]:
+                    zone["radius"] = zone["min_radius"]
+
+def zone_is_occupied(zone, tags):
+    for tag in tags:
+        if tag.filt_position is None:
+            continue
+        if point_in_zone(tag.filt_position, zone):
+            return True
+    return False
 
 # ---------------------------------------------------------------------------
 # OSC handler — called from the OSC server thread for every /distances message
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
-                     csv_writer=None):
+                    csv_writer=None):
     def handle_distances(address, *args):
         # args = [tag_id, d0, d1, ..., d7]
         if len(args) < 9:
@@ -189,8 +267,28 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 fx, fy = tag.kalman.update(raw_pos[0], raw_pos[1])
                 tag.raw_position  = raw_pos
                 tag.filt_position = (fx, fy)
+                # --- zone detection(per tag) ---
+                current_zones = set()                            # checks zones tht are occupied by tags
+
+                for zi, zone in enumerate(ZONES):                # checking each zone
+                    if point_in_zone(tag.filt_position, zone):   # takes tag position and check if tag is in zone
+                        current_zones.add(zi)                    # stores zone id if tag is in the zone
+
+                entered = current_zones - tag.zones_inside       # comparing tag positions so see if it entered a new zone
+                exited  = tag.zones_inside - current_zones
+
+                for zi in entered:
+                    print(f"[ZONE] Tag {tag_id} ENTERED "
+                        f"{ZONES[zi]['label']}")
+
+                for zi in exited:
+                    print(f"[ZONE] Tag {tag_id} EXITED "
+                        f"{ZONES[zi]['label']}")
+
+                tag.zones_inside = current_zones
             else:
                 tag.kalman.predict()
+                update_zones(state.tags) 
             state.frame_count += 1
             csv_color_idx = state.row_color_index[tag_id]
 
@@ -204,7 +302,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 row_data += ["", ""]
             if tag.filt_position is not None:
                 row_data += [f"{tag.filt_position[0]:.3f}",
-                             f"{tag.filt_position[1]:.3f}"]
+                            f"{tag.filt_position[1]:.3f}"]
             else:
                 row_data += ["", ""]
             csv_writer.writerow(row_data)
@@ -257,18 +355,45 @@ class ViewerApp:
 
         for aid, (ax_x, ax_y) in ANCHORS.items():
             self.ax_plot.plot(ax_x, ax_y, marker="^", markersize=14,
-                              color="#ffeb3b", markeredgecolor="white")
+                            color="#ffeb3b", markeredgecolor="white")
             self.ax_plot.annotate(f"A{aid}", (ax_x, ax_y),
-                                  textcoords="offset points",
-                                  xytext=(8, 8), color="#ffeb3b", fontsize=11)
+                                textcoords="offset points",
+                                xytext=(8, 8), color="#ffeb3b", fontsize=11)
+        # --- draw zones ---
+        for zone in ZONES:
+            cx, cy = zone["center"]
+
+            circle = mpatches.Circle(
+                (cx, cy),
+                zone["radius"],
+                fill=False,
+                linewidth=3,
+                linestyle="--",
+                edgecolor=zone["color"],
+                alpha=0.9,
+            )
+
+            self.ax_plot.add_patch(circle)
+
+            # zone label
+            self.ax_plot.text(
+                cx,
+                cy,
+                zone["label"],
+                color=zone["color"],
+                fontsize=11,
+                ha="center",
+                va="center",
+                weight="bold",
+            )
 
         self.row_dots = []
         self.row_circles_per_anchor = [[None] * self.n_anchors
-                                       for _ in range(state.n_tags)]
+                                    for _ in range(state.n_tags)]
         for i in range(state.n_tags):
             dot, = self.ax_plot.plot([], [], marker="o", markersize=10,
-                                     color=TAG_COLORS[i],
-                                     markeredgecolor="white", linewidth=0)
+                                    color=TAG_COLORS[i],
+                                    markeredgecolor="white", linewidth=0)
             self.row_dots.append(dot)
 
         self.hud = self.ax_plot.text(
@@ -352,7 +477,7 @@ class ViewerApp:
             combo.set(COLOR_NAMES[r])
             combo.pack(side="left", padx=4, pady=6)
             combo.bind("<<ComboboxSelected>>",
-                       lambda event, row=r: self.on_color_changed(row))
+                    lambda event, row=r: self.on_color_changed(row))
             self.color_combos.append(combo)
 
         root.bind("<KeyPress-q>", lambda e: self.shutdown())
@@ -392,7 +517,7 @@ class ViewerApp:
         names = [COLOR_NAMES[i] for i in snapshot]
         if other_row is not None:
             print(f"Row {row} -> {chosen_name}; row {other_row} swapped to "
-                  f"{names[other_row]}.")
+                f"{names[other_row]}.")
         else:
             print(f"Row {row} -> {chosen_name}.")
         self.sync_color_widgets(snapshot)
@@ -456,7 +581,7 @@ class ViewerApp:
                         continue
                     cx, cy = ANCHORS[aid]
                     circ = mpatches.Circle((cx, cy), d, fill=False,
-                                           color=color, alpha=0.25, linewidth=1)
+                                        color=color, alpha=0.25, linewidth=1)
                     self.ax_plot.add_patch(circ)
                     self.row_circles_per_anchor[row][slot] = circ
 
@@ -468,7 +593,7 @@ class ViewerApp:
 
         rate   = total / elapsed if elapsed > 0 else 0
         active = sum(1 for s in snapshot
-                     if s["filt"] is not None and now - s["last"] < 1.0)
+                    if s["filt"] is not None and now - s["last"] < 1.0)
         colors_str = " ".join(
             f"T{i}={COLOR_NAMES[color_indices[i]]}"
             for i in range(self.state.n_tags)
@@ -534,7 +659,7 @@ def main():
     # Build OSC dispatcher and start server thread
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, anchor_ids, anchor_positions_list,
-                               csv_writer)
+                            csv_writer)
     disp.map("/distances", handler)
 
     server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", args.port), disp)
@@ -551,8 +676,8 @@ def main():
 
     root = tk.Tk()
     app  = ViewerApp(root, state,
-                     show_circles=not args.no_circles,
-                     fullscreen=not args.windowed)
+                    show_circles=not args.no_circles,
+                    fullscreen=not args.windowed)
 
     try:
         root.mainloop()
