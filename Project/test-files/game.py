@@ -1,22 +1,7 @@
-# Huats Club 2026
 #!/usr/bin/env python3
 """
 game.py  —  OSC Receiver + Trilateration + Kalman Filter + Visualizer
 ======================================================================
-Runs on the "game" Pi that drives the display.
-
-Listens for OSC messages sent by uart.py:
-    /distances  <tag_id:int> <d0:float> ... <d7:float>
-
-For each incoming frame it:
-  1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
-  2. Smooths it through a per-tag Kalman2D filter.
-  3. Updates a live Tkinter / matplotlib visualizer (identical to the
-     original viewer).
-
-Run:
-    python3 game.py --tags 2
-    python3 game.py --tags 2 --port 5005 --windowed
 """
 
 import argparse
@@ -84,6 +69,16 @@ ZONES = [
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
+    },
+    # --- ADDED: DANGER ZONE ---
+    {
+        "center": [0.0, 0.0],
+        "radius": 0.15,
+        "color": "#ff0000",
+        "label": "DANGER",
+        "active": True,
+        "is_danger": True,
+        "velocity": [0.015, 0.012], # Movement speed
     },
 ]
 
@@ -211,22 +206,44 @@ class SharedState:
         self.stop = False
 
 # ---------------------------------------------------------------------------
-# Zone shrinking - only if no tag is in the zone
+# Zone shrinking AND Movement logic
 # ---------------------------------------------------------------------------
-def update_zones(tags):
+def update_zones(state):
+    x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
             continue
 
-        occupied = zone_is_occupied(zone, tags)
+        # --- Danger Zone Movement & Collision ---
+        if zone.get("is_danger"):
+            cx, cy = zone["center"]
+            vx, vy = zone["velocity"]
+            
+            new_x, new_y = cx + vx, cy + vy
 
-        # ONLY shrink if empty
-        if not occupied:
-            if zone["radius"] > zone["min_radius"]:
-                zone["radius"] -= zone["shrink_rate"]
+            # Bounce logic
+            if new_x - zone["radius"] < x_min or new_x + zone["radius"] > x_max:
+                vx = -vx
+            if new_y - zone["radius"] < y_min or new_y + zone["radius"] > y_max:
+                vy = -vy
+            
+            zone["center"] = (cx + vx, cy + vy)
+            zone["velocity"] = [vx, vy]
 
-                if zone["radius"] < zone["min_radius"]:
-                    zone["radius"] = zone["min_radius"]
+            # Clash Detection
+            for tag in state.tags:
+                if tag.filt_position and point_in_zone(tag.filt_position, zone):
+                    print("!!! DANGER ZONE CLASH - GAME OVER !!!")
+                    state.stop = True
+
+        # --- Original Shrinking Logic ---
+        else:
+            occupied = zone_is_occupied(zone, state.tags)
+            if not occupied:
+                if zone["radius"] > zone["min_radius"]:
+                    zone["radius"] -= zone["shrink_rate"]
+                    if zone["radius"] < zone["min_radius"]:
+                        zone["radius"] = zone["min_radius"]
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
@@ -242,7 +259,8 @@ def zone_is_occupied(zone, tags):
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
     def handle_distances(address, *args):
-        # args = [tag_id, d0, d1, ..., d7]
+        if state.stop: return # Stop processing if game ended
+
         if len(args) < 9:
             print(f"[osc] malformed message (got {len(args)} args)")
             return
@@ -286,9 +304,10 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                         f"{ZONES[zi]['label']}")
 
                 tag.zones_inside = current_zones
+                update_zones(state) # Update movement/shrinking on every tag update
             else:
                 tag.kalman.predict()
-                update_zones(state.tags) 
+                update_zones(state) 
             state.frame_count += 1
             csv_color_idx = state.row_color_index[tag_id]
 
@@ -311,7 +330,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
-# Viewer  (Tkinter + matplotlib — identical to original viewer3_annotated.py)
+# Viewer  (Tkinter + matplotlib)
 # ---------------------------------------------------------------------------
 class ViewerApp:
     def __init__(self, root, state: SharedState, show_circles, fullscreen):
@@ -360,6 +379,7 @@ class ViewerApp:
                                 textcoords="offset points",
                                 xytext=(8, 8), color="#ffeb3b", fontsize=11)
         # --- draw zones ---
+        self.zone_patches = []
         for zone in ZONES:
             cx, cy = zone["center"]
 
@@ -374,18 +394,13 @@ class ViewerApp:
             )
 
             self.ax_plot.add_patch(circle)
-
-            # zone label
-            self.ax_plot.text(
-                cx,
-                cy,
-                zone["label"],
-                color=zone["color"],
-                fontsize=11,
-                ha="center",
-                va="center",
-                weight="bold",
+            
+            # Save label and circle for dynamic updates
+            txt = self.ax_plot.text(
+                cx, cy, zone["label"], color=zone["color"],
+                fontsize=11, ha="center", va="center", weight="bold"
             )
+            self.zone_patches.append((circle, txt, zone))
 
         self.row_dots = []
         self.row_circles_per_anchor = [[None] * self.n_anchors
@@ -493,7 +508,6 @@ class ViewerApp:
 
         self.root.after(100, self.update_loop)
 
-    # --- color dropdown logic ---
     def on_color_changed(self, row):
         chosen_name = self.color_combos[row].get()
         try:
@@ -528,9 +542,11 @@ class ViewerApp:
             self.color_swatches[r].configure(bg=TAG_COLORS[ci])
             self.id_labels[r].configure(fg=TAG_COLORS[ci])
 
-    # --- main display refresh (called every ~66 ms from Tk event loop) ---
     def update_loop(self):
         if self.state.stop:
+            self.hud.set_text("!!! GAME OVER - DANGER ZONE HIT !!!")
+            self.hud.set_color("red")
+            self.canvas.draw_idle()
             return
 
         with self.state.lock:
@@ -542,16 +558,22 @@ class ViewerApp:
                     "last":  tag.last_update,
                 })
             total         = self.state.frame_count
-            elapsed       = time.time() - self.state.start_time
+            elapsed        = time.time() - self.state.start_time
             color_indices = list(self.state.row_color_index)
 
         now = time.time()
 
+        # Update Zone Visual Positions (Danger Zone Moves)
+        for patch, txt, zone_data in self.zone_patches:
+            patch.center = zone_data["center"]
+            patch.set_radius(zone_data["radius"])
+            txt.set_position(zone_data["center"])
+
         for row, snap in enumerate(snapshot):
             color_idx = color_indices[row]
             color     = TAG_COLORS[color_idx]
-            pos       = snap["filt"]
-            stale     = (now - snap["last"] > 1.0) if snap["last"] else True
+            pos        = snap["filt"]
+            stale      = (now - snap["last"] > 1.0) if snap["last"] else True
 
             self.row_dots[row].set_color(color)
             self.row_dots[row].set_markerfacecolor(color)
@@ -615,10 +637,6 @@ class ViewerApp:
         except tk.TclError:
             pass
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(
         description="Receive UWB distances via OSC, trilaterate, and visualize.")
@@ -642,10 +660,9 @@ def main():
     for tag in state.tags:
         tag.kalman.dt = 0.10
 
-    anchor_ids             = sorted(ANCHORS.keys())
-    anchor_positions_list  = [ANCHORS[i] for i in anchor_ids]
+    anchor_ids               = sorted(ANCHORS.keys())
+    anchor_positions_list   = [ANCHORS[i] for i in anchor_ids]
 
-    # Optional CSV
     csv_file   = None
     csv_writer = None
     if args.csv:
@@ -656,7 +673,6 @@ def main():
         header += ["raw_x", "raw_y", "filt_x", "filt_y"]
         csv_writer.writerow(header)
 
-    # Build OSC dispatcher and start server thread
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, anchor_ids, anchor_positions_list,
                             csv_writer)
@@ -665,14 +681,6 @@ def main():
     server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", args.port), disp)
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
-
-    print(f"[game] Listening for OSC on UDP port {args.port}")
-    print(f"[game] Tracking {args.tags} tag(s)")
-    print(f"[game] Anchors: {ANCHORS}")
-    print(f"[game] View bounds: {VIEW_BOUNDS}")
-    if args.csv:
-        print(f"[game] Logging to: {args.csv}")
-    print("[game] Press Q in the window to quit.\n")
 
     root = tk.Tk()
     app  = ViewerApp(root, state,
@@ -689,8 +697,6 @@ def main():
         time.sleep(0.3)
         if csv_file:
             csv_file.close()
-            print(f"[game] Wrote {args.csv}")
-
 
 if __name__ == "__main__":
     main()
