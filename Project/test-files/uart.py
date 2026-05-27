@@ -55,6 +55,7 @@ DEFAULT_PORT = 5005
 # Frame parsing helpers
 # ---------------------------------------------------------------------------
 def parse_frame(frame: bytes):
+    """Checks if frame size is exactly 37 bytes and returns distance value (in m)"""
     """Return list of 8 distances (m) or None if the frame is invalid."""
     if len(frame) != FRAME_SIZE:
         return None
@@ -63,25 +64,28 @@ def parse_frame(frame: bytes):
     distances = []
     for i in range(8):
         off = 3 + i * 4
-        (mm,) = struct.unpack_from("<I", frame, off)
-        distances.append(mm / 1000.0)
+        (mm,) = struct.unpack_from("<I", frame, off)    # a function that unpacks the distance value in mm from the frame variable
+                                                        # (is a Python function used to extract data from a binary buffer (like bytes or bytearray) starting at a specific position)
+        distances.append(mm / 1000.0)   # converts mm distance to m by dividing by 1000
     return distances
 
 
 def find_frames(buf: bytearray):
-    """Extract all complete frames from the mutable byte buffer."""
     frames = []
+    # If the stream has desynced and the buffer is ballooning, drop everything
+    # but the last couple of bytes. Without this, a bad sync byte-by-byte
+    # search can exhaust RAM and trigger the Pi's OOM killer (full freeze).
     if len(buf) > MAX_BUF:
         del buf[:-2]
     while True:
-        idx = buf.find(FRAME_HEADER)
+        idx = buf.find(FRAME_HEADER)    # finds frame with the given header "\xaa\x25\x01", and limits the buffer (prevent RAM exhaustion)
         if idx < 0:
-            if len(buf) > 2:
+            if len(buf) > 2:    # if the length of the frame with header found is more than 2, it will remove 2 characters
                 del buf[:-2]
             break
-        if idx > 0:
+        if idx > 0:     # if the length of the frame with header found is more than 0 (but less than 2), it will delete the frame (the frame contains no useful characters)
             del buf[:idx]
-        if len(buf) < FRAME_SIZE:
+        if len(buf) < FRAME_SIZE:   # if the length of the frame with header found is less than the stated frame size, it will end the while loop
             break
         candidate = bytes(buf[:FRAME_SIZE])
         if candidate[-1] == TRAILER:
@@ -93,14 +97,14 @@ def find_frames(buf: bytearray):
 
 
 # ---------------------------------------------------------------------------
-# Main reader / sender loop
+# Main reader / sender loop via OSC
 # ---------------------------------------------------------------------------
 def run(n_tags: int, host: str, port: int):
     # Open OSC client (fire-and-forget UDP — no connection needed)
     osc = udp_client.SimpleUDPClient(host, port)
     print(f"[uart] OSC target → {host}:{port}")
 
-    # Open serial port
+    # Open serial port -> to pull UART Data
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
     except serial.SerialException as e:
@@ -110,31 +114,32 @@ def run(n_tags: int, host: str, port: int):
     print(f"[uart] Serial open on {SERIAL_PORT} @ {BAUD_RATE} baud")
     print(f"[uart] Tracking {n_tags} tag(s).  Press Ctrl-C to stop.\n")
 
-    buf        = bytearray()
+    buf        = bytearray() # In Python, bytearray() is a built-in function that creates a mutable sequence of integers ranging from 0 to 255.
+                             # Think of it as a version of the bytes type that you can actually change after creating it.
     frame_count = 0
 
     try:
         while True:
             try:
-                data = ser.read(256)
+                data = ser.read(256)    # Read UART data (up to 256 bytes)
             except Exception as e:
                 print(f"[reader error] {e}")
                 break
 
             if data:
-                buf.extend(data)
+                buf.extend(data)    # Append to buffer
 
-            for raw in find_frames(buf):
-                distances = parse_frame(raw)
+            for raw in find_frames(buf):    # Extract raw data from complete frames (from the find_frame() function above)
+                distances = parse_frame(raw)    # Parse UART frame into distances via parse_frame() from above
                 if distances is None:
                     continue
 
-                # Apply calibration offsets
+                # Apply calibration offsets to distances
                 for aid, off in ANCHOR_OFFSETS.items():
                     if aid < len(distances):
                         distances[aid] = max(0.0, distances[aid] + off)
 
-                # Round-robin tag assignment (matches game.py logic)
+                # Round-robin tag assignment If you have 2 tags, frame 0 → tag 0, frame 1 → tag 1, frame 2 → tag 0, etc. (matches game.py logic.)
                 tag_id = frame_count % n_tags
 
                 # Build OSC message:  /distances  tag_id  d0 d1 ... d7
@@ -155,7 +160,8 @@ def run(n_tags: int, host: str, port: int):
 
 
 # ---------------------------------------------------------------------------
-# Entry point
+# Entry point -- what is typed in the CLI when running the code. 
+# e.g. python3 uart.py --tags 2 --192.168.254.100 --5005
 # ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(

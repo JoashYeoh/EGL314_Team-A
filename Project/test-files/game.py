@@ -99,11 +99,21 @@ DEFAULT_PORT = 5005   # UDP port to listen on
 # Trilateration (linear least-squares multilateration — no numpy needed)
 # ---------------------------------------------------------------------------
 def trilaterate_2d(anchor_positions, distances):
+    """Linear least-squares multilateration.
+
+    Uses EVERY valid anchor, not just the first three. Each extra anchor
+    adds a row to an over-determined system that is solved via the normal
+    equations (A^T A) x = A^T b. No reference anchor can poison the solve,
+    and near-collinear subsets no longer cause spurious None returns.
+    Closed-form 2x2 solve of the normal equations -- no numpy/scipy needed.
+    """
     valid = [(p[0], p[1], d) for p, d in zip(anchor_positions, distances)
             if p is not None and 0.05 < d < 50.0]
     if len(valid) < 3:
         return None
 
+    # Use the LAST anchor as the linearization reference (subtracting one
+    # circle equation from the others to cancel the quadratic x^2+y^2 term).
     xr, yr, rr = valid[-1]
     A, b = [], []
     for xi, yi, ri in valid[:-1]:
@@ -112,6 +122,7 @@ def trilaterate_2d(anchor_positions, distances):
     if len(A) < 2:
         return None
 
+    # Normal equations: M = A^T A  (2x2),  v = A^T b  (2x1)
     m00 = sum(ax * ax for ax, ay in A)
     m01 = sum(ax * ay for ax, ay in A)
     m11 = sum(ay * ay for ax, ay in A)
@@ -120,7 +131,7 @@ def trilaterate_2d(anchor_positions, distances):
 
     det = m00 * m11 - m01 * m01
     if abs(det) < 1e-9:
-        return None
+        return None     # all anchors collinear -- truly unsolvable
 
     x = -(v0 * m11 - v1 * m01) / det
     y = -(m00 * v1 - m01 * v0) / det
@@ -143,9 +154,10 @@ def point_in_zone(point, zone):
     return (dx * dx + dy * dy) <= (r * r)  # checks if tag is in zone 
 
 # ---------------------------------------------------------------------------
-# Kalman filter (position + velocity, 2-D)
+# Kalman filter (position + velocity, 2-D) (form of predictive smoothing)
 # ---------------------------------------------------------------------------
 class Kalman2D:
+    # Initialize with state vector [x, y, vx, vy] (position and velocity)
     def __init__(self, dt=0.10, q=0.12, r=1.1):
         self.dt = dt    # distance travelled prediction
         self.q  = q     # process noise
@@ -254,14 +266,14 @@ def zone_is_occupied(zone, tags):
     return False
 
 # ---------------------------------------------------------------------------
-# OSC handler — called from the OSC server thread for every /distances message
+# OSC handler — called from the OSC server thread for every distances message
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
     def handle_distances(address, *args):
         if state.stop: return # Stop processing if game ended
 
-        if len(args) < 9:
+        if len(args) < 9:   
             print(f"[osc] malformed message (got {len(args)} args)")
             return
 
