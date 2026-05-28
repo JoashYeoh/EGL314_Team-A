@@ -27,7 +27,7 @@ from pythonosc import osc_server
 # Anchor layout and view config  (must match uart.py)
 # ---------------------------------------------------------------------------
 ANCHORS = {
-    0: (0.0, 0.0),
+    0: (0.0, 0.0),  
     1: (0.0, 0.50),
     2: (0.0, 1.0),
     3: (1.0, 1.0),
