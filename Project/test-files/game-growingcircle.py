@@ -4,21 +4,21 @@ game.py  —  OSC Receiver + Trilateration + Kalman Filter + Visualizer
 ======================================================================
 """
 
-import argparse
-import csv
-import sys
-import threading
-import time
-import tkinter as tk
-from tkinter import ttk
-from dataclasses import dataclass, field
+import argparse # Parses command-line arguments when you run the script
+import csv # Reads and writes CSV files -> this is to show on the Tkinter window to show the distances
+import sys # Used here only to call sys.exit(1) -> to end the programe 
+import threading # Runs the OSC server on a background thread while the UI runs on the main thread simultaneously. The Lock prevents both threads from touching SharedState at the same time.
+import time # Used for timestamping frames time.times()
+import tkinter as tk # Tkinter 
+from tkinter import ttk # "themed" extension of tkinter with nicer-looking widgets
+from dataclasses import dataclass, field # 
 
-import matplotlib
+import matplotlib # For the ploting of the graph on the thinker window
 matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt # Applies the dark_background style for the black theme
+import matplotlib.patches as mpatches # Draws Circle patches — both the zone outlines and the per-anchor distance rings
+from matplotlib.figure import Figure # Creates the plot figure that gets embedded in the Tkinter window
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg # The bridge that embeds the matplotlib figure inside the Tkinter window
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
@@ -248,14 +248,21 @@ def update_zones(state):
                     print("!!! DANGER ZONE CLASH - GAME OVER !!!")
                     state.stop = True
 
-        # --- Original Shrinking Logic ---
+        # --- Shrink when empty, grow when occupied ---
         else:
             occupied = zone_is_occupied(zone, state.tags)
             if not occupied:
+                # No tag inside — shrink down to min_radius
                 if zone["radius"] > zone["min_radius"]:
                     zone["radius"] -= zone["shrink_rate"]
                     if zone["radius"] < zone["min_radius"]:
                         zone["radius"] = zone["min_radius"]
+            if occupied:
+                # Tag is inside — grow back up to max_radius
+                if zone["radius"] < zone["max_radius"]:
+                    zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
+                    if zone["radius"] > zone["max_radius"]:
+                        zone["radius"] = zone["max_radius"]
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
