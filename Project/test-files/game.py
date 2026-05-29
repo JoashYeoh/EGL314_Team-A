@@ -2,6 +2,16 @@
 """
 game.py  —  OSC Receiver + Trilateration + Kalman Filter + Visualizer
 ======================================================================
+Runs on the "game" Pi that drives the display.
+
+Listens for OSC messages sent by uart.py:
+    /distances  <tag_id:int> <d0:float> ... <d7:float>
+
+For each incoming frame it:
+  1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
+  2. Smooths it through a per-tag Kalman2D filter.
+  3. Updates a live Tkinter / matplotlib visualizer (identical to the
+     original viewer).
 """
 
 import argparse
@@ -70,15 +80,25 @@ ZONES = [
         "label": "ZONE C",
         "active": True,
     },
-    # --- ADDED: DANGER ZONE ---
+    # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
-        "center": [0.0, 0.0],
-        "radius": 0.15,
+        "center": [0.3, 0.5],
+        "radius": 0.10,
         "color": "#ff0000",
-        "label": "DANGER",
+        "label": "DANGER-V",
         "active": True,
         "is_danger": True,
-        "velocity": [0.015, 0.012], # Movement speed
+        "velocity": [0.0, 0.015], 
+    },
+    # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
+    {
+        "center": [0.5, 0.7],
+        "radius": 0.10,
+        "color": "#ff0000",
+        "label": "DANGER-H",
+        "active": True,
+        "is_danger": True,
+        "velocity": [0.015, 0.0], 
     },
 ]
 
@@ -92,7 +112,7 @@ COLOR_NAMES = [
     "purple", "teal", "pink", "gray",
 ]
 
-DEFAULT_PORT = 5005   # UDP port to listen on
+DEFAULT_PORT = 5005  # UDP port to listen on
 
 
 # ---------------------------------------------------------------------------
@@ -138,34 +158,33 @@ def point_in_zone(point, zone):
     r = zone["radius"] + ZONE_HIT_TOLERANCE
 
     dx = px - zx
-    dy = py - zy   # calculates tag dist from center of zone
+    dy = py - zy
 
-    return (dx * dx + dy * dy) <= (r * r)  # checks if tag is in zone 
+    return (dx * dx + dy * dy) <= (r * r)
 
 # ---------------------------------------------------------------------------
 # Kalman filter (position + velocity, 2-D)
 # ---------------------------------------------------------------------------
 class Kalman2D:
     def __init__(self, dt=0.10, q=0.12, r=1.1):
-        self.dt = dt    # distance travelled prediction
-        self.q  = q     # process noise
-        self.r  = r     # measurement noise
+        self.dt = dt
+        self.q  = q
+        self.r  = r
         self.state = [0.0, 0.0, 0.0, 0.0]
         self.P = [[1.0, 0, 0, 0], [0, 1.0, 0, 0],
                 [0, 0, 1.0, 0], [0, 0, 0, 1.0]]
         self.initialized = False
 
-    def predict(self):     # Prediction based on velocity
-        if not self.initialized:      # If not initialised, return self. (no prediction required to be carried out) exit early.
+    def predict(self):
+        if not self.initialized:
             return
-        self.state[0] += self.state[2] * self.dt      # vx * dt = distance travelled in x
-        self.state[1] += self.state[3] * self.dt      # vy * dt = distance travelled in y
+        self.state[0] += self.state[2] * self.dt
+        self.state[1] += self.state[3] * self.dt
         for i in range(4):
-            self.P[i][i] += self.q     # 'p' is uncertainty. this function is increasing the uncertainty of the prediction. (higher more uncertain)
-
+            self.P[i][i] += self.q
 
     def update(self, mx, my):
-        if not self.initialized:       # If not initialised, return the given x and y distance valuie. (no prediction carried out)
+        if not self.initialized:
             self.state = [mx, my, 0.0, 0.0]
             self.initialized = True
             return mx, my
@@ -185,16 +204,14 @@ class Kalman2D:
 # Per-tag state and shared state container
 # ---------------------------------------------------------------------------
 @dataclass
-# Stores per-tag information
 class TagState:
     last_distances: list = field(default_factory=lambda: [0.0] * 8)
-    raw_position:   tuple = None    # unfilted (x, y) position from triangulation
-    filt_position:  tuple = None    # Kalman-filtered (x, y) position
-    last_update:    float = 0.0     # Timestamp
-    kalman: Kalman2D = field(default_factory=Kalman2D)   # Kalman filter instance
-    zones_inside: set = field(default_factory=set)  # store zones for each tag indivly, and when new tag is added, default set is empty 
+    raw_position:   tuple = None
+    filt_position:  tuple = None
+    last_update:    float = 0.0
+    kalman: Kalman2D = field(default_factory=Kalman2D)
+    zones_inside: set = field(default_factory=set)
 
-# Thread-safe container for all tags
 class SharedState:
     def __init__(self, n_tags):
         self.n_tags = n_tags
@@ -206,37 +223,38 @@ class SharedState:
         self.stop = False
 
 # ---------------------------------------------------------------------------
-# Zone shrinking AND Movement logic
+# Zone Update (Movement & Shrinking)
 # ---------------------------------------------------------------------------
 def update_zones(state):
-    x_min, x_max, y_min, y_max = VIEW_BOUNDS
+    # Anchor Boundaries (0.0 to 1.0)
+    L_X_MIN, L_X_MAX = 0.0, 1.0
+    L_Y_MIN, L_Y_MAX = 0.0, 1.0
+    
     for zone in ZONES:
         if not zone["active"]:
             continue
 
-        # --- Danger Zone Movement & Collision ---
         if zone.get("is_danger"):
             cx, cy = zone["center"]
             vx, vy = zone["velocity"]
             
             new_x, new_y = cx + vx, cy + vy
-
-            # Bounce logic
-            if new_x - zone["radius"] < x_min or new_x + zone["radius"] > x_max:
-                vx = -vx
-            if new_y - zone["radius"] < y_min or new_y + zone["radius"] > y_max:
-                vy = -vy
             
+            # Bounce logic at Anchor edges
+            if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
+                vx = -vx
+            if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
+                vy = -vy
+                
             zone["center"] = (cx + vx, cy + vy)
             zone["velocity"] = [vx, vy]
-
-            # Clash Detection
+            
+            # Check for clash
             for tag in state.tags:
                 if tag.filt_position and point_in_zone(tag.filt_position, zone):
-                    print("!!! DANGER ZONE CLASH - GAME OVER !!!")
-                    state.stop = True
-
-        # --- Original Shrinking Logic ---
+                    print(f"!!! GAME OVER - {zone['label']} CLASH !!!")
+                    state.stop = True 
+        
         else:
             occupied = zone_is_occupied(zone, state.tags)
             if not occupied:
@@ -254,12 +272,12 @@ def zone_is_occupied(zone, tags):
     return False
 
 # ---------------------------------------------------------------------------
-# OSC handler — called from the OSC server thread for every /distances message
+# OSC handler
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
     def handle_distances(address, *args):
-        if state.stop: return # Stop processing if game ended
+        if state.stop: return 
 
         if len(args) < 9:
             print(f"[osc] malformed message (got {len(args)} args)")
@@ -269,13 +287,11 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
         distances = [float(v) for v in args[1:9]]
 
         if tag_id >= state.n_tags:
-            return   # ignore tags beyond what we're tracking
+            return
 
         tag = state.tags[tag_id]
-
-        # Trilateration
-        dists_for_trilat = [distances[i] for i in anchor_ids]
-        raw_pos = trilaterate_2d(anchor_positions_list, dists_for_trilat)
+        dist_for_trilat = [distances[i] for i in anchor_ids]
+        raw_pos = trilaterate_2d(anchor_positions_list, dist_for_trilat)
 
         with state.lock:
             tag.last_distances = distances
@@ -285,43 +301,36 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 fx, fy = tag.kalman.update(raw_pos[0], raw_pos[1])
                 tag.raw_position  = raw_pos
                 tag.filt_position = (fx, fy)
-                # --- zone detection(per tag) ---
-                current_zones = set()                            # checks zones tht are occupied by tags
+                
+                current_zones = set()
+                for zi, zone in enumerate(ZONES):
+                    if point_in_zone(tag.filt_position, zone):
+                        current_zones.add(zi)
 
-                for zi, zone in enumerate(ZONES):                # checking each zone
-                    if point_in_zone(tag.filt_position, zone):   # takes tag position and check if tag is in zone
-                        current_zones.add(zi)                    # stores zone id if tag is in the zone
-
-                entered = current_zones - tag.zones_inside       # comparing tag positions so see if it entered a new zone
+                entered = current_zones - tag.zones_inside
                 exited  = tag.zones_inside - current_zones
 
                 for zi in entered:
-                    print(f"[ZONE] Tag {tag_id} ENTERED "
-                        f"{ZONES[zi]['label']}")
-
+                    print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
                 for zi in exited:
-                    print(f"[ZONE] Tag {tag_id} EXITED "
-                        f"{ZONES[zi]['label']}")
+                    print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
 
                 tag.zones_inside = current_zones
-                update_zones(state) # Update movement/shrinking on every tag update
             else:
                 tag.kalman.predict()
-                update_zones(state) 
+            
+            update_zones(state)
             state.frame_count += 1
-            csv_color_idx = state.row_color_index[tag_id]
 
-        # Optional CSV logging
         if csv_writer is not None:
-            row_data = [time.time(), tag_id, COLOR_NAMES[csv_color_idx]]
+            row_data = [time.time(), tag_id, COLOR_NAMES[state.row_color_index[tag_id]]]
             row_data += [f"{distances[i]:.3f}" for i in anchor_ids]
             if raw_pos is not None:
                 row_data += [f"{raw_pos[0]:.3f}", f"{raw_pos[1]:.3f}"]
             else:
                 row_data += ["", ""]
             if tag.filt_position is not None:
-                row_data += [f"{tag.filt_position[0]:.3f}",
-                            f"{tag.filt_position[1]:.3f}"]
+                row_data += [f"{tag.filt_position[0]:.3f}", f"{tag.filt_position[1]:.3f}"]
             else:
                 row_data += ["", ""]
             csv_writer.writerow(row_data)
@@ -330,7 +339,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
-# Viewer  (Tkinter + matplotlib)
+# Viewer App
 # ---------------------------------------------------------------------------
 class ViewerApp:
     def __init__(self, root, state: SharedState, show_circles, fullscreen):
@@ -343,17 +352,10 @@ class ViewerApp:
         root.title("BU03 Live Tracker — game.py")
         root.configure(bg="#000000")
 
-        style = ttk.Style()
-        try:
-            style.theme_use("clam")
-        except tk.TclError:
-            pass
-
         root.grid_rowconfigure(0, weight=5)
         root.grid_rowconfigure(1, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        # --- matplotlib plot (top) ---
         plot_frame = tk.Frame(root, bg="#000000")
         plot_frame.grid(row=0, column=0, sticky="nsew")
 
@@ -366,337 +368,141 @@ class ViewerApp:
         self.ax_plot.set_xlim(x_min, x_max)
         self.ax_plot.set_ylim(y_min, y_max)
         self.ax_plot.set_aspect("equal")
-        self.ax_plot.set_xlabel("X (m)")
-        self.ax_plot.set_ylabel("Y (m)")
-        self.ax_plot.grid(True, alpha=0.2)
-        self.ax_plot.set_title("UWB Live Tracker — press Q to quit")
         self.ax_plot.set_facecolor("#000000")
 
         for aid, (ax_x, ax_y) in ANCHORS.items():
             self.ax_plot.plot(ax_x, ax_y, marker="^", markersize=14,
                             color="#ffeb3b", markeredgecolor="white")
-            self.ax_plot.annotate(f"A{aid}", (ax_x, ax_y),
-                                textcoords="offset points",
-                                xytext=(8, 8), color="#ffeb3b", fontsize=11)
-        # --- draw zones ---
+            self.ax_plot.annotate(f"A{aid}", (ax_x, ax_y), xytext=(8, 8),
+                                textcoords="offset points", color="#ffeb3b")
+
         self.zone_patches = []
         for zone in ZONES:
-            cx, cy = zone["center"]
-
-            circle = mpatches.Circle(
-                (cx, cy),
-                zone["radius"],
-                fill=False,
-                linewidth=3,
-                linestyle="--",
-                edgecolor=zone["color"],
-                alpha=0.9,
-            )
-
+            circle = mpatches.Circle(zone["center"], zone["radius"], fill=False,
+                                    linewidth=3, linestyle="--", edgecolor=zone["color"])
             self.ax_plot.add_patch(circle)
-            
-            # Save label and circle for dynamic updates
-            txt = self.ax_plot.text(
-                cx, cy, zone["label"], color=zone["color"],
-                fontsize=11, ha="center", va="center", weight="bold"
-            )
+            txt = self.ax_plot.text(zone["center"][0], zone["center"][1], zone["label"],
+                                   color=zone["color"], ha="center", va="center", weight="bold")
             self.zone_patches.append((circle, txt, zone))
 
         self.row_dots = []
-        self.row_circles_per_anchor = [[None] * self.n_anchors
-                                    for _ in range(state.n_tags)]
+        self.row_circles_per_anchor = [[None] * self.n_anchors for _ in range(state.n_tags)]
         for i in range(state.n_tags):
             dot, = self.ax_plot.plot([], [], marker="o", markersize=10,
-                                    color=TAG_COLORS[i],
-                                    markeredgecolor="white", linewidth=0)
+                                    color=TAG_COLORS[i], markeredgecolor="white")
             self.row_dots.append(dot)
 
-        self.hud = self.ax_plot.text(
-            0.02, 0.98, "", transform=self.ax_plot.transAxes,
-            va="top", ha="left", color="white",
-            fontsize=10, family="monospace",
-            bbox=dict(facecolor="black", alpha=0.5, edgecolor="none"),
-        )
+        self.hud = self.ax_plot.text(0.02, 0.98, "", transform=self.ax_plot.transAxes,
+                                    va="top", color="white", family="monospace",
+                                    bbox=dict(facecolor="black", alpha=0.5))
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        # --- table with dropdowns (bottom) ---
         table_frame = tk.Frame(root, bg="#000000")
         table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
-        headers = ["Tag ID", "X (m)", "Y (m)", "Color"]
-        for col, label in enumerate(headers):
-            lbl = tk.Label(
-                table_frame, text=label,
-                bg="#222222", fg="white",
-                font=("Helvetica", 13, "bold"),
-                padx=8, pady=6, relief="solid", borderwidth=1,
-            )
-            lbl.grid(row=0, column=col, sticky="nsew")
-
-        for col in range(4):
-            table_frame.grid_columnconfigure(col, weight=1, uniform="cols")
-
-        self.id_labels    = []
-        self.x_labels     = []
-        self.y_labels     = []
-        self.color_combos = []
-        self.color_swatches = []
+        self.id_labels, self.x_labels, self.y_labels = [], [], []
+        self.color_combos, self.color_swatches = [], []
 
         for r in range(state.n_tags):
-            id_lbl = tk.Label(
-                table_frame, text=f"T{r}",
-                bg="#111111", fg=TAG_COLORS[r],
-                font=("Helvetica", 14, "bold"),
-                padx=8, pady=6, relief="solid", borderwidth=1,
-            )
-            id_lbl.grid(row=r + 1, column=0, sticky="nsew")
+            id_lbl = tk.Label(table_frame, text=f"T{r}", bg="#111111", fg=TAG_COLORS[r], font=("Helvetica", 14, "bold"), relief="solid", borderwidth=1)
+            id_lbl.grid(row=r+1, column=0, sticky="nsew")
             self.id_labels.append(id_lbl)
 
-            x_lbl = tk.Label(
-                table_frame, text="—",
-                bg="#111111", fg="white",
-                font=("Courier", 13),
-                padx=8, pady=6, relief="solid", borderwidth=1,
-            )
-            x_lbl.grid(row=r + 1, column=1, sticky="nsew")
+            x_lbl = tk.Label(table_frame, text="—", bg="#111111", fg="white", relief="solid", borderwidth=1)
+            x_lbl.grid(row=r+1, column=1, sticky="nsew")
             self.x_labels.append(x_lbl)
 
-            y_lbl = tk.Label(
-                table_frame, text="—",
-                bg="#111111", fg="white",
-                font=("Courier", 13),
-                padx=8, pady=6, relief="solid", borderwidth=1,
-            )
-            y_lbl.grid(row=r + 1, column=2, sticky="nsew")
+            y_lbl = tk.Label(table_frame, text="—", bg="#111111", fg="white", relief="solid", borderwidth=1)
+            y_lbl.grid(row=r+1, column=2, sticky="nsew")
             self.y_labels.append(y_lbl)
 
-            color_cell = tk.Frame(
-                table_frame, bg="#111111",
-                relief="solid", borderwidth=1,
-            )
-            color_cell.grid(row=r + 1, column=3, sticky="nsew")
-
+            color_cell = tk.Frame(table_frame, bg="#111111", relief="solid", borderwidth=1)
+            color_cell.grid(row=r+1, column=3, sticky="nsew")
             swatch = tk.Frame(color_cell, bg=TAG_COLORS[r], width=24, height=24)
-            swatch.pack(side="left", padx=8, pady=6)
-            swatch.pack_propagate(False)
+            swatch.pack(side="left", padx=8)
             self.color_swatches.append(swatch)
-
-            combo = ttk.Combobox(
-                color_cell, values=COLOR_NAMES,
-                state="readonly", width=10,
-                font=("Helvetica", 12),
-            )
+            combo = ttk.Combobox(color_cell, values=COLOR_NAMES, state="readonly", width=10)
             combo.set(COLOR_NAMES[r])
-            combo.pack(side="left", padx=4, pady=6)
-            combo.bind("<<ComboboxSelected>>",
-                    lambda event, row=r: self.on_color_changed(row))
+            combo.pack(side="left", padx=4)
+            combo.bind("<<ComboboxSelected>>", lambda e, row=r: self.on_color_changed(row))
             self.color_combos.append(combo)
 
         root.bind("<KeyPress-q>", lambda e: self.shutdown())
-        root.bind("<KeyPress-Q>", lambda e: self.shutdown())
-        root.bind("<Escape>",     lambda e: self.shutdown())
-        root.protocol("WM_DELETE_WINDOW", self.shutdown)
-
-        if fullscreen:
-            try:
-                root.attributes("-fullscreen", True)
-            except tk.TclError as e:
-                print(f"[warn] could not enter fullscreen: {e}")
-
+        if fullscreen: root.attributes("-fullscreen", True)
         self.root.after(100, self.update_loop)
-
-    def on_color_changed(self, row):
-        chosen_name = self.color_combos[row].get()
-        try:
-            chosen_idx = COLOR_NAMES.index(chosen_name)
-        except ValueError:
-            return
-        with self.state.lock:
-            current = self.state.row_color_index[row]
-            if chosen_idx == current:
-                return
-            other_row = None
-            for r, c in enumerate(self.state.row_color_index):
-                if r != row and c == chosen_idx:
-                    other_row = r
-                    break
-            self.state.row_color_index[row] = chosen_idx
-            if other_row is not None:
-                self.state.row_color_index[other_row] = current
-            snapshot = list(self.state.row_color_index)
-
-        names = [COLOR_NAMES[i] for i in snapshot]
-        if other_row is not None:
-            print(f"Row {row} -> {chosen_name}; row {other_row} swapped to "
-                f"{names[other_row]}.")
-        else:
-            print(f"Row {row} -> {chosen_name}.")
-        self.sync_color_widgets(snapshot)
-
-    def sync_color_widgets(self, color_indices):
-        for r, ci in enumerate(color_indices):
-            self.color_combos[r].set(COLOR_NAMES[ci])
-            self.color_swatches[r].configure(bg=TAG_COLORS[ci])
-            self.id_labels[r].configure(fg=TAG_COLORS[ci])
 
     def update_loop(self):
         if self.state.stop:
-            self.hud.set_text("!!! GAME OVER - DANGER ZONE HIT !!!")
+            self.hud.set_text("!!! GAME OVER - DANGER ZONE CLASH !!!")
             self.hud.set_color("red")
             self.canvas.draw_idle()
             return
 
         with self.state.lock:
-            snapshot = []
-            for tag in self.state.tags:
-                snapshot.append({
-                    "filt":  tag.filt_position,
-                    "dists": list(tag.last_distances),
-                    "last":  tag.last_update,
-                })
-            total         = self.state.frame_count
-            elapsed        = time.time() - self.state.start_time
+            snapshot = [{"filt": t.filt_position, "dists": list(t.last_distances), "last": t.last_update} for t in self.state.tags]
+            total, elapsed = self.state.frame_count, time.time() - self.state.start_time
             color_indices = list(self.state.row_color_index)
 
         now = time.time()
 
-        # Update Zone Visual Positions (Danger Zone Moves)
         for patch, txt, zone_data in self.zone_patches:
             patch.center = zone_data["center"]
             patch.set_radius(zone_data["radius"])
             txt.set_position(zone_data["center"])
 
         for row, snap in enumerate(snapshot):
-            color_idx = color_indices[row]
-            color     = TAG_COLORS[color_idx]
-            pos        = snap["filt"]
-            stale      = (now - snap["last"] > 1.0) if snap["last"] else True
-
+            color = TAG_COLORS[color_indices[row]]
+            pos, stale = snap["filt"], (now - snap["last"] > 1.0) if snap["last"] else True
             self.row_dots[row].set_color(color)
-            self.row_dots[row].set_markerfacecolor(color)
-            if pos is not None and not stale:
+            if pos and not stale:
                 self.row_dots[row].set_data([pos[0]], [pos[1]])
-            else:
-                self.row_dots[row].set_data([], [])
-
-            self.id_labels[row].configure(fg=color)
-            if pos is not None and not stale:
                 self.x_labels[row].configure(text=f"{pos[0]:.3f}")
                 self.y_labels[row].configure(text=f"{pos[1]:.3f}")
             else:
+                self.row_dots[row].set_data([], [])
                 self.x_labels[row].configure(text="—")
-                self.y_labels[row].configure(text="—")
-
-            if self.show_circles:
-                for slot, aid in enumerate(self.anchor_ids):
-                    old = self.row_circles_per_anchor[row][slot]
-                    if old is not None:
-                        old.remove()
-                        self.row_circles_per_anchor[row][slot] = None
-                    if stale:
-                        continue
-                    d = snap["dists"][aid] if aid < len(snap["dists"]) else 0
-                    if d <= 0.05:
-                        continue
-                    cx, cy = ANCHORS[aid]
-                    circ = mpatches.Circle((cx, cy), d, fill=False,
-                                        color=color, alpha=0.25, linewidth=1)
-                    self.ax_plot.add_patch(circ)
-                    self.row_circles_per_anchor[row][slot] = circ
-
-        for r, ci in enumerate(color_indices):
-            if self.color_swatches[r].cget("bg") != TAG_COLORS[ci]:
-                self.color_swatches[r].configure(bg=TAG_COLORS[ci])
-            if self.color_combos[r].get() != COLOR_NAMES[ci]:
-                self.color_combos[r].set(COLOR_NAMES[ci])
-
-        rate   = total / elapsed if elapsed > 0 else 0
-        active = sum(1 for s in snapshot
-                    if s["filt"] is not None and now - s["last"] < 1.0)
-        colors_str = " ".join(
-            f"T{i}={COLOR_NAMES[color_indices[i]]}"
-            for i in range(self.state.n_tags)
-        )
-        self.hud.set_text(
-            f"frames: {total}\n"
-            f"rate:   {rate:5.1f} Hz\n"
-            f"active: {active}/{self.state.n_tags}\n"
-            f"colors: {colors_str}"
-        )
 
         self.canvas.draw_idle()
         self.root.after(66, self.update_loop)
 
+    def on_color_changed(self, row):
+        name = self.color_combos[row].get()
+        idx = COLOR_NAMES.index(name)
+        with self.state.lock:
+            self.state.row_color_index[row] = idx
+        self.sync_color_widgets(self.state.row_color_index)
+
+    def sync_color_widgets(self, indices):
+        for r, ci in enumerate(indices):
+            self.color_swatches[r].configure(bg=TAG_COLORS[ci])
+            self.id_labels[r].configure(fg=TAG_COLORS[ci])
+
     def shutdown(self):
         self.state.stop = True
-        try:
-            self.root.destroy()
-        except tk.TclError:
-            pass
+        self.root.destroy()
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Receive UWB distances via OSC, trilaterate, and visualize.")
-    ap.add_argument("--tags", type=int, default=2,
-                    help="Number of active tags (1..8). Default: 2.")
-    ap.add_argument("--port", type=int, default=DEFAULT_PORT,
-                    help=f"UDP port to listen on. Default: {DEFAULT_PORT}")
-    ap.add_argument("--csv", type=str, default=None,
-                    help="If set, log per-frame data to this CSV file.")
-    ap.add_argument("--no-circles", action="store_true",
-                    help="Hide distance circles (faster rendering).")
-    ap.add_argument("--windowed", action="store_true",
-                    help="Don't enter fullscreen mode.")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tags", type=int, default=2)
+    ap.add_argument("--port", type=int, default=DEFAULT_PORT)
+    ap.add_argument("--csv", type=str, default=None)
+    ap.add_argument("--windowed", action="store_true")
     args = ap.parse_args()
 
-    if not 1 <= args.tags <= 8:
-        print("--tags must be between 1 and 8")
-        sys.exit(1)
-
     state = SharedState(n_tags=args.tags)
-    for tag in state.tags:
-        tag.kalman.dt = 0.10
-
-    anchor_ids               = sorted(ANCHORS.keys())
-    anchor_positions_list   = [ANCHORS[i] for i in anchor_ids]
-
-    csv_file   = None
-    csv_writer = None
-    if args.csv:
-        csv_file   = open(args.csv, "w", newline="")
-        csv_writer = csv.writer(csv_file)
-        header  = ["timestamp", "tag_id", "color"]
-        header += [f"d{i}_m" for i in anchor_ids]
-        header += ["raw_x", "raw_y", "filt_x", "filt_y"]
-        csv_writer.writerow(header)
-
     disp = osc_dispatcher.Dispatcher()
-    handler = make_osc_handler(state, anchor_ids, anchor_positions_list,
-                            csv_writer)
+    handler = make_osc_handler(state, sorted(ANCHORS.keys()), [ANCHORS[i] for i in sorted(ANCHORS.keys())])
     disp.map("/distances", handler)
 
     server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", args.port), disp)
-    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-    server_thread.start()
+    threading.Thread(target=server.serve_forever, daemon=True).start()
 
     root = tk.Tk()
-    app  = ViewerApp(root, state,
-                    show_circles=not args.no_circles,
-                    fullscreen=not args.windowed)
-
-    try:
-        root.mainloop()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        state.stop = True
-        server.shutdown()
-        time.sleep(0.3)
-        if csv_file:
-            csv_file.close()
+    ViewerApp(root, state, True, not args.windowed)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
