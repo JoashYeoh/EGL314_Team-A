@@ -339,9 +339,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
-<<<<<<< Updated upstream
 # Viewer App
-=======
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
 class TutorialWindow:
@@ -500,7 +498,6 @@ class TutorialWindow:
 
 # ---------------------------------------------------------------------------
 # Viewer  (Tkinter + matplotlib)
->>>>>>> Stashed changes
 # ---------------------------------------------------------------------------
 class ViewerApp:
     def __init__(self, root, state: SharedState, show_circles, fullscreen):
