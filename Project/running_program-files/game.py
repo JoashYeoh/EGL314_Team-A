@@ -1,39 +1,24 @@
-# Huats Club 2026
 #!/usr/bin/env python3
 """
 game.py  —  OSC Receiver + Trilateration + Kalman Filter + Visualizer
 ======================================================================
-Runs on the "game" Pi that drives the display.
-
-Listens for OSC messages sent by uart.py:
-    /distances  <tag_id:int> <d0:float> ... <d7:float>
-
-For each incoming frame it:
-  1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
-  2. Smooths it through a per-tag Kalman2D filter.
-  3. Updates a live Tkinter / matplotlib visualizer (identical to the
-     original viewer).
-
-Run:
-    python3 game.py --tags 2
-    python3 game.py --tags 2 --port 5005 --windowed
 """
 
-import argparse
-import csv
-import sys
-import threading
-import time
-import tkinter as tk
-from tkinter import ttk
-from dataclasses import dataclass, field
+import argparse # Parses command-line arguments when you run the script
+import csv # Reads and writes CSV files -> this is to show on the Tkinter window to show the distances
+import sys # Used here only to call sys.exit(1) -> to end the programe 
+import threading # Runs the OSC server on a background thread while the UI runs on the main thread simultaneously. The Lock prevents both threads from touching SharedState at the same time.
+import time # Used for timestamping frames time.times()
+import tkinter as tk # Tkinter 
+from tkinter import ttk # "themed" extension of tkinter with nicer-looking widgets
+from dataclasses import dataclass, field # 
 
-import matplotlib
+import matplotlib # For the ploting of the graph on the thinker window
 matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt # Applies the dark_background style for the black theme
+import matplotlib.patches as mpatches # Draws Circle patches — both the zone outlines and the per-anchor distance rings
+from matplotlib.figure import Figure # Creates the plot figure that gets embedded in the Tkinter window
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg # The bridge that embeds the matplotlib figure inside the Tkinter window
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
@@ -42,7 +27,7 @@ from pythonosc import osc_server
 # Anchor layout and view config  (must match uart.py)
 # ---------------------------------------------------------------------------
 ANCHORS = {
-    0: (0.0, 0.0),
+    0: (0.0, 0.0),  
     1: (0.0, 0.50),
     2: (0.0, 1.0),
     3: (1.0, 1.0),
@@ -51,6 +36,51 @@ ANCHORS = {
 }
 
 VIEW_BOUNDS = (-0.50, 1.50, -0.50, 1.50)
+
+# ---------------------------------------------------------------------------
+# Zone configs
+# ---------------------------------------------------------------------------
+ZONE_HIT_TOLERANCE = 0.0
+
+ZONES = [
+    {
+        "center": (0.5, 0.5),
+        "radius": 0.35,
+        "min_radius": 0.10,
+        "shrink_rate": 0.002,
+        "color": "#00e5ff",
+        "label": "ZONE A",
+        "active": True,
+    },
+    {
+        "center": (0.2, 0.8),
+        "radius": 0.25,
+        "min_radius": 0.10,
+        "shrink_rate": 0.010,
+        "color": "#ff4081",
+        "label": "ZONE B",
+        "active": True,
+    },
+    {
+        "center": (0.8, 0.2),
+        "radius": 0.25,
+        "min_radius": 0.10,
+        "shrink_rate": 0.006,
+        "color": "#66ff66",
+        "label": "ZONE C",
+        "active": True,
+    },
+    # --- ADDED: DANGER ZONE ---
+    {
+        "center": [0.0, 0.0],
+        "radius": 0.15,
+        "color": "#ff0000",
+        "label": "DANGER",
+        "active": True,
+        "is_danger": True,
+        "velocity": [0.015, 0.012], # Movement speed
+    },
+]
 
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",
@@ -69,11 +99,21 @@ DEFAULT_PORT = 5005   # UDP port to listen on
 # Trilateration (linear least-squares multilateration — no numpy needed)
 # ---------------------------------------------------------------------------
 def trilaterate_2d(anchor_positions, distances):
+    """Linear least-squares multilateration.
+
+    Uses EVERY valid anchor, not just the first three. Each extra anchor
+    adds a row to an over-determined system that is solved via the normal
+    equations (A^T A) x = A^T b. No reference anchor can poison the solve,
+    and near-collinear subsets no longer cause spurious None returns.
+    Closed-form 2x2 solve of the normal equations -- no numpy/scipy needed.
+    """
     valid = [(p[0], p[1], d) for p, d in zip(anchor_positions, distances)
-             if p is not None and 0.05 < d < 50.0]
+            if p is not None and 0.05 < d < 50.0]
     if len(valid) < 3:
         return None
 
+    # Use the LAST anchor as the linearization reference (subtracting one
+    # circle equation from the others to cancel the quadratic x^2+y^2 term).
     xr, yr, rr = valid[-1]
     A, b = [], []
     for xi, yi, ri in valid[:-1]:
@@ -82,6 +122,7 @@ def trilaterate_2d(anchor_positions, distances):
     if len(A) < 2:
         return None
 
+    # Normal equations: M = A^T A  (2x2),  v = A^T b  (2x1)
     m00 = sum(ax * ax for ax, ay in A)
     m01 = sum(ax * ay for ax, ay in A)
     m11 = sum(ay * ay for ax, ay in A)
@@ -90,36 +131,53 @@ def trilaterate_2d(anchor_positions, distances):
 
     det = m00 * m11 - m01 * m01
     if abs(det) < 1e-9:
-        return None
+        return None     # all anchors collinear -- truly unsolvable
 
     x = -(v0 * m11 - v1 * m01) / det
     y = -(m00 * v1 - m01 * v0) / det
     return x, y
 
+# ---------------------------------------------------------------------------
+# Zone detection
+# ---------------------------------------------------------------------------
+def point_in_zone(point, zone):
+    if point is None:
+        return False
+
+    px, py = point
+    zx, zy = zone["center"]
+    r = zone["radius"] + ZONE_HIT_TOLERANCE
+
+    dx = px - zx
+    dy = py - zy   # calculates tag dist from center of zone
+
+    return (dx * dx + dy * dy) <= (r * r)  # checks if tag is in zone 
 
 # ---------------------------------------------------------------------------
-# Kalman filter (position + velocity, 2-D)
+# Kalman filter (position + velocity, 2-D) (form of predictive smoothing)
 # ---------------------------------------------------------------------------
 class Kalman2D:
+    # Initialize with state vector [x, y, vx, vy] (position and velocity)
     def __init__(self, dt=0.10, q=0.12, r=1.1):
-        self.dt = dt
-        self.q  = q
-        self.r  = r
+        self.dt = dt    # distance travelled prediction
+        self.q  = q     # process noise
+        self.r  = r     # measurement noise
         self.state = [0.0, 0.0, 0.0, 0.0]
         self.P = [[1.0, 0, 0, 0], [0, 1.0, 0, 0],
-                  [0, 0, 1.0, 0], [0, 0, 0, 1.0]]
+                [0, 0, 1.0, 0], [0, 0, 0, 1.0]]
         self.initialized = False
 
-    def predict(self):
-        if not self.initialized:
+    def predict(self):     # Prediction based on velocity
+        if not self.initialized:      # If not initialised, return self. (no prediction required to be carried out) exit early.
             return
-        self.state[0] += self.state[2] * self.dt
-        self.state[1] += self.state[3] * self.dt
+        self.state[0] += self.state[2] * self.dt      # vx * dt = distance travelled in x
+        self.state[1] += self.state[3] * self.dt      # vy * dt = distance travelled in y
         for i in range(4):
-            self.P[i][i] += self.q
+            self.P[i][i] += self.q     # 'p' is uncertainty. this function is increasing the uncertainty of the prediction. (higher more uncertain)
+
 
     def update(self, mx, my):
-        if not self.initialized:
+        if not self.initialized:       # If not initialised, return the given x and y distance valuie. (no prediction carried out)
             self.state = [mx, my, 0.0, 0.0]
             self.initialized = True
             return mx, my
@@ -139,14 +197,16 @@ class Kalman2D:
 # Per-tag state and shared state container
 # ---------------------------------------------------------------------------
 @dataclass
+# Stores per-tag information
 class TagState:
     last_distances: list = field(default_factory=lambda: [0.0] * 8)
-    raw_position:   tuple = None
-    filt_position:  tuple = None
-    last_update:    float = 0.0
-    kalman: Kalman2D = field(default_factory=Kalman2D)
+    raw_position:   tuple = None    # unfilted (x, y) position from triangulation
+    filt_position:  tuple = None    # Kalman-filtered (x, y) position
+    last_update:    float = 0.0     # Timestamp
+    kalman: Kalman2D = field(default_factory=Kalman2D)   # Kalman filter instance
+    zones_inside: set = field(default_factory=set)  # store zones for each tag indivly, and when new tag is added, default set is empty 
 
-
+# Thread-safe container for all tags
 class SharedState:
     def __init__(self, n_tags):
         self.n_tags = n_tags
@@ -157,15 +217,63 @@ class SharedState:
         self.start_time  = time.time()
         self.stop = False
 
+# ---------------------------------------------------------------------------
+# Zone shrinking AND Movement logic
+# ---------------------------------------------------------------------------
+def update_zones(state):
+    x_min, x_max, y_min, y_max = VIEW_BOUNDS
+    for zone in ZONES:
+        if not zone["active"]:
+            continue
+
+        # --- Danger Zone Movement & Collision ---
+        if zone.get("is_danger"):
+            cx, cy = zone["center"]
+            vx, vy = zone["velocity"]
+            
+            new_x, new_y = cx + vx, cy + vy
+
+            # Bounce logic
+            if new_x - zone["radius"] < x_min or new_x + zone["radius"] > x_max:
+                vx = -vx
+            if new_y - zone["radius"] < y_min or new_y + zone["radius"] > y_max:
+                vy = -vy
+            
+            zone["center"] = (cx + vx, cy + vy)
+            zone["velocity"] = [vx, vy]
+
+            # Clash Detection
+            for tag in state.tags:
+                if tag.filt_position and point_in_zone(tag.filt_position, zone):
+                    print("!!! DANGER ZONE CLASH - GAME OVER !!!")
+                    state.stop = True
+
+        # --- Original Shrinking Logic ---
+        else:
+            occupied = zone_is_occupied(zone, state.tags)
+            if not occupied:
+                if zone["radius"] > zone["min_radius"]:
+                    zone["radius"] -= zone["shrink_rate"]
+                    if zone["radius"] < zone["min_radius"]:
+                        zone["radius"] = zone["min_radius"]
+
+def zone_is_occupied(zone, tags):
+    for tag in tags:
+        if tag.filt_position is None:
+            continue
+        if point_in_zone(tag.filt_position, zone):
+            return True
+    return False
 
 # ---------------------------------------------------------------------------
-# OSC handler — called from the OSC server thread for every /distances message
+# OSC handler — called from the OSC server thread for every distances message
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
-                     csv_writer=None):
+                    csv_writer=None):
     def handle_distances(address, *args):
-        # args = [tag_id, d0, d1, ..., d7]
-        if len(args) < 9:
+        if state.stop: return # Stop processing if game ended
+
+        if len(args) < 9:   
             print(f"[osc] malformed message (got {len(args)} args)")
             return
 
@@ -189,8 +297,29 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 fx, fy = tag.kalman.update(raw_pos[0], raw_pos[1])
                 tag.raw_position  = raw_pos
                 tag.filt_position = (fx, fy)
+                # --- zone detection(per tag) ---
+                current_zones = set()                            # checks zones tht are occupied by tags
+
+                for zi, zone in enumerate(ZONES):                # checking each zone
+                    if point_in_zone(tag.filt_position, zone):   # takes tag position and check if tag is in zone
+                        current_zones.add(zi)                    # stores zone id if tag is in the zone
+
+                entered = current_zones - tag.zones_inside       # comparing tag positions so see if it entered a new zone
+                exited  = tag.zones_inside - current_zones
+
+                for zi in entered:
+                    print(f"[ZONE] Tag {tag_id} ENTERED "
+                        f"{ZONES[zi]['label']}")
+
+                for zi in exited:
+                    print(f"[ZONE] Tag {tag_id} EXITED "
+                        f"{ZONES[zi]['label']}")
+
+                tag.zones_inside = current_zones
+                update_zones(state) # Update movement/shrinking on every tag update
             else:
                 tag.kalman.predict()
+                update_zones(state) 
             state.frame_count += 1
             csv_color_idx = state.row_color_index[tag_id]
 
@@ -204,7 +333,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 row_data += ["", ""]
             if tag.filt_position is not None:
                 row_data += [f"{tag.filt_position[0]:.3f}",
-                             f"{tag.filt_position[1]:.3f}"]
+                            f"{tag.filt_position[1]:.3f}"]
             else:
                 row_data += ["", ""]
             csv_writer.writerow(row_data)
@@ -213,7 +342,7 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
-# Viewer  (Tkinter + matplotlib — identical to original viewer3_annotated.py)
+# Viewer  (Tkinter + matplotlib)
 # ---------------------------------------------------------------------------
 class ViewerApp:
     def __init__(self, root, state: SharedState, show_circles, fullscreen):
@@ -257,18 +386,41 @@ class ViewerApp:
 
         for aid, (ax_x, ax_y) in ANCHORS.items():
             self.ax_plot.plot(ax_x, ax_y, marker="^", markersize=14,
-                              color="#ffeb3b", markeredgecolor="white")
+                            color="#ffeb3b", markeredgecolor="white")
             self.ax_plot.annotate(f"A{aid}", (ax_x, ax_y),
-                                  textcoords="offset points",
-                                  xytext=(8, 8), color="#ffeb3b", fontsize=11)
+                                textcoords="offset points",
+                                xytext=(8, 8), color="#ffeb3b", fontsize=11)
+        # --- draw zones ---
+        self.zone_patches = []
+        for zone in ZONES:
+            cx, cy = zone["center"]
+
+            circle = mpatches.Circle(
+                (cx, cy),
+                zone["radius"],
+                fill=False,
+                linewidth=3,
+                linestyle="--",
+                edgecolor=zone["color"],
+                alpha=0.9,
+            )
+
+            self.ax_plot.add_patch(circle)
+            
+            # Save label and circle for dynamic updates
+            txt = self.ax_plot.text(
+                cx, cy, zone["label"], color=zone["color"],
+                fontsize=11, ha="center", va="center", weight="bold"
+            )
+            self.zone_patches.append((circle, txt, zone))
 
         self.row_dots = []
         self.row_circles_per_anchor = [[None] * self.n_anchors
-                                       for _ in range(state.n_tags)]
+                                    for _ in range(state.n_tags)]
         for i in range(state.n_tags):
             dot, = self.ax_plot.plot([], [], marker="o", markersize=10,
-                                     color=TAG_COLORS[i],
-                                     markeredgecolor="white", linewidth=0)
+                                    color=TAG_COLORS[i],
+                                    markeredgecolor="white", linewidth=0)
             self.row_dots.append(dot)
 
         self.hud = self.ax_plot.text(
@@ -352,7 +504,7 @@ class ViewerApp:
             combo.set(COLOR_NAMES[r])
             combo.pack(side="left", padx=4, pady=6)
             combo.bind("<<ComboboxSelected>>",
-                       lambda event, row=r: self.on_color_changed(row))
+                    lambda event, row=r: self.on_color_changed(row))
             self.color_combos.append(combo)
 
         root.bind("<KeyPress-q>", lambda e: self.shutdown())
@@ -368,7 +520,6 @@ class ViewerApp:
 
         self.root.after(100, self.update_loop)
 
-    # --- color dropdown logic ---
     def on_color_changed(self, row):
         chosen_name = self.color_combos[row].get()
         try:
@@ -392,7 +543,7 @@ class ViewerApp:
         names = [COLOR_NAMES[i] for i in snapshot]
         if other_row is not None:
             print(f"Row {row} -> {chosen_name}; row {other_row} swapped to "
-                  f"{names[other_row]}.")
+                f"{names[other_row]}.")
         else:
             print(f"Row {row} -> {chosen_name}.")
         self.sync_color_widgets(snapshot)
@@ -403,9 +554,11 @@ class ViewerApp:
             self.color_swatches[r].configure(bg=TAG_COLORS[ci])
             self.id_labels[r].configure(fg=TAG_COLORS[ci])
 
-    # --- main display refresh (called every ~66 ms from Tk event loop) ---
     def update_loop(self):
         if self.state.stop:
+            self.hud.set_text("!!! GAME OVER - DANGER ZONE HIT !!!")
+            self.hud.set_color("red")
+            self.canvas.draw_idle()
             return
 
         with self.state.lock:
@@ -417,16 +570,22 @@ class ViewerApp:
                     "last":  tag.last_update,
                 })
             total         = self.state.frame_count
-            elapsed       = time.time() - self.state.start_time
+            elapsed        = time.time() - self.state.start_time
             color_indices = list(self.state.row_color_index)
 
         now = time.time()
 
+        # Update Zone Visual Positions (Danger Zone Moves)
+        for patch, txt, zone_data in self.zone_patches:
+            patch.center = zone_data["center"]
+            patch.set_radius(zone_data["radius"])
+            txt.set_position(zone_data["center"])
+
         for row, snap in enumerate(snapshot):
             color_idx = color_indices[row]
             color     = TAG_COLORS[color_idx]
-            pos       = snap["filt"]
-            stale     = (now - snap["last"] > 1.0) if snap["last"] else True
+            pos        = snap["filt"]
+            stale      = (now - snap["last"] > 1.0) if snap["last"] else True
 
             self.row_dots[row].set_color(color)
             self.row_dots[row].set_markerfacecolor(color)
@@ -456,7 +615,7 @@ class ViewerApp:
                         continue
                     cx, cy = ANCHORS[aid]
                     circ = mpatches.Circle((cx, cy), d, fill=False,
-                                           color=color, alpha=0.25, linewidth=1)
+                                        color=color, alpha=0.25, linewidth=1)
                     self.ax_plot.add_patch(circ)
                     self.row_circles_per_anchor[row][slot] = circ
 
@@ -468,7 +627,7 @@ class ViewerApp:
 
         rate   = total / elapsed if elapsed > 0 else 0
         active = sum(1 for s in snapshot
-                     if s["filt"] is not None and now - s["last"] < 1.0)
+                    if s["filt"] is not None and now - s["last"] < 1.0)
         colors_str = " ".join(
             f"T{i}={COLOR_NAMES[color_indices[i]]}"
             for i in range(self.state.n_tags)
@@ -490,10 +649,6 @@ class ViewerApp:
         except tk.TclError:
             pass
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(
         description="Receive UWB distances via OSC, trilaterate, and visualize.")
@@ -517,10 +672,9 @@ def main():
     for tag in state.tags:
         tag.kalman.dt = 0.10
 
-    anchor_ids             = sorted(ANCHORS.keys())
-    anchor_positions_list  = [ANCHORS[i] for i in anchor_ids]
+    anchor_ids               = sorted(ANCHORS.keys())
+    anchor_positions_list   = [ANCHORS[i] for i in anchor_ids]
 
-    # Optional CSV
     csv_file   = None
     csv_writer = None
     if args.csv:
@@ -531,28 +685,19 @@ def main():
         header += ["raw_x", "raw_y", "filt_x", "filt_y"]
         csv_writer.writerow(header)
 
-    # Build OSC dispatcher and start server thread
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, anchor_ids, anchor_positions_list,
-                               csv_writer)
+                            csv_writer)
     disp.map("/distances", handler)
 
     server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", args.port), disp)
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
 
-    print(f"[game] Listening for OSC on UDP port {args.port}")
-    print(f"[game] Tracking {args.tags} tag(s)")
-    print(f"[game] Anchors: {ANCHORS}")
-    print(f"[game] View bounds: {VIEW_BOUNDS}")
-    if args.csv:
-        print(f"[game] Logging to: {args.csv}")
-    print("[game] Press Q in the window to quit.\n")
-
     root = tk.Tk()
     app  = ViewerApp(root, state,
-                     show_circles=not args.no_circles,
-                     fullscreen=not args.windowed)
+                    show_circles=not args.no_circles,
+                    fullscreen=not args.windowed)
 
     try:
         root.mainloop()
@@ -564,8 +709,6 @@ def main():
         time.sleep(0.3)
         if csv_file:
             csv_file.close()
-            print(f"[game] Wrote {args.csv}")
-
 
 if __name__ == "__main__":
     main()
