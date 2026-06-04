@@ -82,7 +82,7 @@ ZONES = [
     },
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
-        "center": [0.3, 0.5],
+        "center": [0.5, 0.5],
         "radius": 0.10,
         "color": "#ff0000",
         "label": "DANGER-V",
@@ -92,7 +92,7 @@ ZONES = [
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
-        "center": [0.5, 0.7],
+        "center": [0.5, 0.5],
         "radius": 0.10,
         "color": "#ff0000",
         "label": "DANGER-H",
