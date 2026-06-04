@@ -76,7 +76,17 @@ class ZoneManager:
                 occupied
             )
 
-            if not occupied:
+            if occupied:
+                print(
+                    f"{zone.label} expanding "
+                    f"{zone.radius:.3f}"
+                )
+                zone.expand()
+            else:
+                print(
+                    f"{zone.label} shrinking "
+                    f"{zone.radius:.3f}"
+                )
                 zone.shrink()
 
 

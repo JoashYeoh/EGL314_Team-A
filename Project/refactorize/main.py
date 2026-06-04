@@ -94,18 +94,16 @@ def main():
 
     args = parse_args()
 
-    #
     # Shared State
-    #
-
     state = SharedState(
         n_tags=args.tags
     )
 
-    #
-    # Zones
-    #
+    #--------------------Enable/disable mouse simulation--------------------
+    state.simulation_mode = args.simulate
+    #-----------------------------------------------------------------------
 
+    # Zones
     safe_zones = (
         create_default_safe_zones()
     )
@@ -114,10 +112,7 @@ def main():
         create_default_danger_zones()
     )
 
-    #
     # Game Engine
-    #
-
     engine = GameEngine(
         state=state,
         anchors=ANCHORS,
@@ -125,20 +120,14 @@ def main():
         danger_zones=danger_zones
     )
 
-    #
     # OSC
-    #
-
     start_osc_server(
         state=state,
         engine=engine,
         port=args.port
     )
 
-    #
     # UI
-    #
-
     root = tk.Tk()
 
     root.withdraw()

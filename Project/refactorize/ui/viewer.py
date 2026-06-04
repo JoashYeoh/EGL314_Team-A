@@ -133,10 +133,13 @@ class ViewerApp:
 
         #--------------- Mouse movement tag simulation ---------------
         # Mouse-controlled virtual tag
-        self.canvas.mpl_connect(
-            "motion_notify_event",
-            self.on_mouse_move
-        )
+        if self.state.simulation_mode:
+
+            self.canvas.mpl_connect(
+                "motion_notify_event",
+                self.on_mouse_move
+            )
+        #-------------------------------------------------------------
 
 
 
@@ -383,3 +386,4 @@ class ViewerApp:
                 event.ydata
             )
         )
+    #-------------------------------------------------------------
