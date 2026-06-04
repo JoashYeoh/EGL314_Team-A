@@ -131,6 +131,14 @@ class ViewerApp:
         )
 
 
+        #--------------- Mouse movement tag simulation ---------------
+        # Mouse-controlled virtual tag
+        self.canvas.mpl_connect(
+            "motion_notify_event",
+            self.on_mouse_move
+        )
+
+
 
     def draw_anchors(self):
 
@@ -356,3 +364,22 @@ class ViewerApp:
         self.state.stop = True
 
         self.root.destroy()
+
+
+    
+    #------------ simulate tag movement with mouse --------------
+    def on_mouse_move(self, event):
+
+        if event.xdata is None:
+            return
+
+        if event.ydata is None:
+            return
+
+        self.engine.update_virtual_tag(
+            0,
+            (
+                event.xdata,
+                event.ydata
+            )
+        )

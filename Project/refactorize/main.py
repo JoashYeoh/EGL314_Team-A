@@ -44,6 +44,14 @@ def parse_args():
         help="Disable fullscreen"
     )
 
+
+#---------- Mouse simulation of Tags -----------
+    parser.add_argument(
+        "--simulate",
+        action="store_true"
+    )
+#-----------------------------------------------
+
     return parser.parse_args()
 
 

@@ -168,3 +168,34 @@ class GameEngine:
         self.state.stop_game()
 
         print("GAME OVER")
+
+
+
+
+
+# -------------------- Mouse Simulation for Tag ----------------------
+    def update_virtual_tag(
+        self,
+        tag_id,
+        position
+    ):
+
+        if tag_id >= self.state.n_tags:
+            return
+
+        tag = self.state.tags[tag_id]
+
+        with self.state.lock:
+
+            tag.raw_position = position
+            tag.filt_position = position
+
+        event = self.zone_manager.update(
+            self.state.tags
+        )
+
+        if event == "GAME_OVER":
+            self.game_over()
+
+        elif event == "ROUND_COMPLETE":
+            self.advance_round()
