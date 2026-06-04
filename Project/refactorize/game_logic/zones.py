@@ -72,15 +72,15 @@ def create_default_safe_zones():
 
     return [
         Zone(
-            center=(0.5, 0.5),
-            radius=0.35,
+            center=(0.25, 0.25),
+            radius=0.25,
             min_radius=0.10,
             shrink_rate=0.002,
             color="#00e5ff",
             label="ZONE A",
         ),
         Zone(
-            center=(0.2, 0.8),
+            center=(0.25, 0.75),
             radius=0.25,
             min_radius=0.10,
             shrink_rate=0.010,
@@ -88,11 +88,19 @@ def create_default_safe_zones():
             label="ZONE B",
         ),
         Zone(
-            center=(0.8, 0.2),
+            center=(0.75, 0.75),
             radius=0.25,
             min_radius=0.10,
             shrink_rate=0.006,
             color="#66ff66",
             label="ZONE C",
+        ),
+        Zone(
+            center=(0.75, 0.25),
+            radius=0.25,
+            min_radius=0.10,
+            shrink_rate=0.006,
+            color="#FFE600FF",
+            label="ZONE D",
         ),
     ]
