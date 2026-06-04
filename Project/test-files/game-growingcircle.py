@@ -343,9 +343,10 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
 class TutorialWindow:
-    def __init__(self, parent, app):
+    def __init__(self, parent, state, fullscreen):
         self.parent = parent
-        self.app = app
+        self.state = state
+        self.fullscreen = fullscreen
         
         # Create a Toplevel pop-up container
         self.top = tk.Toplevel(parent)
@@ -486,6 +487,10 @@ class TutorialWindow:
     def start_game(self):
         """Destroys the tutorial overlay completely and launches tracker interface."""
         self.top.destroy()
+
+        # Only after Tutorial Window is destroyed would the ViewerApp (game) run
+        ViewerApp(self.parent, self.state, True, self.fullscreen)
+
         self.parent.deiconify()
         self.parent.lift()
         self.parent.focus_force()
@@ -658,8 +663,12 @@ def main():
     server = osc_server.ThreadingOSCUDPServer(("0.0.0.0", args.port), disp)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
+    # 
     root = tk.Tk()
-    ViewerApp(root, state, True, not args.windowed)
+    root.withdraw()  # Hide root window
+
+    TutorialWindow(root, state, not args.windowed)
+
     root.mainloop()
 
 if __name__ == "__main__":
