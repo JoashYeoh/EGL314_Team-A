@@ -44,32 +44,51 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (0.5, 0.5),
-        "radius": 0.35,
+        "center": (0.0, 0.1),  #top left
+        "radius": 0.15,
+        "max_radius": 1.5,
         "min_radius": 0.10,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.003,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
+        "safe": True,
     },
     {
-        "center": (0.2, 0.8),
-        "radius": 0.25,
-        "min_radius": 0.10,
-        "shrink_rate": 0.010,
-        "color": "#ff4081",
+        "center": (1.0, 1.0),  #top right
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.003,
+        "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
+        "safe": True,
     },
     {
-        "center": (0.8, 0.2),
-        "radius": 0.25,
-        "min_radius": 0.10,
+        "center": (0.0, 0.0),  #bottom left
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
         "shrink_rate": 0.006,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
+        "safe": True,
     },
+    {
+        "center": (1.0, 0.0),  #bottom right
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.006,
+        "color": "#c266ff",
+        "label": "ZONE C",
+        "active": True,
+        "safe": True,
+    },
+
     # --- ADDED: DANGER ZONE ---
     {
         "center": [0.0, 0.0],
@@ -81,6 +100,13 @@ ZONES = [
         "velocity": [0.015, 0.012], # Movement speed
     },
 ]
+
+# ---------------------------------------------------------------------------
+# Game Phases - round progression
+# ---------------------------------------------------------------------------
+ROUND_EXPAND = 0
+ROUND_SURVIVE = 1
+
 
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",
@@ -216,11 +242,13 @@ class SharedState:
         self.frame_count = 0
         self.start_time  = time.time()
         self.stop = False
+        self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
+
 
 # ---------------------------------------------------------------------------
-# Zone shrinking AND Movement logic
+# Danger Zone Movement logic
 # ---------------------------------------------------------------------------
-def update_zones(state):
+def update_danger_zones(state):
     x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
@@ -248,16 +276,55 @@ def update_zones(state):
                     print("!!! DANGER ZONE CLASH - GAME OVER !!!")
                     state.stop = True
 
-        # --- Shrink when empty, grow when occupied ---
-        else:
+# ---------------------------------------------------------------------------
+#  Zone Grow Logic (round 1)
+# ---------------------------------------------------------------------------
+def update_expansion_phase(state):
+    all_expanded = True
+
+    for zone in ZONES:
+        if zone.get("safe"):
+
             occupied = zone_is_occupied(zone, state.tags)
+
+        # Expand while occupied
+        if occupied:
+            if zone["radius"] < zone["max_radius"]:
+                zone["radius"] += zone["expand_rate"]
+
+                if zone["radius"] > zone["max_radius"]:
+                    zone["radius"] = zone["max_radius"]
+
+        # Check if fully expanded
+        if zone["radius"] < zone["max_radius"]:
+            all_expanded = False
+
+    # Transition to next phase
+    if all_expanded:
+        print("=== ROUND 2: SURVIVAL PHASE ===")
+        state.phase = ROUND_SURVIVE
+
+# ---------------------------------------------------------------------------
+#  Zone Shrink & Grow Logic (round 2)
+# ---------------------------------------------------------------------------
+def update_shrinking_zones(state):
+    for zone in ZONES:
+        if not zone["active"]:
+            continue
+
+            if zone.get("is_danger"): # skip danger zone
+                continue
+
+            occupied = zone_is_occupied(zone, state.tags)
+
             if not occupied:
                 # No tag inside — shrink down to min_radius
                 if zone["radius"] > zone["min_radius"]:
                     zone["radius"] -= zone["shrink_rate"]
                     if zone["radius"] < zone["min_radius"]:
                         zone["radius"] = zone["min_radius"]
-            if occupied:
+
+            else:
                 # Tag is inside — grow back up to max_radius
                 if zone["radius"] < zone["max_radius"]:
                     zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
@@ -271,6 +338,13 @@ def zone_is_occupied(zone, tags):
         if point_in_zone(tag.filt_position, zone):
             return True
     return False
+
+# ---------------------------------------------------------------------------
+# Master Zone Update
+# ---------------------------------------------------------------------------
+def update_zones(state):
+    update_danger_zones(state)
+    update_shrinking_zones(state)
 
 # ---------------------------------------------------------------------------
 # OSC handler — called from the OSC server thread for every distances message
