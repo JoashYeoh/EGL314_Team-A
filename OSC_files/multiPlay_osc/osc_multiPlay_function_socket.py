@@ -20,6 +20,6 @@ if __name__ == "__main__":
 # UDP_IP is target IP address
   IP = "192.168.254.189" #Local Host Address
   PORT = 8888
-  message = "/cue/1/fade" # Trigger Cue 1
+  message = "/cue/1/go" # Trigger Cue 1
 
   send_message(IP, PORT, message)
