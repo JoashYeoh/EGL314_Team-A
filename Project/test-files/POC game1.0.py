@@ -37,47 +37,92 @@ from pythonosc import udp_client
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_TARGET_IP = "192.168.254.189"    # Other Pi
+OSC_TARGET_IP = "192.168.1.108"    # IP of laptop running Multi-play
 OSC_TARGET_PORT = 8888
 
 osc_tx_multiPlay = udp_client.SimpleUDPClient(OSC_TARGET_IP, OSC_TARGET_PORT)
+
+
+def start_game(state): #-- start game track
+
+    osc_tx_multiPlay.send_message("/cue/1/go", "")
+
+    state.game_music_started = True
 
 
 def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multiplay
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
-        osc_tx_multiPlay.send_message("/cue/1/go")
+        osc_tx_multiPlay.send_message("/cue/3/go", "")
 
     if zone_name == "ZONE B":
-        osc_tx_multiPlay.send_message("/cue/2/go")
+        osc_tx_multiPlay.send_message("/cue/4/go", "")
 
     if zone_name == "ZONE C":
-        osc_tx_multiPlay.send_message("/cue/3/go")
+        osc_tx_multiPlay.send_message("/cue/5/go", "")
     
     if zone_name == "ZONE D":
-        osc_tx_multiPlay.send_message("/cue/4/go")
+        osc_tx_multiPlay.send_message("/cue/6/go", "")
+    
+    print(
+        f"[OSC] Sent ENTER "
+        f"Tag={tag_id} Zone={zone_name}"
+    )
 
 
 def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
-        osc_tx_multiPlay.send_message("/cue/1/fade")
+        osc_tx_multiPlay.send_message("/cue/3/fade", "")
 
     if zone_name == "ZONE B":
-        osc_tx_multiPlay.send_message("/cue/2/fade")
+        osc_tx_multiPlay.send_message("/cue/4/fade", "")
 
     if zone_name == "ZONE C":
-        osc_tx_multiPlay.send_message("/cue/3/fade")
+        osc_tx_multiPlay.send_message("/cue/5/fade", "")
     
     if zone_name == "ZONE D":
-        osc_tx_multiPlay.send_message("/cue/4/fade")
+        osc_tx_multiPlay.send_message("/cue/6/fade", "")
 
     print(
         f"[OSC] Sent EXIT "
         f"Tag={tag_id} Zone={zone_name}"
     )
+
+
+def send_zone_expanded(zone_index): #-- when respective zone fully expanded, trigger stinger
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/7/go", "")
+        osc_tx_multiPlay.send_message("/cue/3/stop", "")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/8/go", "")
+        osc_tx_multiPlay.send_message("/cue/4/stop", "")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/9/go", "")
+        osc_tx_multiPlay.send_message("/cue/5/stop", "")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/10/go", "")
+        osc_tx_multiPlay.send_message("/cue/6/stop", "")
+
+    print(f"[OSC] Zone {zone_index} Fully Expanded")
+
+
+def send_game_over(tag_id, zone_label):  #-- when tag hit danger zone triger multiplay
+    osc_tx_multiPlay.send_message("/cue/2/go", "")
+    osc_tx_multiPlay.send_message("/cue/1/stop", "") # stop game background music
+
+    print(
+        f"[OSC] Sent Game Over "
+        f"Tag={tag_id} Zone={zone_label}"
+    )
+
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +156,7 @@ ZONES = [
         "label": "ZONE A",
         "active": True,
         "safe": True,
+        "expanded_sent": False,
     },
     {
         "center": (0.25, 0.75),  #top right
@@ -123,6 +169,7 @@ ZONES = [
         "label": "ZONE B",
         "active": True,
         "safe": True,
+        "expanded_sent": False,
     },
     {
         "center": (0.75, 0.75),  #bottom left
@@ -135,6 +182,7 @@ ZONES = [
         "label": "ZONE C",
         "active": True,
         "safe": True,
+        "expanded_sent": False,
     },
     {
         "center": (0.75, 0.25),  #bottom right
@@ -147,6 +195,7 @@ ZONES = [
         "label": "ZONE D",
         "active": True,
         "safe": True,
+        "expanded_sent": False,
     },
 
 
@@ -290,7 +339,7 @@ class TagState:
     zones_inside: set = field(default_factory=set)
 
 class SharedState:
-    def __init__(self, n_tags):
+    def __init__(self, n_tags, simulate=False):
         self.n_tags = n_tags
         self.tags   = [TagState() for _ in range(n_tags)]
         self.row_color_index = list(range(n_tags))
@@ -298,7 +347,9 @@ class SharedState:
         self.frame_count = 0
         self.start_time  = time.time()
         self.stop = False
+        self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
         self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
+        self.simulate = simulate # tag simulation state
 
 # ---------------------------------------------------------------------------
 # Danger Zone Movement logic
@@ -329,9 +380,14 @@ def update_danger_zones(state):
             zone["velocity"] = [vx, vy]
             
             # Check for clash
-            for tag in state.tags:
+            for tag_id, tag in enumerate(state.tags):
                 if tag.filt_position and point_in_zone(tag.filt_position, zone):
+
+                    send_game_over(tag_id, zone["label"])
+
                     print(f"!!! GAME OVER - {zone['label']} CLASH !!!")
+
+                    state.game_over_sent = True
                     state.stop = True 
         
 # ---------------------------------------------------------------------------
@@ -340,7 +396,7 @@ def update_danger_zones(state):
 def update_expansion_phase(state):
     all_expanded = True
 
-    for zone in ZONES:
+    for zi, zone in enumerate(ZONES):
         if not zone.get("safe"):
             continue
 
@@ -352,16 +408,16 @@ def update_expansion_phase(state):
                 zone["radius"] += zone["expand_rate"]
                 zone["radius"] = min(zone["radius"], zone["max_radius"])
 
-        # Check if fully expanded
+                # Check if respective zone fully expanded
+                if zone["radius"] == zone["max_radius"] and not zone["expanded_sent"]:
+                    send_zone_expanded(zi)
+                    zone["expanded_sent"] = True
+        
+        # Global round progression check
         if zone["radius"] < zone["max_radius"]:
             all_expanded = False
 
     # Transition to next phase
-    if all_expanded:
-        print("=== ROUND 2: SURVIVAL PHASE ===")
-        state.round = ROUND_SURVIVE
-        
-        # Transition to next phase
     if all_expanded:
         print("=== ROUND 2: SURVIVAL PHASE ===")
         state.round = ROUND_SURVIVE
@@ -430,6 +486,8 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
             return
 
         tag_id    = int(args[0])
+        if state.simulate and tag_id == 0: #-- Ignore real update of tag 0 if simulation is active
+            return
         distances = [float(v) for v in args[1:9]]
 
         if tag_id >= state.n_tags:
@@ -486,6 +544,37 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
+# Reusable function for mouse simulation
+#----------------------------------------------------------------------------
+
+def process_zone_transitions(tag_id, tag):
+
+    current_zones = set()
+
+    for zi, zone in enumerate(ZONES):
+        if point_in_zone(tag.filt_position, zone):
+            current_zones.add(zi)
+
+    entered = current_zones - tag.zones_inside
+    exited = tag.zones_inside - current_zones
+
+    for zi in entered:
+        print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
+        send_zone_enter(tag_id, zi)
+
+    for zi in exited:
+        print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
+        send_zone_exit(tag_id, zi)
+
+    tag.zones_inside = current_zones
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------
 # Viewer App
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
@@ -508,12 +597,12 @@ class TutorialWindow:
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Red zones and Green zones, click next to view how to play the game.", "img": "Assets/step1.png"},
-            {"text": "2. The objective of this game is to capture all safe zones for three rounds.", "img": "Assets/step2.png"},
-            {"text": "3. However, there will be two moving danger zones trying to eliminate you. AVOID THEM AT ALL COST!", "img": "Assets/step3.png"},
-            {"text": "4. Upon reaching the safe zones, you have to stay in them until you've captured 100% of the zone!", "img": "Assets/step4.png"},
-            {"text": "5. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step5.png"},
-            {"text": "6. There will be three rounds in total. With every zone cleared, the speed of the moving danger zones increases.", "img": "Assets/step6.png"},
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/step1.png"},
+            {"text": "2. The objective of this game is to capture all safe zones, by standing withitn the zone.", "img": "Assets/step2.png"},
+            {"text": "3. Upon reaching a safe zone, you have to remain in the zone, as capturing commences! (zone stops expanding when captured)", "img": "Assets/step3.png"},
+            {"text": "4. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step4.png"},
+            {"text": "5. However, beware of the DANGER ZONES. AVOID THEM AT ALL COST! Coming into contact with them would end the game.", "img": "Assets/step5.png"},
+            {"text": "6. There will be two rounds in total. In the second round, the speed of the moving danger zones increases!", "img": "Assets/step6.png"},
             {"text": "7. Leaving the safe zones, will cause the safe zones to shrink. STAY ON IT!", "img": "Assets/step7.png"},
             {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/step8.png"}
         ]
@@ -536,7 +625,7 @@ class TutorialWindow:
         self.txt_lbl.grid(row=0, column=0, pady=(50, 20), sticky="nsew")
 
         # 2. Middle Section: Image rendering container box
-        self.img_frame = tk.Frame(self.top, bg="#222222", width=700, height=400)
+        self.img_frame = tk.Frame(self.top, bg="#222222", width=900, height=500)
         self.img_frame.grid(row=1, column=0, padx=50, pady=20)
         self.img_frame.pack_propagate(False) # Stop frame from shrinking to text size
         
@@ -710,6 +799,10 @@ class ViewerApp:
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
+        if self.state.simulate: #-- if on simulate mode, 
+            self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
+            print("[SIM] Mouse simulation enabled")
+
         table_frame = tk.Frame(root, bg="#000000")
         table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
@@ -798,15 +891,45 @@ class ViewerApp:
         self.state.stop = True
         self.root.destroy()
 
+
+    #Viewerapp simulate
+    def on_mouse_move(self, event):
+
+        if event.xdata is None:
+            return
+
+        if event.ydata is None:
+            return
+
+        with self.state.lock:
+
+            tag = self.state.tags[0]
+
+            tag.filt_position = (
+                float(event.xdata),
+                float(event.ydata)
+            )
+
+            tag.last_update = time.time()
+
+            process_zone_transitions(0, tag)
+
+        update_zones(self.state)
+
+
+
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tags", type=int, default=2)
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
     ap.add_argument("--csv", type=str, default=None)
     ap.add_argument("--windowed", action="store_true")
+    ap.add_argument("--simulate", action="store_true")
     args = ap.parse_args()
 
-    state = SharedState(n_tags=args.tags)
+    state = SharedState(n_tags=args.tags, simulate=args.simulate)
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, sorted(ANCHORS.keys()), [ANCHORS[i] for i in sorted(ANCHORS.keys())])
     disp.map("/distances", handler)
