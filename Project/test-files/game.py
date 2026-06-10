@@ -284,7 +284,7 @@ def update_zones(state):
           # ---------------------------------------------------------------
             # NEW COMPONENT: 40% RECTILINEAR INTERSECTION LIMIT
             # ---------------------------------------------------------------
-            AREA_THRESHOLD = 0.75
+            AREA_THRESHOLD = 0.50
             
             for tag_id, tag in enumerate(state.tags):
                 if tag.filt_position:
