@@ -32,6 +32,53 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
+from pythonosc import udp_client
+
+# ---------------------------------------------------------------------------
+# OSC to Multiplay -- when enter zone and exit zone
+# ---------------------------------------------------------------------------
+OSC_TARGET_IP = "192.168.254.189"    # Other Pi
+OSC_TARGET_PORT = 8888
+
+osc_tx_multiPlay = udp_client.SimpleUDPClient(OSC_TARGET_IP, OSC_TARGET_PORT)
+
+
+def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multiplay
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/1/go")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/2/go")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/3/go")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/4/go")
+
+
+def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/1/fade")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/2/fade")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/3/fade")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/4/fade")
+
+    print(
+        f"[OSC] Sent EXIT "
+        f"Tag={tag_id} Zone={zone_name}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Anchor layout and view config  (must match uart.py)
@@ -54,32 +101,52 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (0.5, 0.5),
-        "radius": 0.35,
+        "center": (0.0, 0.1),  #top left
+        "radius": 0.15,
+        "max_radius": 1.5,
         "min_radius": 0.10,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.003,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
+        "safe": True,
     },
     {
-        "center": (0.2, 0.8),
-        "radius": 0.25,
-        "min_radius": 0.10,
-        "shrink_rate": 0.010,
-        "color": "#ff4081",
+        "center": (1.0, 1.0),  #top right
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.003,
+        "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
+        "safe": True,
     },
     {
-        "center": (0.8, 0.2),
-        "radius": 0.25,
-        "min_radius": 0.10,
+        "center": (0.0, 0.0),  #bottom left
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
         "shrink_rate": 0.006,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
+        "safe": True,
     },
+    {
+        "center": (1.0, 0.0),  #bottom right
+        "radius":  0.15,
+        "max_radius": 1.5,
+        "expand_rate": 0.01,
+        "shrink_rate": 0.006,
+        "color": "#c266ff",
+        "label": "ZONE D",
+        "active": True,
+        "safe": True,
+    },
+
+
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
         "center": [0.5, 0.5],
@@ -101,6 +168,13 @@ ZONES = [
         "velocity": [0.015, 0.0], 
     },
 ]
+
+# ---------------------------------------------------------------------------
+# Game Phases - round progression
+# ---------------------------------------------------------------------------
+ROUND_EXPAND = 0
+ROUND_SURVIVE = 1
+
 
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",
@@ -221,19 +295,24 @@ class SharedState:
         self.frame_count = 0
         self.start_time  = time.time()
         self.stop = False
+        self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
+
 
 # ---------------------------------------------------------------------------
 # Zone Update (Movement & Shrinking)
 # ---------------------------------------------------------------------------
-def update_zones(state):
+# Danger Zone Movement logic
+# ---------------------------------------------------------------------------
+def update_danger_zones(state):
     # Anchor Boundaries (0.0 to 1.0)
     L_X_MIN, L_X_MAX = 0.0, 1.0
     L_Y_MIN, L_Y_MAX = 0.0, 1.0
-    
+
+    x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
             continue
-
+            
         if zone.get("is_danger"):
             cx, cy = zone["center"]
             vx, vy = zone["velocity"]
@@ -256,12 +335,62 @@ def update_zones(state):
                     state.stop = True 
         
         else:
+                    print("!!! DANGER ZONE CLASH - GAME OVER !!!")
+                    state.stop = True
+
+# ---------------------------------------------------------------------------
+#  Zone Grow Logic (round 1)
+# ---------------------------------------------------------------------------
+def update_expansion_phase(state):
+    all_expanded = True
+
+    for zone in ZONES:
+        if zone.get("safe"):
+
             occupied = zone_is_occupied(zone, state.tags)
+
+        # Expand while occupied
+        if occupied:
+            if zone["radius"] < zone["max_radius"]:
+                zone["radius"] += zone["expand_rate"]
+
+                if zone["radius"] > zone["max_radius"]:
+                    zone["radius"] = zone["max_radius"]
+
+        # Check if fully expanded
+        if zone["radius"] < zone["max_radius"]:
+            all_expanded = False
+
+    # Transition to next phase
+    if all_expanded:
+        print("=== ROUND 2: SURVIVAL PHASE ===")
+        state.phase = ROUND_SURVIVE
+
+# ---------------------------------------------------------------------------
+#  Zone Shrink & Grow Logic (round 2)
+# ---------------------------------------------------------------------------
+def update_shrinking_zones(state):
+    for zone in ZONES:
+        if not zone["active"]:
+            continue
+
+            if zone.get("is_danger"): # skip danger zone
+                continue
+
+            occupied = zone_is_occupied(zone, state.tags)
+
             if not occupied:
                 if zone["radius"] > zone["min_radius"]:
                     zone["radius"] -= zone["shrink_rate"]
                     if zone["radius"] < zone["min_radius"]:
                         zone["radius"] = zone["min_radius"]
+
+            else:
+                # Tag is inside — grow back up to max_radius
+                if zone["radius"] < zone["max_radius"]:
+                    zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
+                    if zone["radius"] > zone["max_radius"]:
+                        zone["radius"] = zone["max_radius"]
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
@@ -273,6 +402,14 @@ def zone_is_occupied(zone, tags):
 
 # ---------------------------------------------------------------------------
 # OSC handler
+# Master Zone Update
+# ---------------------------------------------------------------------------
+def update_zones(state):
+    update_danger_zones(state)
+    update_shrinking_zones(state)
+
+# ---------------------------------------------------------------------------
+# OSC handler — called from the OSC server thread for every distances message
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
@@ -312,8 +449,10 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
                 for zi in entered:
                     print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
+                    send_zone_enter(tag_id, zi)
                 for zi in exited:
                     print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
+                    send_zone_exit(tag_id, zi)
 
                 tag.zones_inside = current_zones
             else:
