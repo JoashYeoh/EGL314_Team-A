@@ -300,9 +300,6 @@ class SharedState:
         self.stop = False
         self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
 
-
-# ---------------------------------------------------------------------------
-# Zone Update (Movement & Shrinking)
 # ---------------------------------------------------------------------------
 # Danger Zone Movement logic
 # ---------------------------------------------------------------------------
