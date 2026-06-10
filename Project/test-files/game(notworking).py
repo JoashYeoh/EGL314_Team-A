@@ -8,10 +8,10 @@ Listens for OSC messages sent by uart.py:
     /distances  <tag_id:int> <d0:float> ... <d7:float>
 
 For each incoming frame it:
-  1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
-  2. Smooths it through a per-tag Kalman2D filter.
-  3. Updates a live Tkinter / matplotlib visualizer (identical to the
-     original viewer).
+    1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
+    2. Smooths it through a per-tag Kalman2D filter.
+    3. Updates a live Tkinter / matplotlib visualizer (identical to the
+        original viewer).
 """
 
 import argparse
@@ -101,11 +101,11 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (0.0, 0.1),  #top left
-        "radius": 0.15,
-        "max_radius": 1.5,
+        "center": (0.25, 0.25),  #top left
+        "radius": 0.10,
+        "max_radius": 0.25,
         "min_radius": 0.10,
-        "expand_rate": 0.01,
+        "expand_rate": 0.005,
         "shrink_rate": 0.003,
         "color": "#00e5ff",
         "label": "ZONE A",
@@ -113,10 +113,11 @@ ZONES = [
         "safe": True,
     },
     {
-        "center": (1.0, 1.0),  #top right
-        "radius":  0.15,
-        "max_radius": 1.5,
-        "expand_rate": 0.01,
+        "center": (0.25, 0.75),  #top right
+        "radius": 0.10,
+        "max_radius": 0.25,
+        "min_radius": 0.10,
+        "expand_rate": 0.005,
         "shrink_rate": 0.003,
         "color": "#ff40c3",
         "label": "ZONE B",
@@ -124,22 +125,24 @@ ZONES = [
         "safe": True,
     },
     {
-        "center": (0.0, 0.0),  #bottom left
-        "radius":  0.15,
-        "max_radius": 1.5,
-        "expand_rate": 0.01,
-        "shrink_rate": 0.006,
+        "center": (0.75, 0.75),  #bottom left
+        "radius": 0.10,
+        "max_radius": 0.25,
+        "min_radius": 0.10,
+        "expand_rate": 0.005,
+        "shrink_rate": 0.003,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
         "safe": True,
     },
     {
-        "center": (1.0, 0.0),  #bottom right
-        "radius":  0.15,
-        "max_radius": 1.5,
-        "expand_rate": 0.01,
-        "shrink_rate": 0.006,
+        "center": (0.75, 0.25),  #bottom right
+        "radius": 0.10,
+        "max_radius": 0.25,
+        "min_radius": 0.10,
+        "expand_rate": 0.005,
+        "shrink_rate": 0.003,
         "color": "#c266ff",
         "label": "ZONE D",
         "active": True,
@@ -334,10 +337,6 @@ def update_danger_zones(state):
                     print(f"!!! GAME OVER - {zone['label']} CLASH !!!")
                     state.stop = True 
         
-        else:
-                    print("!!! DANGER ZONE CLASH - GAME OVER !!!")
-                    state.stop = True
-
 # ---------------------------------------------------------------------------
 #  Zone Grow Logic (round 1)
 # ---------------------------------------------------------------------------
@@ -345,17 +344,16 @@ def update_expansion_phase(state):
     all_expanded = True
 
     for zone in ZONES:
-        if zone.get("safe"):
+        if not zone.get("safe"):
+            continue
 
-            occupied = zone_is_occupied(zone, state.tags)
+        occupied = zone_is_occupied(zone, state.tags)
 
         # Expand while occupied
         if occupied:
             if zone["radius"] < zone["max_radius"]:
                 zone["radius"] += zone["expand_rate"]
-
-                if zone["radius"] > zone["max_radius"]:
-                    zone["radius"] = zone["max_radius"]
+                zone["radius"] = min(zone["radius"], zone["max_radius"])
 
         # Check if fully expanded
         if zone["radius"] < zone["max_radius"]:
@@ -364,7 +362,7 @@ def update_expansion_phase(state):
     # Transition to next phase
     if all_expanded:
         print("=== ROUND 2: SURVIVAL PHASE ===")
-        state.phase = ROUND_SURVIVE
+        state.round = ROUND_SURVIVE
 
 # ---------------------------------------------------------------------------
 #  Zone Shrink & Grow Logic (round 2)
@@ -374,23 +372,20 @@ def update_shrinking_zones(state):
         if not zone["active"]:
             continue
 
-            if zone.get("is_danger"): # skip danger zone
-                continue
+        if zone.get("is_danger"): # skip danger zone
+            continue
 
-            occupied = zone_is_occupied(zone, state.tags)
+        occupied = zone_is_occupied(zone, state.tags)
 
-            if not occupied:
-                if zone["radius"] > zone["min_radius"]:
-                    zone["radius"] -= zone["shrink_rate"]
-                    if zone["radius"] < zone["min_radius"]:
-                        zone["radius"] = zone["min_radius"]
-
+        if not occupied:
+            if zone["radius"] > zone["min_radius"]:
+                zone["radius"] -= zone["shrink_rate"]
+                zone["radius"] = max(zone["radius"], zone["min_radius"])
             else:
                 # Tag is inside — grow back up to max_radius
                 if zone["radius"] < zone["max_radius"]:
                     zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
-                    if zone["radius"] > zone["max_radius"]:
-                        zone["radius"] = zone["max_radius"]
+                    zone["radius"] = min(zone["radius"], zone["max_radius"])
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
@@ -405,8 +400,12 @@ def zone_is_occupied(zone, tags):
 # Master Zone Update
 # ---------------------------------------------------------------------------
 def update_zones(state):
+    if state.round == ROUND_EXPAND:
+        update_expansion_phase(state)
+    elif state.round == ROUND_SURVIVE:
+        update_shrinking_zones(state)
+
     update_danger_zones(state)
-    update_shrinking_zones(state)
 
 # ---------------------------------------------------------------------------
 # OSC handler — called from the OSC server thread for every distances message
@@ -458,7 +457,6 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
             else:
                 tag.kalman.predict()
             
-            update_zones(state)
             state.frame_count += 1
 
         if csv_writer is not None:
@@ -589,9 +587,9 @@ class TutorialWindow:
             self.img_lbl.configure(image=self.current_img_asset, text="")
             
         except Exception as e:
-             # Fallback safely to placeholder text description if file not found
-             self.img_lbl.configure(image="", text=f"[ Missing Diagram Image: {page_data['img']} ]")
-             print(f"DEBUG: Image failed to load because: {e}")
+            # Fallback safely to placeholder text description if file not found
+            self.img_lbl.configure(image="", text=f"[ Missing Diagram Image: {page_data['img']} ]")
+            print(f"DEBUG: Image failed to load because: {e}")
 
         # Control visibility of the "Previous" button
         if self.current_page == 0:
@@ -684,7 +682,7 @@ class ViewerApp:
                                     linewidth=3, linestyle="--", edgecolor=zone["color"])
             self.ax_plot.add_patch(circle)
             txt = self.ax_plot.text(zone["center"][0], zone["center"][1], zone["label"],
-                                   color=zone["color"], ha="center", va="center", weight="bold")
+                                color=zone["color"], ha="center", va="center", weight="bold")
             self.zone_patches.append((circle, txt, zone))
 
         self.row_dots = []
@@ -737,6 +735,10 @@ class ViewerApp:
         self.root.after(100, self.update_loop)
 
     def update_loop(self):
+        if not self.state.stop:
+            with self.state.lock:
+                update_zones(self.state)
+
         if self.state.stop:
             self.hud.set_text("!!! GAME OVER - DANGER ZONE CLASH !!!")
             self.hud.set_color("red")
