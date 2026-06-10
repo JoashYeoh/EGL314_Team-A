@@ -363,6 +363,19 @@ def update_expansion_phase(state):
     if all_expanded:
         print("=== ROUND 2: SURVIVAL PHASE ===")
         state.round = ROUND_SURVIVE
+        
+        # Transition to next phase
+    if all_expanded:
+        print("=== ROUND 2: SURVIVAL PHASE ===")
+        state.round = ROUND_SURVIVE
+        
+        # --- NEW CONDITION ADDED HERE ---
+        SPEED_MULTIPLIER = 2.0
+        for zone in ZONES:
+            if zone.get("is_danger"):
+                # Multiplies both X and Y components of the velocity vector
+                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]]
+        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")
 
 # ---------------------------------------------------------------------------
 #  Zone Shrink & Grow Logic (round 2)
