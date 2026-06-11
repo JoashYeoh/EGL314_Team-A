@@ -202,12 +202,12 @@ ZONES = [
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
         "center": [0.5, 0.5],
-        "radius": 0.10,
+        "radius": 0.10,          #show big my danger zone is
         "color": "#ff0000",
         "label": "DANGER-V",
         "active": True,
-        "is_danger": True,
-        "velocity": [0.0, 0.015], 
+        "is_danger": True,          # Unique flag to identify this as an enemy zone
+        "velocity": [0.0, 0.015],    # [X-speed, Y-speed] -> Moves ONLY up/down
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
@@ -217,7 +217,7 @@ ZONES = [
         "label": "DANGER-H",
         "active": True,
         "is_danger": True,
-        "velocity": [0.015, 0.0], 
+        "velocity": [0.015, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
     },
 ]
 
@@ -356,36 +356,39 @@ class SharedState:
 # ---------------------------------------------------------------------------
 def update_danger_zones(state):
     # Anchor Boundaries (0.0 to 1.0)
-    L_X_MIN, L_X_MAX = 0.0, 1.0
-    L_Y_MIN, L_Y_MAX = 0.0, 1.0
+    L_X_MIN, L_X_MAX = 0.0, 1.0   # Set the left and right outer boundary walls
+    L_Y_MIN, L_Y_MAX = 0.0, 1.0   # Set the bottom and top outer boundary walls
 
     x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
-            continue
+            continue   # Skip checking this zone if it's turned off
             
         if zone.get("is_danger"):
-            cx, cy = zone["center"]
-            vx, vy = zone["velocity"]
+            cx, cy = zone["center"]     # Get current X and Y center position of the ball     
+            vx, vy = zone["velocity"]   # Get current horizontal and vertical speeds
             
-            new_x, new_y = cx + vx, cy + vy
+            new_x, new_y = cx + vx, cy + vy  # Calculate its potential next position step
             
             # Bounce logic at Anchor edges
             if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
                 vx = -vx
             if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
                 vy = -vy
+                # Reverse the horizontal direction (bounce!)
                 
             zone["center"] = (cx + vx, cy + vy)
             zone["velocity"] = [vx, vy]
+            # Reverse the vertical direction (bounce!)
+            
             
             # Check for clash
             for tag_id, tag in enumerate(state.tags):
-                if tag.filt_position and point_in_zone(tag.filt_position, zone):
+                if tag.filt_position and point_in_zone(tag.filt_position, zone): 
 
                     send_game_over(tag_id, zone["label"])
 
-                    print(f"!!! GAME OVER - {zone['label']} CLASH !!!")
+                    print(f"!!! GAME OVER - {zone['label']} CLASH !!!")   #when game hits the danger zone it will end and show game over
 
                     state.game_over_sent = True
                     state.stop = True 
@@ -423,7 +426,7 @@ def update_expansion_phase(state):
         state.round = ROUND_SURVIVE
         
         # --- NEW CONDITION ADDED HERE ---
-        SPEED_MULTIPLIER = 2.0
+        SPEED_MULTIPLIER = 2.0  #when it reach zone 2 the game will speed up
         for zone in ZONES:
             if zone.get("is_danger"):
                 # Multiplies both X and Y components of the velocity vector
