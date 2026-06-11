@@ -28,11 +28,10 @@ from dataclasses import dataclass, field
 
 import matplotlib
 matplotlib.use("TkAgg")   # Embedded backend that allows the game map to display inside a Tkinter window
-import matplotlib.pyplot as plt  # Provides the underlying dark theme styles used for the game board canvas
+import matplotlib.pyplot as plt  # Provides the dark theme styles used for the game board canvas
 import matplotlib.patches as mpatches
 # ^^^ CRITICAL FOR DANGER ZONES: 
-# This is where 'mpatches.Circle' comes from. It is used to generate 
-# the actual visual circles (the red danger balls) on your game grid.
+# This is where 'mpatches.Circle' comes from. It is used to generate the actual visual circles (the red danger balls) on your game grid.
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -460,11 +459,11 @@ def update_expansion_phase(state):
         for zone in ZONES:
             if zone.get("is_danger"):
                 # Multiplies both X and Y components of the velocity vector
-                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]]
-        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")
+                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]] # Multiply both the horizontal (X) and vertical (Y) speed values by your multiplier
+        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")   # Print an alert to the terminal to tell people that it is moving faster
 
 # ---------------------------------------------------------------------------
-#  Zone Shrink & Grow Logic (round 2)
+#  Zone Shrink & Grow Logic (round 2) 
 # ---------------------------------------------------------------------------
 def update_shrinking_zones(state):
 
