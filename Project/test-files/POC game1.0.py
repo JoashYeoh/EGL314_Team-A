@@ -28,11 +28,10 @@ from dataclasses import dataclass, field
 
 import matplotlib
 matplotlib.use("TkAgg")   # Embedded backend that allows the game map to display inside a Tkinter window
-import matplotlib.pyplot as plt  # Provides the underlying dark theme styles used for the game board canvas
+import matplotlib.pyplot as plt  # Provides the dark theme styles used for the game board canvas
 import matplotlib.patches as mpatches
 # ^^^ CRITICAL FOR DANGER ZONES: 
-# This is where 'mpatches.Circle' comes from. It is used to generate 
-# the actual visual circles (the red danger balls) on your game grid.
+# This is where 'mpatches.Circle' comes from. It is used to generate the actual visual circles (the red danger balls) on your game grid.
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -460,11 +459,11 @@ def update_expansion_phase(state):
         for zone in ZONES:
             if zone.get("is_danger"):
                 # Multiplies both X and Y components of the velocity vector
-                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]]
-        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")
+                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]] # Multiply both the horizontal (X) and vertical (Y) speed values by your multiplier
+        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")   # Print an alert to the terminal to tell people that it is moving faster
 
 # ---------------------------------------------------------------------------
-#  Zone Shrink & Grow Logic (round 2)
+#  Zone Shrink & Grow Logic (round 2) 
 # ---------------------------------------------------------------------------
 def update_shrinking_zones(state):
 
@@ -643,9 +642,9 @@ def process_zone_transitions(tag_id, tag):
 # Viewer App
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
-class TutorialWindow:
-    def __init__(self, parent, state, fullscreen):
-        self.parent = parent
+class TutorialWindow: #defines class handling intruction window
+    def __init__(self, parent, state, fullscreen): #initialization and take parent and app to communicate with main game
+        self.parent = parent #Saves these window references as object variables so any function inside this class can access them later.
         self.state = state
         self.fullscreen = fullscreen
         
@@ -662,14 +661,14 @@ class TutorialWindow:
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/step1.png"},
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"},
             {"text": "2. The objective of this game is to capture all safe zones, by standing withitn the zone.", "img": "Assets/step2.png"},
             {"text": "3. Upon reaching a safe zone, you have to remain in the zone, as capturing commences! (zone stops expanding when captured)", "img": "Assets/step3.png"},
             {"text": "4. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step4.png"},
             {"text": "5. However, beware of the DANGER ZONES. AVOID THEM AT ALL COST! Coming into contact with them would end the game.", "img": "Assets/step5.png"},
             {"text": "6. There will be two rounds in total. In the second round, the speed of the moving danger zones increases!", "img": "Assets/step6.png"},
             {"text": "7. Leaving the safe zones, will cause the safe zones to shrink. STAY ON IT!", "img": "Assets/step7.png"},
-            {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/step8.png"}
+            {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/Step68.png"}
         ]
         self.current_page = 0
 
@@ -794,9 +793,9 @@ class TutorialWindow:
         # Only after Tutorial Window is destroyed would the ViewerApp (game) run
         ViewerApp(self.parent, self.state, True, self.fullscreen)
 
-        self.parent.deiconify()
+        self.parent.deiconify() #show the game window after the instruction page closes
         self.parent.lift()
-        self.parent.focus_force()
+        self.parent.focus_force() #pull focus onto the game application so keybinds work immediately at the game window
 
     def on_close(self):
         # Force clean terminate on early cancellation exit routines
