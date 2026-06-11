@@ -20,15 +20,24 @@ import sys
 import threading
 import time
 import tkinter as tk
+# ^^^ Standard GUI library. It creates 'plot_frame', which acts as the 
+# physical container holding your game arena and the moving danger zones.
+
 from tkinter import ttk
 from dataclasses import dataclass, field
 
 import matplotlib
-matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
+matplotlib.use("TkAgg")   # Embedded backend that allows the game map to display inside a Tkinter window
+import matplotlib.pyplot as plt  # Provides the underlying dark theme styles used for the game board canvas
 import matplotlib.patches as mpatches
+# ^^^ CRITICAL FOR DANGER ZONES: 
+# This is where 'mpatches.Circle' comes from. It is used to generate 
+# the actual visual circles (the red danger balls) on your game grid.
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# ^^^ Standard GUI library. It creates 'plot_frame', which acts as the 
+# physical container holding your game arena and the moving danger zones.
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
@@ -446,7 +455,7 @@ def update_expansion_phase(state):
         state.round = ROUND_SURVIVE
         state.survival_start_time = time.time()
         
-        # --- NEW CONDITION ADDED HERE ---
+        # --- NEW CONDITION ADDED HERE  when it goes to stage 2 for the danger zone ---
         SPEED_MULTIPLIER = 2.0  #when it reach zone 2 the game will speed up
         for zone in ZONES:
             if zone.get("is_danger"):
