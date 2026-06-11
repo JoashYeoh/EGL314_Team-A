@@ -37,14 +37,15 @@ from pythonosc import udp_client
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_TARGET_IP = "192.168.1.108"    # IP of laptop running Multi-play
+OSC_TARGET_IP = "192.168.254.189"    # IP of laptop running Multi-play
 OSC_TARGET_PORT = 8888
 
 osc_tx_multiPlay = udp_client.SimpleUDPClient(OSC_TARGET_IP, OSC_TARGET_PORT)
 
 
-def start_game(state): #-- start game track
+def start_game_bgm(state): #-- start game track
 
+    print("START BUTTON PRESSED")
     osc_tx_multiPlay.send_message("/cue/1/go", "")
 
     state.game_music_started = True
@@ -75,16 +76,16 @@ def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
-        osc_tx_multiPlay.send_message("/cue/3/fade", "")
+        osc_tx_multiPlay.send_message("/cue/3/stop", "")
 
     if zone_name == "ZONE B":
-        osc_tx_multiPlay.send_message("/cue/4/fade", "")
+        osc_tx_multiPlay.send_message("/cue/4/stop", "")
 
     if zone_name == "ZONE C":
-        osc_tx_multiPlay.send_message("/cue/5/fade", "")
+        osc_tx_multiPlay.send_message("/cue/5/stop", "")
     
     if zone_name == "ZONE D":
-        osc_tx_multiPlay.send_message("/cue/6/fade", "")
+        osc_tx_multiPlay.send_message("/cue/6/stop", "")
 
     print(
         f"[OSC] Sent EXIT "
@@ -115,14 +116,19 @@ def send_zone_expanded(zone_index): #-- when respective zone fully expanded, tri
 
 
 def send_game_over(tag_id, zone_label):  #-- when tag hit danger zone triger multiplay
+    osc_tx_multiPlay.send_message("/stopall", "")
     osc_tx_multiPlay.send_message("/cue/2/go", "")
-    osc_tx_multiPlay.send_message("/cue/1/stop", "") # stop game background music
 
     print(
         f"[OSC] Sent Game Over "
         f"Tag={tag_id} Zone={zone_label}"
     )
 
+
+def send_game_win():
+    osc_tx_multiPlay.send_message("/stopall", "")
+    osc_tx_multiPlay.send_message("/cue/11/go", "") # you win stinger
+    print("WIN")
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +163,8 @@ ZONES = [
         "active": True,
         "safe": True,
         "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
     {
         "center": (0.25, 0.75),  #top right
@@ -170,6 +178,8 @@ ZONES = [
         "active": True,
         "safe": True,
         "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
     {
         "center": (0.75, 0.75),  #bottom left
@@ -183,6 +193,8 @@ ZONES = [
         "active": True,
         "safe": True,
         "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
     {
         "center": (0.75, 0.25),  #bottom right
@@ -196,6 +208,8 @@ ZONES = [
         "active": True,
         "safe": True,
         "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
 
 
@@ -346,10 +360,14 @@ class SharedState:
         self.lock   = threading.Lock()
         self.frame_count = 0
         self.start_time  = time.time()
+        self.game_started = False
         self.stop = False
         self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
         self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
         self.simulate = simulate # tag simulation state
+        self.survival_start_time = None # survival state for survival round
+        self.game_won = False
+
 
 # ---------------------------------------------------------------------------
 # Danger Zone Movement logic
@@ -381,7 +399,7 @@ def update_danger_zones(state):
             
             # Check for clash
             for tag_id, tag in enumerate(state.tags):
-                if tag.filt_position and point_in_zone(tag.filt_position, zone):
+                if not state.game_over_sent and tag.filt_position and point_in_zone(tag.filt_position, zone):
 
                     send_game_over(tag_id, zone["label"])
 
@@ -412,6 +430,7 @@ def update_expansion_phase(state):
                 if zone["radius"] == zone["max_radius"] and not zone["expanded_sent"]:
                     send_zone_expanded(zi)
                     zone["expanded_sent"] = True
+                    zone["captured"] = True
         
         # Global round progression check
         if zone["radius"] < zone["max_radius"]:
@@ -421,6 +440,7 @@ def update_expansion_phase(state):
     if all_expanded:
         print("=== ROUND 2: SURVIVAL PHASE ===")
         state.round = ROUND_SURVIVE
+        state.survival_start_time = time.time()
         
         # --- NEW CONDITION ADDED HERE ---
         SPEED_MULTIPLIER = 2.0
@@ -434,6 +454,7 @@ def update_expansion_phase(state):
 #  Zone Shrink & Grow Logic (round 2)
 # ---------------------------------------------------------------------------
 def update_shrinking_zones(state):
+
     for zone in ZONES:
         if not zone["active"]:
             continue
@@ -447,11 +468,16 @@ def update_shrinking_zones(state):
             if zone["radius"] > zone["min_radius"]:
                 zone["radius"] -= zone["shrink_rate"]
                 zone["radius"] = max(zone["radius"], zone["min_radius"])
-            else:
-                # Tag is inside — grow back up to max_radius
-                if zone["radius"] < zone["max_radius"]:
-                    zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
-                    zone["radius"] = min(zone["radius"], zone["max_radius"])
+                if zone["radius"] <= zone["min_radius"]: # checks if zone shrinks to min_radius to trigger game end
+                    zone["destroyed"] = True
+                    zone["active"] = False
+                    print(f"{zone['label']} LOST!")
+
+        else:
+            # Tag is inside — grow back up to max_radius
+            if zone["radius"] < zone["max_radius"]:
+                zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
+                zone["radius"] = min(zone["radius"], zone["max_radius"])
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
@@ -461,6 +487,11 @@ def zone_is_occupied(zone, tags):
             return True
     return False
 
+def check_all_zones_lost(state):
+    safe_zones = [z for z in ZONES if z.get("safe")]
+    return all(z.get("destroyed", False) for z in safe_zones)
+
+
 # ---------------------------------------------------------------------------
 # OSC handler
 # Master Zone Update
@@ -468,8 +499,22 @@ def zone_is_occupied(zone, tags):
 def update_zones(state):
     if state.round == ROUND_EXPAND:
         update_expansion_phase(state)
+
     elif state.round == ROUND_SURVIVE:
+        SURVIVAL_TIME = 60
+        if state.round == ROUND_SURVIVE:
+            elapsed = time.time() - state.survival_start_time
+            if elapsed >= SURVIVAL_TIME:
+                send_game_win()
+                state.game_won = True
+                state.stop = True
+
         update_shrinking_zones(state)
+
+        if check_all_zones_lost(state):
+            print("ALL SAFE ZONES LOST")
+            send_game_over(-1, "ALL SAFE ZONES")
+            state.stop = True
 
     update_danger_zones(state)
 
@@ -479,6 +524,9 @@ def update_zones(state):
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
     def handle_distances(address, *args):
+        if not state.game_started:
+            return
+
         if state.stop: return 
 
         if len(args) < 9:
@@ -515,8 +563,12 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 exited  = tag.zones_inside - current_zones
 
                 for zi in entered:
+                    zone = ZONES[zi]
+                    if zone.get("captured"): # checks if zone is already captured, so as to not re-trigger osc
+                        continue
                     print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
                     send_zone_enter(tag_id, zi)
+
                 for zi in exited:
                     print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
                     send_zone_exit(tag_id, zi)
@@ -721,8 +773,10 @@ class TutorialWindow:
             self.update_page_view()
 
     def start_game(self):
+        start_game_bgm(self.state)   # send OSC
         """Destroys the tutorial overlay completely and launches tracker interface."""
         self.top.destroy()
+        self.state.game_started = True # toggles the start state of game
 
         # Only after Tutorial Window is destroyed would the ViewerApp (game) run
         ViewerApp(self.parent, self.state, True, self.fullscreen)
@@ -843,8 +897,19 @@ class ViewerApp:
                 update_zones(self.state)
 
         if self.state.stop:
-            self.hud.set_text("!!! GAME OVER - DANGER ZONE CLASH !!!")
-            self.hud.set_color("red")
+            if self.state.game_won:
+                self.hud.set_text("🎉 YOU WIN! 🎉\n"
+                    "All survival objectives completed!"
+                )
+                self.hud.set_color("lime")
+
+            else:
+                self.hud.set_text(
+                    "!!! GAME OVER !!!\n"
+                    "DANGER ZONE CLASH"
+                )
+                self.hud.set_color("red")
+
             self.canvas.draw_idle()
             return
 
@@ -855,10 +920,25 @@ class ViewerApp:
 
         now = time.time()
 
+        # ----- SURVIVAL TIMER HUD -----
+        if (self.state.round == ROUND_SURVIVE and self.state.survival_start_time is not None):
+            SURVIVAL_TIME = 60
+            remaining = max(0, SURVIVAL_TIME - (time.time() - self.state.survival_start_time))
+            self.hud.set_text(
+                f"SURVIVAL MODE\n"
+                f"Time Left: {remaining:.0f}s"
+            )
+            self.hud.set_color("white")
+
         for patch, txt, zone_data in self.zone_patches:
             patch.center = zone_data["center"]
             patch.set_radius(zone_data["radius"])
             txt.set_position(zone_data["center"])
+            # this is for survival mode, where if zone shrinks to minimum then remove zone from viewer
+            if zone_data.get("destroyed"):
+                patch.set_visible(False)
+                txt.set_visible(False)
+                continue
 
         for row, snap in enumerate(snapshot):
             color = TAG_COLORS[color_indices[row]]
@@ -894,6 +974,8 @@ class ViewerApp:
 
     #Viewerapp simulate
     def on_mouse_move(self, event):
+        if not self.state.game_started:
+            return
 
         if event.xdata is None:
             return

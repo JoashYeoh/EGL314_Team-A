@@ -20,4 +20,5 @@ def send_message(receiver_ip, receiver_port, address, message):
 PI_A_ADDR = "192.168.254.189"    # wlan ip
 PORT = 8888 
 
-send_message(PI_A_ADDR, PORT, "/cue/1/go", "")
+send_message(PI_A_ADDR, PORT, "/stopall", "")
+1
