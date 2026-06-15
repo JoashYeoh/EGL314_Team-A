@@ -8,10 +8,10 @@ Listens for OSC messages sent by uart.py:
     /distances  <tag_id:int> <d0:float> ... <d7:float>
 
 For each incoming frame it:
-  1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
-  2. Smooths it through a per-tag Kalman2D filter.
-  3. Updates a live Tkinter / matplotlib visualizer (identical to the
-     original viewer).
+    1. Runs multilateration (trilaterate_2d) to get a raw (x, y) position.
+    2. Smooths it through a per-tag Kalman2D filter.
+    3. Updates a live Tkinter / matplotlib visualizer (identical to the
+        original viewer).
 """
 
 import argparse
@@ -19,20 +19,125 @@ import csv
 import sys
 import threading
 import time
-import math
 import tkinter as tk
+# ^^^ Standard GUI library. It creates 'plot_frame', which acts as the 
+# physical container holding your game arena and the moving danger zones.
+
 from tkinter import ttk
 from dataclasses import dataclass, field
 
 import matplotlib
-matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
+matplotlib.use("TkAgg")   # Embedded backend that allows the game map to display inside a Tkinter window
+import matplotlib.pyplot as plt  # Provides the dark theme styles used for the game board canvas
 import matplotlib.patches as mpatches
+# ^^^ CRITICAL FOR DANGER ZONES: 
+# This is where 'mpatches.Circle' comes from. It is used to generate the actual visual circles (the red danger balls) on your game grid.
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# ^^^ Standard GUI library. It creates 'plot_frame', which acts as the 
+# physical container holding your game arena and the moving danger zones.
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
+from pythonosc import udp_client
+
+# ---------------------------------------------------------------------------
+# OSC to Multiplay -- when enter zone and exit zone
+# ---------------------------------------------------------------------------
+OSC_TARGET_IP = "192.168.254.189"    # IP of laptop running Multi-play
+OSC_TARGET_PORT = 8888
+
+osc_tx_multiPlay = udp_client.SimpleUDPClient(OSC_TARGET_IP, OSC_TARGET_PORT)
+
+
+def start_game_bgm(state): #-- start game track
+
+    print("START BUTTON PRESSED")
+    osc_tx_multiPlay.send_message("/cue/1/go", "")
+
+    state.game_music_started = True
+
+
+def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multiplay
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/3/go", "")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/4/go", "")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/5/go", "")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/6/go", "")
+    
+    print(
+        f"[OSC] Sent ENTER "
+        f"Tag={tag_id} Zone={zone_name}"
+    )
+
+
+def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/3/stop", "")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/4/stop", "")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/5/stop", "")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/6/stop", "")
+
+    print(
+        f"[OSC] Sent EXIT "
+        f"Tag={tag_id} Zone={zone_name}"
+    )
+
+
+def send_zone_expanded(zone_index): #-- when respective zone fully expanded, trigger stinger
+    zone_name = ZONES[zone_index]["label"]
+
+    if zone_name == "ZONE A":
+        osc_tx_multiPlay.send_message("/cue/7/go", "")
+        osc_tx_multiPlay.send_message("/cue/3/stop", "")
+
+    if zone_name == "ZONE B":
+        osc_tx_multiPlay.send_message("/cue/8/go", "")
+        osc_tx_multiPlay.send_message("/cue/4/stop", "")
+
+    if zone_name == "ZONE C":
+        osc_tx_multiPlay.send_message("/cue/9/go", "")
+        osc_tx_multiPlay.send_message("/cue/5/stop", "")
+    
+    if zone_name == "ZONE D":
+        osc_tx_multiPlay.send_message("/cue/10/go", "")
+        osc_tx_multiPlay.send_message("/cue/6/stop", "")
+
+    print(f"[OSC] Zone {zone_index} Fully Expanded")
+
+
+def send_game_over(tag_id, zone_label):  #-- when tag hit danger zone triger multiplay
+    osc_tx_multiPlay.send_message("/stopall", "")
+    osc_tx_multiPlay.send_message("/cue/2/go", "")
+
+    print(
+        f"[OSC] Sent Game Over "
+        f"Tag={tag_id} Zone={zone_label}"
+    )
+
+
+def send_game_win():
+    osc_tx_multiPlay.send_message("/stopall", "")
+    osc_tx_multiPlay.send_message("/cue/11/go", "") # you win stinger
+    print("WIN")
+
 
 # ---------------------------------------------------------------------------
 # Anchor layout and view config  (must match uart.py)
@@ -55,41 +160,76 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (0.5, 0.5),
-        "radius": 0.35,
+        "center": (0.25, 0.25),  #top left
+        "radius": 0.10,
+        "max_radius": 0.25,
         "min_radius": 0.10,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.005,
+        "shrink_rate": 0.0012,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
+        "safe": True,
+        "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
     {
-        "center": (0.2, 0.8),
-        "radius": 0.25,
+        "center": (0.25, 0.75),  #top right
+        "radius": 0.10,
+        "max_radius": 0.25,
         "min_radius": 0.10,
-        "shrink_rate": 0.010,
-        "color": "#ff4081",
+        "expand_rate": 0.005,
+        "shrink_rate": 0.0005,
+        "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
+        "safe": True,
+        "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
     {
-        "center": (0.8, 0.2),
-        "radius": 0.25,
+        "center": (0.75, 0.75),  #bottom left
+        "radius": 0.10,
+        "max_radius": 0.25,
         "min_radius": 0.10,
-        "shrink_rate": 0.006,
+        "expand_rate": 0.005,
+        "shrink_rate": 0.002,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
+        "safe": True,
+        "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
     },
+    {
+        "center": (0.75, 0.25),  #bottom right
+        "radius": 0.10,
+        "max_radius": 0.25,
+        "min_radius": 0.10,
+        "expand_rate": 0.005,
+        "shrink_rate": 0.0011,
+        "color": "#c266ff",
+        "label": "ZONE D",
+        "active": True,
+        "safe": True,
+        "expanded_sent": False,
+        "captured": False,
+        "destroyed": False,
+    },
+
+
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
         "center": [0.5, 0.5],
-        "radius": 0.10,
+        "radius": 0.10,          #show big my danger zone is
         "color": "#ff0000",
         "label": "DANGER-V",
         "active": True,
-        "is_danger": True,
-        "velocity": [0.0, 0.015], 
+        "is_danger": True,          # Unique flag to identify this as an enemy zone
+        "velocity": [0.0, 0.015],    # [X-speed, Y-speed] -> Moves ONLY up/down
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
@@ -99,9 +239,16 @@ ZONES = [
         "label": "DANGER-H",
         "active": True,
         "is_danger": True,
-        "velocity": [0.015, 0.0], 
+        "velocity": [0.015, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
     },
 ]
+
+# ---------------------------------------------------------------------------
+# Game Phases - round progression
+# ---------------------------------------------------------------------------
+ROUND_EXPAND = 0
+ROUND_SURVIVE = 1
+
 
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",
@@ -164,34 +311,6 @@ def point_in_zone(point, zone):
     return (dx * dx + dy * dy) <= (r * r)
 
 # ---------------------------------------------------------------------------
-# MATH HELPER: Analytical Circle Lens Overlap Percentage
-# ---------------------------------------------------------------------------
-def calculate_circle_overlap_percentage(p1, r1, p2, r2):
-    """
-    Computes what fraction of Circle 1 (the Tag) is intersected by Circle 2 (Danger Zone).
-    """
-    dx, dy = p1[0] - p2[0], p1[1] - p2[1]
-    d = math.sqrt(dx * dx + dy * dy)
-    
-    if d >= r1 + r2:    # Case 1: Completely separated circles
-        return 0.0
-    if d <= r2 - r1:    # Case 2: Tag is completely inside Danger Zone
-        return 1.0
-    if d <= r1 - r2:    # Case 3: Danger zone is entirely inside the tag
-        tag_area = math.pi * (r1 ** 2)
-        danger_area = math.pi * (r2 ** 2)
-        return danger_area / tag_area
-
-    # Case 4: Circles intersect forming an asymmetrical circular lens
-    tag_area = math.pi * (r1 ** 2)
-    part1 = r1 ** 2 * math.acos((d ** 2 + r1 ** 2 - r2 ** 2) / (2 * d * r1))
-    part2 = r2 ** 2 * math.acos((d ** 2 + r2 ** 2 - r1 ** 2) / (2 * d * r2))
-    part3 = 0.5 * math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2))
-    
-    intersection_area = part1 + part2 - part3
-    return intersection_area / tag_area
-
-# ---------------------------------------------------------------------------
 # Kalman filter (position + velocity, 2-D)
 # ---------------------------------------------------------------------------
 class Kalman2D:
@@ -240,72 +359,137 @@ class TagState:
     last_update:    float = 0.0
     kalman: Kalman2D = field(default_factory=Kalman2D)
     zones_inside: set = field(default_factory=set)
-    
-    # --- ADD THIS LINE TO GIVE THE TAG A RADIUS SIZE ---
-    radius: float = 0.05
 
 class SharedState:
-    def __init__(self, n_tags):
+    def __init__(self, n_tags, simulate=False):
         self.n_tags = n_tags
         self.tags   = [TagState() for _ in range(n_tags)]
         self.row_color_index = list(range(n_tags))
         self.lock   = threading.Lock()
         self.frame_count = 0
         self.start_time  = time.time()
+        self.game_started = False
         self.stop = False
+        self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
+        self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
+        self.simulate = simulate # tag simulation state
+        self.survival_start_time = None # survival state for survival round
+        self.game_won = False
+
 
 # ---------------------------------------------------------------------------
-# Zone Update (Movement & Shrinking)
+# Danger Zone Movement logic
 # ---------------------------------------------------------------------------
-def update_zones(state):
+def update_danger_zones(state):
     # Anchor Boundaries (0.0 to 1.0)
-    L_X_MIN, L_X_MAX = 0.0, 1.0
-    L_Y_MIN, L_Y_MAX = 0.0, 1.0
-    
+    L_X_MIN, L_X_MAX = 0.0, 1.0   # Set the left and right outer boundary walls
+    L_Y_MIN, L_Y_MAX = 0.0, 1.0   # Set the bottom and top outer boundary walls
+
+    x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
-            continue
-
-        if zone.get("is_danger"):
-            cx, cy = zone["center"]
-            vx, vy = zone["velocity"]
+            continue   # Skip checking this zone if it's turned off
             
-            new_x, new_y = cx + vx, cy + vy
+        if zone.get("is_danger"):
+            cx, cy = zone["center"]     # Get current X and Y center position of the ball     
+            vx, vy = zone["velocity"]   # Get current horizontal and vertical speeds
+            
+            new_x, new_y = cx + vx, cy + vy  # Calculate its potential next position step
             
             # Bounce logic at Anchor edges
             if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
                 vx = -vx
             if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
                 vy = -vy
+                # Reverse the horizontal direction (bounce!)
                 
             zone["center"] = (cx + vx, cy + vy)
             zone["velocity"] = [vx, vy]
+            # Reverse the vertical direction (bounce!)
             
-          # ---------------------------------------------------------------
-            # NEW COMPONENT: 40% RECTILINEAR INTERSECTION LIMIT
-            # ---------------------------------------------------------------
-            AREA_THRESHOLD = 0.50
             
+            # Check for clash
             for tag_id, tag in enumerate(state.tags):
-                if tag.filt_position:
-                    # Run the mathematical lens overlap equation
-                    overlap_fraction = calculate_circle_overlap_percentage(
-                        tag.filt_position, tag.radius,
-                        zone["center"], zone["radius"]
-                    )
-                    
-                    # Stop game execution instantly if overlap >= 40%
-                    if overlap_fraction >= AREA_THRESHOLD:
-                        print(f"!!! GAME OVER - {zone['label']} CLASH ({overlap_fraction * 100:.1f}% Tag Encroachment) !!!")
-                        state.stop = True
+
+                if not state.game_over_sent and tag.filt_position and point_in_zone(tag.filt_position, zone):
+
+                    send_game_over(tag_id, zone["label"])
+
+                    print(f"!!! GAME OVER - {zone['label']} CLASH !!!")   #when game hits the danger zone it will end and show game over
+
+                    state.game_over_sent = True
+                    state.stop = True 
         
+# ---------------------------------------------------------------------------
+#  Zone Grow Logic (round 1)
+# ---------------------------------------------------------------------------
+def update_expansion_phase(state):
+    all_expanded = True
+
+    for zi, zone in enumerate(ZONES):
+        if not zone.get("safe"):
+            continue
+
+        occupied = zone_is_occupied(zone, state.tags)
+
+        # Expand while occupied
+        if occupied:
+            if zone["radius"] < zone["max_radius"]:
+                zone["radius"] += zone["expand_rate"]
+                zone["radius"] = min(zone["radius"], zone["max_radius"])
+
+                # Check if respective zone fully expanded
+                if zone["radius"] == zone["max_radius"] and not zone["expanded_sent"]:
+                    send_zone_expanded(zi)
+                    zone["expanded_sent"] = True
+                    zone["captured"] = True
+        
+        # Global round progression check
+        if zone["radius"] < zone["max_radius"]:
+            all_expanded = False
+
+    # Transition to next phase
+    if all_expanded:
+        print("=== ROUND 2: SURVIVAL PHASE ===")
+        state.round = ROUND_SURVIVE
+        state.survival_start_time = time.time()
+        
+        # --- NEW CONDITION ADDED HERE  when it goes to stage 2 for the danger zone ---
+        SPEED_MULTIPLIER = 2.0  #when it reach zone 2 the game will speed up
+        for zone in ZONES:
+            if zone.get("is_danger"):
+                # Multiplies both X and Y components of the velocity vector
+                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]] # Multiply both the horizontal (X) and vertical (Y) speed values by your multiplier
+        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")   # Print an alert to the terminal to tell people that it is moving faster
+
+# ---------------------------------------------------------------------------
+#  Zone Shrink & Grow Logic (round 2) 
+# ---------------------------------------------------------------------------
+def update_shrinking_zones(state):
+
+    for zone in ZONES:
+        if not zone["active"]:
+            continue
+
+        if zone.get("is_danger"): # skip danger zone
+            continue
+
+        occupied = zone_is_occupied(zone, state.tags)
+
+        if not occupied:
+            if zone["radius"] > zone["min_radius"]:
+                zone["radius"] -= zone["shrink_rate"]
+                zone["radius"] = max(zone["radius"], zone["min_radius"])
+                if zone["radius"] <= zone["min_radius"]: # checks if zone shrinks to min_radius to trigger game end
+                    zone["destroyed"] = True
+                    zone["active"] = False
+                    print(f"{zone['label']} LOST!")
+
         else:
-            occupied = zone_is_occupied(zone, state.tags)
-            if not occupied:
-                if zone["radius"] > zone["min_radius"]:
-                    zone["radius"] -= zone["shrink_rate"]
-                    if zone["radius"] < zone["min_radius"]:
-                        zone["radius"] = zone["min_radius"]
+            # Tag is inside — grow back up to max_radius
+            if zone["radius"] < zone["max_radius"]:
+                zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
+                zone["radius"] = min(zone["radius"], zone["max_radius"])
 
 def zone_is_occupied(zone, tags):
     for tag in tags:
@@ -315,12 +499,46 @@ def zone_is_occupied(zone, tags):
             return True
     return False
 
+def check_all_zones_lost(state):
+    safe_zones = [z for z in ZONES if z.get("safe")]
+    return all(z.get("destroyed", False) for z in safe_zones)
+
+
 # ---------------------------------------------------------------------------
 # OSC handler
+# Master Zone Update
+# ---------------------------------------------------------------------------
+def update_zones(state):
+    if state.round == ROUND_EXPAND:
+        update_expansion_phase(state)
+
+    elif state.round == ROUND_SURVIVE:
+        SURVIVAL_TIME = 60
+        if state.round == ROUND_SURVIVE:
+            elapsed = time.time() - state.survival_start_time
+            if elapsed >= SURVIVAL_TIME:
+                send_game_win()
+                state.game_won = True
+                state.stop = True
+
+        update_shrinking_zones(state)
+
+        if check_all_zones_lost(state):
+            print("ALL SAFE ZONES LOST")
+            send_game_over(-1, "ALL SAFE ZONES")
+            state.stop = True
+
+    update_danger_zones(state)
+
+# ---------------------------------------------------------------------------
+# OSC handler — called from the OSC server thread for every distances message
 # ---------------------------------------------------------------------------
 def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                     csv_writer=None):
     def handle_distances(address, *args):
+        if not state.game_started:
+            return
+
         if state.stop: return 
 
         if len(args) < 9:
@@ -328,6 +546,8 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
             return
 
         tag_id    = int(args[0])
+        if state.simulate and tag_id == 0: #-- Ignore real update of tag 0 if simulation is active
+            return
         distances = [float(v) for v in args[1:9]]
 
         if tag_id >= state.n_tags:
@@ -355,15 +575,20 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
                 exited  = tag.zones_inside - current_zones
 
                 for zi in entered:
+                    zone = ZONES[zi]
+                    if zone.get("captured"): # checks if zone is already captured, so as to not re-trigger osc
+                        continue
                     print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
+                    send_zone_enter(tag_id, zi)
+
                 for zi in exited:
                     print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
+                    send_zone_exit(tag_id, zi)
 
                 tag.zones_inside = current_zones
             else:
                 tag.kalman.predict()
             
-            update_zones(state)
             state.frame_count += 1
 
         if csv_writer is not None:
@@ -383,12 +608,43 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
 
 
 # ---------------------------------------------------------------------------
+# Reusable function for mouse simulation
+#----------------------------------------------------------------------------
+
+def process_zone_transitions(tag_id, tag):
+
+    current_zones = set()
+
+    for zi, zone in enumerate(ZONES):
+        if point_in_zone(tag.filt_position, zone):
+            current_zones.add(zi)
+
+    entered = current_zones - tag.zones_inside
+    exited = tag.zones_inside - current_zones
+
+    for zi in entered:
+        print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[zi]['label']}")
+        send_zone_enter(tag_id, zi)
+
+    for zi in exited:
+        print(f"[ZONE] Tag {tag_id} EXITED {ZONES[zi]['label']}")
+        send_zone_exit(tag_id, zi)
+
+    tag.zones_inside = current_zones
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------
 # Viewer App
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
-class TutorialWindow:
-    def __init__(self, parent, state, fullscreen):
-        self.parent = parent
+class TutorialWindow: #defines class handling intruction window
+    def __init__(self, parent, state, fullscreen): #initialization and take parent and app to communicate with main game
+        self.parent = parent #Saves these window references as object variables so any function inside this class can access them later.
         self.state = state
         self.fullscreen = fullscreen
         
@@ -405,14 +661,14 @@ class TutorialWindow:
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Red zones and Green zones, click next to view how to play the game.", "img": "Assets/step1.png"},
-            {"text": "2. The objective of this game is to capture all safe zones for three rounds.", "img": "Assets/step2.png"},
-            {"text": "3. However, there will be two moving danger zones trying to eliminate you. AVOID THEM AT ALL COST!", "img": "Assets/step3.png"},
-            {"text": "4. Upon reaching the safe zones, you have to stay in them until you've captured 100% of the zone!", "img": "Assets/step4.png"},
-            {"text": "5. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step5.png"},
-            {"text": "6. There will be three rounds in total. With every zone cleared, the speed of the moving danger zones increases.", "img": "Assets/step6.png"},
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"},
+            {"text": "2. The objective of this game is to capture all safe zones, by standing withitn the zone.", "img": "Assets/step2.png"},
+            {"text": "3. Upon reaching a safe zone, you have to remain in the zone, as capturing commences! (zone stops expanding when captured)", "img": "Assets/step3.png"},
+            {"text": "4. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step4.png"},
+            {"text": "5. However, beware of the DANGER ZONES. AVOID THEM AT ALL COST! Coming into contact with them would end the game.", "img": "Assets/step5.png"},
+            {"text": "6. There will be two rounds in total. In the second round, the speed of the moving danger zones increases!", "img": "Assets/step6.png"},
             {"text": "7. Leaving the safe zones, will cause the safe zones to shrink. STAY ON IT!", "img": "Assets/step7.png"},
-            {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/step8.png"}
+            {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/Step68.png"}
         ]
         self.current_page = 0
 
@@ -433,7 +689,7 @@ class TutorialWindow:
         self.txt_lbl.grid(row=0, column=0, pady=(50, 20), sticky="nsew")
 
         # 2. Middle Section: Image rendering container box
-        self.img_frame = tk.Frame(self.top, bg="#222222", width=700, height=400)
+        self.img_frame = tk.Frame(self.top, bg="#222222", width=900, height=500)
         self.img_frame.grid(row=1, column=0, padx=50, pady=20)
         self.img_frame.pack_propagate(False) # Stop frame from shrinking to text size
         
@@ -494,9 +750,9 @@ class TutorialWindow:
             self.img_lbl.configure(image=self.current_img_asset, text="")
             
         except Exception as e:
-             # Fallback safely to placeholder text description if file not found
-             self.img_lbl.configure(image="", text=f"[ Missing Diagram Image: {page_data['img']} ]")
-             print(f"DEBUG: Image failed to load because: {e}")
+            # Fallback safely to placeholder text description if file not found
+            self.img_lbl.configure(image="", text=f"[ Missing Diagram Image: {page_data['img']} ]")
+            print(f"DEBUG: Image failed to load because: {e}")
 
         # Control visibility of the "Previous" button
         if self.current_page == 0:
@@ -529,15 +785,17 @@ class TutorialWindow:
             self.update_page_view()
 
     def start_game(self):
+        start_game_bgm(self.state)   # send OSC
         """Destroys the tutorial overlay completely and launches tracker interface."""
         self.top.destroy()
+        self.state.game_started = True # toggles the start state of game
 
         # Only after Tutorial Window is destroyed would the ViewerApp (game) run
         ViewerApp(self.parent, self.state, True, self.fullscreen)
 
-        self.parent.deiconify()
+        self.parent.deiconify() #show the game window after the instruction page closes
         self.parent.lift()
-        self.parent.focus_force()
+        self.parent.focus_force() #pull focus onto the game application so keybinds work immediately at the game window
 
     def on_close(self):
         # Force clean terminate on early cancellation exit routines
@@ -589,7 +847,7 @@ class ViewerApp:
                                     linewidth=3, linestyle="--", edgecolor=zone["color"])
             self.ax_plot.add_patch(circle)
             txt = self.ax_plot.text(zone["center"][0], zone["center"][1], zone["label"],
-                                   color=zone["color"], ha="center", va="center", weight="bold")
+                                color=zone["color"], ha="center", va="center", weight="bold")
             self.zone_patches.append((circle, txt, zone))
 
         self.row_dots = []
@@ -606,6 +864,10 @@ class ViewerApp:
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        if self.state.simulate: #-- if on simulate mode, 
+            self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
+            print("[SIM] Mouse simulation enabled")
 
         table_frame = tk.Frame(root, bg="#000000")
         table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
@@ -642,9 +904,24 @@ class ViewerApp:
         self.root.after(100, self.update_loop)
 
     def update_loop(self):
+        if not self.state.stop:
+            with self.state.lock:
+                update_zones(self.state)
+
         if self.state.stop:
-            self.hud.set_text("!!! GAME OVER - DANGER ZONE CLASH !!!")
-            self.hud.set_color("red")
+            if self.state.game_won:
+                self.hud.set_text("🎉 YOU WIN! 🎉\n"
+                    "All survival objectives completed!"
+                )
+                self.hud.set_color("lime")
+
+            else:
+                self.hud.set_text(
+                    "!!! GAME OVER !!!\n"
+                    "DANGER ZONE CLASH"
+                )
+                self.hud.set_color("red")
+
             self.canvas.draw_idle()
             return
 
@@ -655,10 +932,25 @@ class ViewerApp:
 
         now = time.time()
 
+        # ----- SURVIVAL TIMER HUD -----
+        if (self.state.round == ROUND_SURVIVE and self.state.survival_start_time is not None):
+            SURVIVAL_TIME = 60
+            remaining = max(0, SURVIVAL_TIME - (time.time() - self.state.survival_start_time))
+            self.hud.set_text(
+                f"SURVIVAL MODE\n"
+                f"Time Left: {remaining:.0f}s"
+            )
+            self.hud.set_color("white")
+
         for patch, txt, zone_data in self.zone_patches:
             patch.center = zone_data["center"]
             patch.set_radius(zone_data["radius"])
             txt.set_position(zone_data["center"])
+            # this is for survival mode, where if zone shrinks to minimum then remove zone from viewer
+            if zone_data.get("destroyed"):
+                patch.set_visible(False)
+                txt.set_visible(False)
+                continue
 
         for row, snap in enumerate(snapshot):
             color = TAG_COLORS[color_indices[row]]
@@ -691,15 +983,47 @@ class ViewerApp:
         self.state.stop = True
         self.root.destroy()
 
+
+    #Viewerapp simulate
+    def on_mouse_move(self, event):
+        if not self.state.game_started:
+            return
+
+        if event.xdata is None:
+            return
+
+        if event.ydata is None:
+            return
+
+        with self.state.lock:
+
+            tag = self.state.tags[0]
+
+            tag.filt_position = (
+                float(event.xdata),
+                float(event.ydata)
+            )
+
+            tag.last_update = time.time()
+
+            process_zone_transitions(0, tag)
+
+        update_zones(self.state)
+
+
+
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tags", type=int, default=2)
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
     ap.add_argument("--csv", type=str, default=None)
     ap.add_argument("--windowed", action="store_true")
+    ap.add_argument("--simulate", action="store_true")
     args = ap.parse_args()
 
-    state = SharedState(n_tags=args.tags)
+    state = SharedState(n_tags=args.tags, simulate=args.simulate)
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, sorted(ANCHORS.keys()), [ANCHORS[i] for i in sorted(ANCHORS.keys())])
     disp.map("/distances", handler)
