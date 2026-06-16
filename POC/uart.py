@@ -5,7 +5,7 @@ uart.py  —  UART Reader + OSC Sender
 =====================================
 Runs on the "sensor" Pi that is physically connected to the UWB module.
 
-Reads raw UART frames from the BU03-Kit, parses them into 8 distances (m),
+Reads raw UART frames from the BU03-Kit, parses them into 12 distances (m),
 applies per-anchor calibration offsets, then broadcasts each frame over OSC
 to the "game" Pi running game.py.
 
