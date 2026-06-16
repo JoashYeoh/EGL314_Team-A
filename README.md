@@ -32,7 +32,8 @@ In the game, players must capture safe zones while avoiding moving danger zones.
 flowchart 
     A[AI Thinker UWB Kit] -->|UART| B[Sensor Pi -> uart.py]
     B -->|OSC| c[Game Pi -> game.py]
-    c -->|OSC| D[Multiplay]
+    c -->|OSC| D[Multiplay
+    'Multi-track player']
 ```
 
 
