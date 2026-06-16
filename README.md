@@ -1,14 +1,14 @@
 # EGL314 - POC - UWB Interactive Zone Capture Game
 
 ## Table of Contents
-* [1. Project Overview](#1.-Project-Overview)
-* [2. System Architecture](#2.-System-Architecture)
-* [3. Repository Structure](#3.-Repository-Structure)
-    * [3.1. assets/ ](#3.1.-assets/)
-    * [3.2. docs/ ](#3.2.-docs/)
-    * [3.3. module_config-files/ ](#3.3.-module_config-files/)
-    * [3.4. game.py ](#3.4.-game.py)
-    * [3.5. uart.py ](#3.5-uart.py)
+* [1. Project Overview](#1-project-overview)
+* [2. System Architecture](#2-system-architecture-poc)
+* [3. Repository Structure](#3-repository-structure-poc)
+    * [3.1. assets/ ](#31-assets)
+    * [3.2. docs/ ](#32-docs)
+    * [3.3. module_config-files/ ](#33-module_config-files)
+    * [3.4. game.py ](#34-gamepy)
+    * [3.5. uart.py ](#35-uartpy)
 
 
 
