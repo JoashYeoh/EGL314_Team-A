@@ -3,7 +3,7 @@ In this document, you will find explaination of the software pipeline in this pr
 
 
 ## Overarching Data Flow
-```Mermaid
+```mermaid
 flowchart TD
     A[AI Thinker UWB Kit] -->|UART frame via Serial| B[Sensor Pi -> uart.py]
     B -->|Distances via OSC| C[Game Pi -> game.py]
@@ -17,7 +17,7 @@ flowchart TD
 
 
 ## UART Frame via Serial
-```Mermaid
+```mermaid
 flowchart LR
     A[AI Thinker UWB Kit] -->|UART frame via Serial| B[Sensor Pi -> uart.py]
 ```
@@ -25,7 +25,7 @@ When `uart.py` is running on the **Senor Pi**, it is actively reading **raw UART
 
 
 ## Distances via OSC  
-```Mermaid
+```mermaid
 flowchart LR
     B[Sensor Pi -> uart.py] -->|Distances via OSC| C[Game Pi -> game.py]
 ```
@@ -33,7 +33,7 @@ flowchart LR
 
 
 ## Processes That Distance Values Go Through
-```Mermaid
+```mermaid
 flowchart LR
     C[Game Pi -> game.py] -->|Distances go through| D(Trilateration, 
     Kalman Filtering, 
@@ -48,7 +48,7 @@ While tag's positions are being processed, `game.py` is also constantly **checki
 
 
 ## Commands Triggering 'MultiPlay' via OSC
-```Mermaid
+```mermaid
 flowchart LR
     C[Game Pi -> game.py] -->|Commands via OSC| E[Multiplay
     'Multi-track player']
