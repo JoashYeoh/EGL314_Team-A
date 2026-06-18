@@ -9,7 +9,6 @@ In this document, you will get to see how the game setup looks like.
 
 3. All the tags are powered by a power bank. As for the anchors, they are stationary and connected to a power strip instead of a power bank. The first anchor which is A00 is our main anchor where we connected it to our Raspberri PI.
 
-![Alt text](assets/Tag.drawio.png)
 ![Alt text](assets/AnchorSetup.drawio.png)
 
 
