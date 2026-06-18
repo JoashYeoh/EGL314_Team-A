@@ -1,53 +1,58 @@
 # Game Logic Documentation
 
-Overview:
+## Overview:
 The UWB Interactive Game is a location-based game that uses Ultra-Wideband (UWB) tracking to monitor the player's position in real time.
 
 The player's physical movement is translated into actions within the game. By moving around the play area, players interact with different zones that appear on the game screen.
 
 The objective is to capture safe zones while avoiding danger zones and survive until the end of the game.
 
-Gameplay Flow:
+## Gameplay Flow:
 
 The game is divided into three main stages:
 
 Tutorial
-    ↓
+    →
 Zone Capture Phase
-    ↓
+   →
 Survival Phase
-    ↓
+     →
 Victory / Game Over
 
-Stage 1: Tutorial
+## Stage 1: Tutorial
 
 When the game starts, players are presented with a tutorial screen.
 
 The tutorial explains:
 
-How player movement is tracked
-The difference between Safe Zones and Danger Zones
-How to capture zones
-How to win or lose the game
+1:How player movement is tracked
+
+2:The difference between Safe Zones and Danger Zones
+
+3:How to capture zones
+
+4:How to win or lose the game
 
 Once all players understand the rules, the game begins.
 
-Stage 2: Zone Capture Phase:
+## Stage 2: Zone Capture Phase:
 
 During this phase, several Safe Zones appear on the game field.
 
-What is a Safe Zone?
+**What is a Safe Zone?**
+
 A Safe Zone is an area that players must enter and remain inside to capture.
 
-WHAT HAPPENS WHEN U GET INTO THE SAFE ZONE:
+ **WHAT HAPPENS WHEN U GET INTO THE SAFE ZONE:**
+
 Player enters Safe Zone
-          ↓
+           →
 Zone begins expanding
-          ↓
+           →
 Player remains inside
-          ↓
+           →
 Zone reaches maximum size
-          ↓
+           →
 Zone is captured
 
 Capturing a Zone
@@ -55,29 +60,32 @@ Capturing a Zone
 To successfully capture a zone:
 
 1:Move into the Safe Zone.
+
 2:Stay within the zone boundary.
+
 3:Allow the zone to fully expand.
+
 4:Once fully expanded, the zone is considered captured.
 
 The process is repeated until all Safe Zones have been captured.
 
-Danger Zones:
+## Danger Zones:
 
 While players are capturing Safe Zones, Danger Zones are also present on the field.
 
-What is a Danger Zone?
+**What is a Danger Zone?**
 
 Danger Zones are hazardous areas that players must avoid.
 
 If a player enters a Danger Zone:
 
 Player enters Danger Zone
-          ↓
+           →
       Game Over
 
 Danger Zones move throughout the play area, forcing players to constantly reposition themselves.      
 
-Stage 3: Survival Phase
+## Stage 3: Survival Phase
 
 After all Safe Zones have been captured, the game enters Survival Mode.
 
@@ -98,7 +106,7 @@ Survive Countdown Timer
 
 The goal is to remain alive until the timer reaches zero.
 
-Win Condition:
+## Win Condition
 
 A player wins if they successfully survive until the end of the Survival Phase.
 
@@ -110,20 +118,22 @@ Survive Entire Timer
           ↓
       Victory
 
-When this happens:
+**When this happens:**
 
 1:Victory audio is played
-2;Victory visuals are displayed
+
+2:Victory visuals are displayed
+
 3:The game ends successfully
 
-Lose Conditions
+## Lose Conditions
 
 The game can end in failure under the following situations:
 
 1. Entering a Danger Zone:
 
    Player touches Danger Zone
-          ↓
+           →
      Game Over
 
 2. Safe Zones Destroyed
@@ -141,18 +151,18 @@ The game uses AI Thinker UWB modules to continuously track player positions.
 The tracking process works as follows:
 
 Player Carries UWB Tag
-          ↓
+           →
 Anchors Measure Distances
-          ↓
+           →
 Sensor Pi Receives Data
-          ↓
+           →
 Game Pi Calculates Position
-          ↓
+           →
 Player Marker Updated On Screen
 
 This allows the game to accurately determine whether a player is inside a Safe Zone or Danger Zone.
 
-Audio and Visual Feedback:
+## Audio and Visual Feedback
 
 The game provides immediate feedback to players through audio and visual effects.
 
@@ -168,7 +178,7 @@ Examples include:
 
 This feedback helps players understand what is happening during gameplay without needing to look at technical information.
      
-Summary
+## Summary
 
 The objective of the game is simple:
 
