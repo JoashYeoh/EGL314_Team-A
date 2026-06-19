@@ -5,7 +5,7 @@ The UWB Interactive Game System uses Open Sound Control (OSC) messages for commu
 
 ```mermaid
 flowchart LR
-    A[Sensor Pi 'uart.py'] -->|OSC via UDP, port 5005|B(Game Pi ' game.py'
+    A[Sensor Pi - uart.py] -->|OSC via UDP, port 5005|B(Game Pi - game.py
     - port 5005: Listen for /distances 
     - Calculates Trilateration / Kalman 
     - Updates Tkinter/Matplotlib Engine)
