@@ -76,11 +76,21 @@ OSC communication between the Game Pi and media server is not working.
 
 Solution:
 
-1:Verify the media server is running.
+1: Verify the media server / Multiplay is running.
 
-2:Check OSC IP address and port settings.
+2: Confirm both devices are connected to the same network.
 
-3:Confirm both devices are connected to the same network.
+3: Check that Sensor Pi is running uart.py
+
+4: Confirm correct IP addresses (Sensor Pi → Game Pi → Multiplay).
+
+5: Ensure OSC port numbers match on all devices.
+
+6: Check OSC IP settings are correct.
+
+7: Confirm Multiplay is listening on the correct port.
+
+8: Allow UDP traffic / check firewall settings if needed.
 
 ## 5. Game Starts but Immediately Ends
 
