@@ -95,3 +95,9 @@ Responsibilities of this script:
 - Applies calibration offsets
 - Assigns tag IDs
 - Sends distance data to **Game Pi** via OSC
+
+
+## Credits
+Built around the Ai-Thinker BU03-Kit (DW3000 + STM32F103). Hardware datasheet and AT command reference: https://en.ai-thinker.com/pro_view-158.html.
+
+Core Electronics BU03 Spatial Tracking Guide https://core-electronics.com.au/guides/diy-2d-and-3d-spatial-tracking-with-ultra-wideband-arduino-and-pico-guide/.
