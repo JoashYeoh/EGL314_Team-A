@@ -35,7 +35,7 @@ The Game Pi:
 
 
 ## Game Pi -> Multiplay 
-The `game.py` script sends OSC messages to the Multiplay media server to trigger audio and visual effects.
+The `game.py` script sends OSC messages to the Multiplay media server to trigger audio effects.
 
 | **Event**           | **OSC Address**       | **Trigger**       |
 |---------------------|--------------------   |-------------------|
@@ -72,11 +72,11 @@ The OSC addresses listed below represent logical game events used within the sys
 
 ### Core Game States
 
-| **OSC Adress**      | **Arguments**           | **Trigger**           |
-|---------------------|-------------------------|-----------------------|
-| `/start`            |                         |Sent when player clears the tutorial                                                            |
-| `/gameover`         |                         |Sent when player violates survival objectives (e.g., entering a critical danger zone structure) |
-| `/win`              |                         |Sent when all countdown criteria are successfully met and the survival timer reaches 0s.        |
+| **OSC Adress**      | **Trigger**           |
+|---------------------|-----------------------|
+| `/start`            |Sent when player clears the tutorial  |
+| `/gameover`         |Sent when player violates survival objectives (e.g., entering a critical danger zone structure) |
+| `/win`              |Sent when all countdown criteria are successfully met and the survival timer reaches 0s.        |
 
 ### Dynamic Arena  Mechanics
 
