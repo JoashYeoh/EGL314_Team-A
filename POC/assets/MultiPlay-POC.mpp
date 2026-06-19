@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Production>
+  <Version>3.0.242.0</Version>
+  <FileName>C:\Users\Joash\Desktop\School Y3S1\EGL314\project\MultiPlay-POC.mpp</FileName>
+  <LastModified>2026-06-11 12:18:18 pm</LastModified>
+  <General>
+    <AutoStartCueList>0</AutoStartCueList>
+  </General>
+  <MidiControl Device="-1" Active="0"/>
+  <Appearance>
+    <CueList Name="Arial" Size="10" Colour="FFFFFF" BgColour="000000" CueSelectedBgColour="800080" CueSelectedFontColour="FFFFFF" CueSelectedBoldText="0" CueDisabledBgColour="808080" CueDisabledFontColour="FFFFFF" CueColourStyle="0" CueListScrollBars="-1">
+      <Audio BGColour="000000" FontColour="FFFFFF"/>
+      <Wait BGColour="000000" FontColour="FFFFFF"/>
+      <Serial BGColour="000000" FontColour="FFFFFF"/>
+      <Adlib BGColour="000000" FontColour="FFFFFF"/>
+      <PlayList BGColour="000000" FontColour="FFFFFF"/>
+      <Control BGColour="000000" FontColour="FFFFFF"/>
+      <MIDI BGColour="000000" FontColour="FFFFFF"/>
+      <END BGColour="000000" FontColour="FFFFFF"/>
+      <MIDISeq BGColour="000000" FontColour="FFFFFF"/>
+      <Image BGColour="000000" FontColour="FFFFFF"/>
+      <MIDIMute BGColour="000000" FontColour="FFFFFF"/>
+      <Video BGColour="000000" FontColour="FFFFFF"/>
+      <Memo BGColour="000000" FontColour="FFFFFF"/>
+      <Network BGColour="000000" FontColour="FFFFFF"/>
+      <Launch BGColour="000000" FontColour="FFFFFF"/>
+      <AudioInput BGColour="000000" FontColour="FFFFFF"/>
+      <Message BGColour="000000" FontColour="FFFFFF"/>
+      <HTTP BGColour="000000" FontColour="FFFFFF"/>
+    </CueList>
+    <HotButtons Name="Arial" Size="12" BgColour="000000"/>
+    <ProgressBar ColourPlaying="008000" ColourPaused="0000FF" ColourWarning="FF0000" ColourInterval="808080" ColourLooping="008000" MaxWhenLooping="-1" ProgressFullHeight="-1"/>
+    <NotesHeader Name="Arial" Size="12" BgColour="000000" Colour="FF0000"/>
+    <NotesBody Name="Arial" Size="10" Colour="000000" BgColour="FFFBF0"/>
+    <Common Name="Arial" Size="10" Colour="FFFFFF" BgColour="000000" SelectedFontColour="FFFFFF" SelectedBgColour="800080" EditFontColour="000000" EditBgColour="FFFFFF" ControlFocusColour="000000"/>
+    <SelectedCueWindow Colour="FFFFFF" BgColour="000000"/>
+    <Buttons StopwatchFontColour="FFFFFF" StopwatchBgColour="000000" ClockFontColour="FFFFFF" ClockBgColour="000000" StopAllFontColour="FFFF00" StopAllBgColour="000000" FadeAllFontColour="00FFFF" FadeAllBgColour="000000" AdvanceFontColour="FF8000" AdvanceBgColour="000000" CountDownTimerFontColourNormal="FFFFFF" CountDownTimerBgColourNormal="008000" CountDownTimerFontColourWarning="FF0000" CountDownTimerBgColourWarning="000000"/>
+    <HideFractionalSeconds>0</HideFractionalSeconds>
+  </Appearance>
+  <Audio PreviewDeviceName="Default" PreviewDeviceChans="1">
+    <Patch Name="Audio Output 1" DeviceName="Default" DeviceChans="1"/>
+    <Patch Name="Audio Output 2" DeviceName="Default" DeviceChans="1"/>
+  </Audio>
+  <MIDI>
+    <Muting Patch="0" Command="0" Channel="0"/>
+  </MIDI>
+  <Network/>
+  <Messages Adapter="Local Host">
+    <Timeout>0</Timeout>
+    <Font Enabled="0" Name="Arial" BGColour="000000" FontColour="FFFFFF" DisplayStyle="0"/>
+  </Messages>
+  <HotButtons ColumnCount="1" RowCount="1" PageCount="1" UseCueDescriptions="0">
+    <Button Caption="1" CaptionColour="000000" BtnColour="FFFFFF" UID="" List="0"/>
+  </HotButtons>
+  <Layouts DefaultLayout="0">
+    <Layout ColumnStates="15#50,40,39,42,87,98,77,76,93,40,46,53,62,79,63#0,1,2,3,4,5,6,7,8,9,10,11,12,13,14#1,1,1,1,1,1,1,1,1,1,1,1,1,1,1" DirectEdit="0" LimitedUser="0" Name="Default Layout">
+      <Adlib ColumnStates="15#50,40,39,42,87,98,77,76,93,40,46,53,62,79,63#0,1,2,3,4,5,6,7,8,9,10,11,12,13,14#1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"/>
+      <Windows>
+        <fmMain Top="-8" Left="-8" Height="997" Width="1662" Maximised="-1"/>
+      </Windows>
+      <Notes UpperPaneSize="108" LowerPaneSize="108"/>
+      <sitelist>
+				<site dpi="96" id="fmMain.DockSite">
+					<zone kind="HORZ">
+						<zone kind="VERT" size="228" dsize="0.14004914004914">
+							<zone kind="PANEL" id="fmMain.dkCueControls" visible="1" size="290" dsize="0.336426914153132"/>
+							<zone kind="PANEL" id="fmMain.dkAdvance" visible="0" size="74" dsize="0.0986843389895377"/>
+							<zone kind="PANEL" id="fmMain.dkGo" visible="1" size="184" dsize="0.213518820540216"/>
+							<zone kind="PANEL" id="fmMain.dkStopAll" visible="1" size="193" dsize="0.224142019700856"/>
+							<zone kind="PANEL" id="fmMain.dkFadeAll" visible="1" size="195" dsize="0.225912245605795"/>
+							<zone kind="PANEL" id="fmMain.dkStopwatch" visible="0" size="97" dsize="0.119221269072075"/>
+							<zone kind="PANEL" id="fmMain.dkClock" visible="0" size="47" dsize="0.0564344653568301"/>
+							<zone kind="PANEL" id="fmMain.dkElapsedTime" visible="0" size="32" dsize="0.0340059123933133"/>
+							<zone kind="PANEL" id="fmMain.dkCuePoints" visible="0" size="32" dsize="0.0337035030571866"/>
+							<zone kind="PANEL" id="fmMain.dkRemainingTime" visible="0" size="33" dsize="0.0376006177190997"/>
+							<zone kind="PANEL" id="fmMain.dkCountdownTimer" visible="0" size="90" dsize="0.103454867941743"/>
+							<zone kind="PANEL" id="fmMain.dkVideoPreview" visible="0" size="880" dsize="1"/>
+						</zone>
+						<zone kind="PANEL" id="fmMain.dkCueList" visible="1" size="1400" dsize="0.85995085995086" isspace="1"/>
+						<zone kind="VERT" size="153" dsize="0.0939803439803439">
+							<zone kind="PANEL" id="fmMain.dkScheduler" visible="0" size="76" dsize="0.094603282348581"/>
+							<zone kind="PANEL" id="fmMain.dkInfo" visible="0" size="32" dsize="0.0122418403294824"/>
+							<zone kind="PANEL" id="fmMain.dkNotes" visible="0" size="96" dsize="0.114696187042105"/>
+							<zone kind="PANEL" id="fmMain.dkHotButtons" visible="0" size="80" dsize="0.094578383056071"/>
+							<zone kind="PANEL" id="fmMain.dkAdlibList" visible="0" size="52" dsize="0.0607976444690869"/>
+							<zone kind="PANEL" id="fmMain.dkExtTools" visible="0" size="160" dsize="0.18666555740349"/>
+							<zone kind="PANEL" id="fmMain.dkCueLibrary" visible="0" size="173" dsize="0.200463510873548"/>
+							<zone kind="PANEL" id="fmMain.dkProductionNotes" visible="0" size="211" dsize="0.243447019417327"/>
+							<zone kind="PANEL" id="fmMain.dkAudioPreview" visible="0" size="299" dsize="0.341772151898733"/>
+							<zone kind="VERT" size="880" dsize="1">
+								<zone kind="PANEL" id="fmMain.dkAudioOutputs" visible="0" size="366" dsize="0.418367346938776"/>
+								<zone kind="PANEL" id="fmMain.dkSelectedCue" visible="0" size="880" dsize="1"/>
+							</zone>
+						</zone>
+					</zone>
+				</site>
+			</sitelist>
+    </Layout>
+  </Layouts>
+  <Schedule AutoStart="0" SortColumn="1" SortDirection="0"/>
+  <CountdownTimer Target="12:00:00 am" Warning="60"/>
+  <Video Visible="0">
+    <Screen Name="Window" Top="0" Left="0" Height="50" Width="50" Colour="000000" Monitor="1" Active="0" StayOnTop="0">
+      <Logo Top="0" Left="0" Height="50" Width="50" Colour="000000" FileName="" FullScreen="0"/>
+    </Screen>
+    <Screen Name="Window" Top="0" Left="0" Height="50" Width="50" Colour="000000" Monitor="1" Active="0" StayOnTop="0">
+      <Logo Top="0" Left="0" Height="50" Width="50" Colour="000000" FileName="" FullScreen="0"/>
+    </Screen>
+    <Screen Name="Window" Top="0" Left="0" Height="50" Width="50" Colour="000000" Monitor="1" Active="0" StayOnTop="0">
+      <Logo Top="0" Left="0" Height="50" Width="50" Colour="000000" FileName="" FullScreen="0"/>
+    </Screen>
+    <Screen Name="Window" Top="0" Left="0" Height="50" Width="50" Colour="000000" Monitor="1" Active="0" StayOnTop="0">
+      <Logo Top="0" Left="0" Height="50" Width="50" Colour="000000" FileName="" FullScreen="0"/>
+    </Screen>
+  </Video>
+  <CueList>
+    <Cue>
+      <UID>1</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>1</Q>
+      <Description>game-bgm</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\game-bgm.wav" Duration="366698" StopPos="366698"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>-6</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>2</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>2</Q>
+      <Description>game-over</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\game-over.wav" Duration="2011" StopPos="2011"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>3</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>3</Q>
+      <Description>zoneA-expanding</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanding.wav" Duration="29736" StopPos="29736"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>4</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>4</Q>
+      <Description>zoneB-expanding</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanding.wav" Duration="29736" StopPos="29736"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>5</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>5</Q>
+      <Description>zoneC-expanding</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanding.wav" Duration="29736" StopPos="29736"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>6</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>6</Q>
+      <Description>zoneD-expanding</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanding.wav" Duration="29736" StopPos="29736"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>7</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>7</Q>
+      <Description>zoneA-stinger</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanded-stinger.wav" Duration="1290" StopPos="1290"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>8</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>8</Q>
+      <Description>zoneB-stinger</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanded-stinger.wav" Duration="1290" StopPos="1290"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>9</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>9</Q>
+      <Description>zoneC-stinger</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanded-stinger.wav" Duration="1290" StopPos="1290"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+    <Cue>
+      <UID>10</UID>
+      <Type>0</Type>
+      <Enabled>-1</Enabled>
+      <Q>10</Q>
+      <Description>zoneD-stinger</Description>
+      <Exclusive Mode="0" FadeTime="200"/>
+      <SecondTrigger Mode="0"/>
+      <Ignore FadeAll="0" StopAll="0" PauseAll="0" ResumeAll="0"/>
+      <Wait Pre="0" Post="0"/>
+      <CuePoints/>
+      <Appearance BGColour="000000" FontColour="FFFFFF"/>
+      <Advance Action="1" Target="0"/>
+      <File Name="C:\Users\Joash\Desktop\School Y3S1\EGL314\project\assets\edited\zone-expanded-stinger.wav" Duration="1290" StopPos="1290"/>
+      <AudioChannel>1</AudioChannel>
+      <Loops>1</Loops>
+      <Volume-dB>0</Volume-dB>
+      <Pan>0</Pan>
+      <SpeedStyle>0</SpeedStyle>
+      <Speed>100</Speed>
+      <Fade In="0" Out="0" AtEnd="0"/>
+    </Cue>
+  </CueList>
+  <AdlibList/>
+</Production>
