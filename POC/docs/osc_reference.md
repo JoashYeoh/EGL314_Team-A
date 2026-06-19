@@ -5,11 +5,12 @@ The UWB Interactive Game System uses Open Sound Control (OSC) messages for commu
 
 ```mermaid
 flowchart LR
-    A[Sensor Pi - uart.py] -->|OSC via UDP, port 5005|B(Game Pi - game.py
+    A[**Sensor Pi - uart.py**] -->|OSC via UDP, port 5005|B(**Game Pi - game.py**
     - port 5005: Listen for /distances 
     - Calculates Trilateration / Kalman 
     - Updates Tkinter/Matplotlib Engine)
-    B-->|OSC Cues via UDP, Target Port: 8888| C[Multi-Play Media Server Triggers targeted audio cues]
+    B-->|OSC Cues via UDP, Target Port: 8888| C[**Multi-Play Media Server** 
+    - Triggers targeted audio cues]
 ```
 The OSC communication layer serves two purposes:
 
@@ -72,7 +73,7 @@ The OSC addresses listed below represent logical game events used within the sys
 
 ### Core Game States
 
-| **OSC Adress**      | **Trigger**           |
+| **OSC Address**      | **Trigger**           |
 |---------------------|-----------------------|
 | `/start`            |Sent when player clears the tutorial  |
 | `/gameover`         |Sent when player violates survival objectives (e.g., entering a critical danger zone structure) |
@@ -80,13 +81,13 @@ The OSC addresses listed below represent logical game events used within the sys
 
 ### Dynamic Arena  Mechanics
 
-| **OSC Adress**      | **Arguments**                          | **Trigger**       |
+| **OSC Address**      | **Arguments**                          | **Trigger**       |
 |---------------------|----------------------------------------|-------------------|
 | `/zone/expand`      |  `zone_id(int)` `radius(float)`        |When Zone grows       |
 | `/zone/shrink`      |  `zone_id(int)` `radius(float)`        |When Zone contracts   |
 
 
-| **OSC Adress**      | **Arguments**                 | **Trigger**                   |
+| **OSC Address**      | **Arguments**                 | **Trigger**                   |
 |---------------------|-------------------------------|-------------------------------|
 | `/zone/enter`       |  `zone_id(int)` `tag_id(int)` |Sent when a player steps into a zone boundary.  |      
 | `/zone/exit`        |  `zone_id(int)` `tag_id(int)` |Sent when player leaves a zone.                 |
