@@ -40,6 +40,31 @@ flowchart
 
 ## 3. Repository Structure (POC/)
 
+```
+.
+├── README.md          # this file (overview of POC/ repo)
+├── POC/ 
+    ├── assets/        # assets used in game developtment
+    ├── docs/
+        ├── assets/                    # assets used in documentation
+        ├── architecture.md            # system architecture overview
+        ├── calibration.md             # uwb anchor calibration guide
+        ├── game_logic.md              # explaination of game.py logic
+        ├── hardware_setup.md          # guide on phyiscal set-up of game
+        ├── osc_reference.md           # guide to osc implementation
+        ├── software_setup.md          # rpi prep and software related
+        ├── troubleshooting.md         # common issues and its solution
+        └── uwb_configuration.md       # BU03 board pinout
+    ├── module_config-files
+        ├── check_uart.sh              # confirms /dev/serial0 mapping
+        ├── bu03_detect.py             # UART smoke test
+        ├── bu03_multi_config.py       # set ID/role per board
+        ├── bu03_inspect.py            # read back saved config
+        └── viewer_calibrate.py        # per-anchor offset measurement
+    ├── game.py         # main game script to run on Game Pi
+    └── uart.py         # script to run on Sensor Pi to pull UART data
+```
+
 ### 3.1. assets/
 Contains:
 - Tutorial images
