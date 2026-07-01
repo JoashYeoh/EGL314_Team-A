@@ -246,8 +246,27 @@ ZONES = [
 # ---------------------------------------------------------------------------
 # Game Phases - round progression
 # ---------------------------------------------------------------------------
-ROUND_EXPAND = 0
-ROUND_SURVIVE = 1
+LEVELS = [
+
+    {
+        "zones":[0,1],
+        "time":10,
+        "danger_speed":1.0,
+    },
+
+    {
+        "zones":[0,1,2],
+        "time":15,
+        "danger_speed":1.3,
+    },
+
+    {
+        "zones":[0,1,2,3],
+        "time":20,
+        "danger_speed":1.6,
+    }
+
+]
 
 
 TAG_COLORS = [
@@ -362,63 +381,20 @@ class TagState:
 
 class SharedState:
     def __init__(self, n_tags, simulate=False):
+
         self.n_tags = n_tags
         self.tags   = [TagState() for _ in range(n_tags)]
+
         self.row_color_index = list(range(n_tags))
+
         self.lock   = threading.Lock()
+
         self.frame_count = 0
         self.start_time  = time.time()
-        self.game_started = False
-        self.stop = False
-        self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
-        self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
+
         self.simulate = simulate # tag simulation state
-        self.survival_start_time = None # survival state for survival round
-        self.game_won = False
+        
 
-
-# ---------------------------------------------------------------------------
-# Danger Zone Movement logic
-# ---------------------------------------------------------------------------
-def update_danger_zones(state):
-    # Anchor Boundaries (0.0 to 1.0)
-    L_X_MIN, L_X_MAX = 0.0, 1.0   # Set the left and right outer boundary walls
-    L_Y_MIN, L_Y_MAX = 0.0, 1.0   # Set the bottom and top outer boundary walls
-
-    x_min, x_max, y_min, y_max = VIEW_BOUNDS
-    for zone in ZONES:
-        if not zone["active"]:
-            continue   # Skip checking this zone if it's turned off
-            
-        if zone.get("is_danger"):
-            cx, cy = zone["center"]     # Get current X and Y center position of the ball     
-            vx, vy = zone["velocity"]   # Get current horizontal and vertical speeds
-            
-            new_x, new_y = cx + vx, cy + vy  # Calculate its potential next position step
-            
-            # Bounce logic at Anchor edges
-            if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
-                vx = -vx
-            if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
-                vy = -vy
-                # Reverse the horizontal direction (bounce!)
-                
-            zone["center"] = (cx + vx, cy + vy)
-            zone["velocity"] = [vx, vy]
-            # Reverse the vertical direction (bounce!)
-            
-            
-            # Check for clash
-            for tag_id, tag in enumerate(state.tags):
-
-                if not state.game_over_sent and tag.filt_position and point_in_zone(tag.filt_position, zone):
-
-                    send_game_over(tag_id, zone["label"])
-
-                    print(f"!!! GAME OVER - {zone['label']} CLASH !!!")   #when game hits the danger zone it will end and show game over
-
-                    state.game_over_sent = True
-                    state.stop = True 
         
 # ---------------------------------------------------------------------------
 #  Zone Grow Logic (round 1)
@@ -447,20 +423,6 @@ def update_expansion_phase(state):
         # Global round progression check
         if zone["radius"] < zone["max_radius"]:
             all_expanded = False
-
-    # Transition to next phase
-    if all_expanded:
-        print("=== ROUND 2: SURVIVAL PHASE ===")
-        state.round = ROUND_SURVIVE
-        state.survival_start_time = time.time()
-        
-        # --- NEW CONDITION ADDED HERE  when it goes to stage 2 for the danger zone ---
-        SPEED_MULTIPLIER = 2.0  #when it reach zone 2 the game will speed up
-        for zone in ZONES:
-            if zone.get("is_danger"):
-                # Multiplies both X and Y components of the velocity vector
-                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]] # Multiply both the horizontal (X) and vertical (Y) speed values by your multiplier
-        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")   # Print an alert to the terminal to tell people that it is moving faster
 
 # ---------------------------------------------------------------------------
 #  Zone Shrink & Grow Logic (round 2) 
@@ -504,31 +466,6 @@ def check_all_zones_lost(state):
     return all(z.get("destroyed", False) for z in safe_zones)
 
 
-# ---------------------------------------------------------------------------
-# OSC handler
-# Master Zone Update
-# ---------------------------------------------------------------------------
-def update_zones(state):
-    if state.round == ROUND_EXPAND:
-        update_expansion_phase(state)
-
-    elif state.round == ROUND_SURVIVE:
-        SURVIVAL_TIME = 60
-        if state.round == ROUND_SURVIVE:
-            elapsed = time.time() - state.survival_start_time
-            if elapsed >= SURVIVAL_TIME:
-                send_game_win()
-                state.game_won = True
-                state.stop = True
-
-        update_shrinking_zones(state)
-
-        if check_all_zones_lost(state):
-            print("ALL SAFE ZONES LOST")
-            send_game_over(-1, "ALL SAFE ZONES")
-            state.stop = True
-
-    update_danger_zones(state)
 
 # ---------------------------------------------------------------------------
 # OSC handler — called from the OSC server thread for every distances message
@@ -803,6 +740,117 @@ class TutorialWindow: #defines class handling intruction window
         sys.exit(0)
         
 
+
+
+# ---------------------------------------------------------------------------
+# GameManager (Game logics)
+# ---------------------------------------------------------------------------
+class GameManager:
+    def __init__(self, state):
+
+        self.state = state
+
+        self.current_level = 0
+        self.level_running = False
+        self.level_start_time = None
+
+        self.game_started = False
+        self.game_won = False
+
+        self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
+        
+        self.stop = False
+
+
+    # ---------------------------------------------------------------------------
+    # Master Zone Update
+    # ---------------------------------------------------------------------------
+    def update_zones(state):
+        if state.round == ROUND_EXPAND:
+            update_expansion_phase(state)
+
+        elif state.round == ROUND_SURVIVE:
+            SURVIVAL_TIME = 60
+            if state.round == ROUND_SURVIVE:
+                elapsed = time.time() - state.survival_start_time
+                if elapsed >= SURVIVAL_TIME:
+                    send_game_win()
+                    state.game_won = True
+                    state.stop = True
+
+            update_shrinking_zones(state)
+
+            if check_all_zones_lost(state):
+                print("ALL SAFE ZONES LOST")
+                send_game_over(-1, "ALL SAFE ZONES")
+                state.stop = True
+
+        self.update_danger_zones(state)
+
+    # ---------------------------------------------------------------------------
+    # Danger Zone Movement logic
+    # ---------------------------------------------------------------------------
+    def update_danger_zones(state):
+        # Anchor Boundaries (0.0 to 1.0)
+        L_X_MIN, L_X_MAX = 0.0, 1.0   # Set the left and right outer boundary walls
+        L_Y_MIN, L_Y_MAX = 0.0, 1.0   # Set the bottom and top outer boundary walls
+
+        x_min, x_max, y_min, y_max = VIEW_BOUNDS
+        for zone in ZONES:
+            if not zone["active"]:
+                continue   # Skip checking this zone if it's turned off
+                
+            if zone.get("is_danger"):
+                cx, cy = zone["center"]     # Get current X and Y center position of the ball     
+                vx, vy = zone["velocity"]   # Get current horizontal and vertical speeds
+                
+                new_x, new_y = cx + vx, cy + vy  # Calculate its potential next position step
+                
+                # Bounce logic at Anchor edges
+                if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
+                    vx = -vx
+                if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
+                    vy = -vy
+                    # Reverse the horizontal direction (bounce!)
+                    
+                zone["center"] = (cx + vx, cy + vy)
+                zone["velocity"] = [vx, vy]
+                # Reverse the vertical direction (bounce!)
+                
+                
+                # Check for clash
+                for tag_id, tag in enumerate(state.tags):
+
+                    if tag.filt_position and point_in_zone(tag.filt_position, zone):
+
+                        self.game_over(
+                            tag_id,
+                            zone["label"]
+                        )
+
+                        return
+
+
+    def setup_level(self):
+
+
+    def start_game(self):
+        ...
+
+    def start_level(self):
+        ...
+
+    def update(self):
+        ...
+
+    def game_over(self):
+        ...
+
+    def game_won(self):
+        ...
+
+
+
 # ---------------------------------------------------------------------------
 # Viewer  (Tkinter + matplotlib)
 # ---------------------------------------------------------------------------
@@ -904,11 +952,10 @@ class ViewerApp:
         self.root.after(100, self.update_loop)
 
     def update_loop(self):
-        if not self.state.stop:
-            with self.state.lock:
-                update_zones(self.state)
+        if not self.game.stop:
+            self.game.update()
 
-        if self.state.stop:
+        if self.game.stop:
             if self.state.game_won:
                 self.hud.set_text("🎉 YOU WIN! 🎉\n"
                     "All survival objectives completed!"
