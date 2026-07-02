@@ -123,3 +123,10 @@ DEFAULT_PORT = 5005  # UDP port to listen on
 ROUND_EXPAND = 0
 ROUND_SURVIVE = 1
 
+
+
+# ---------------------------------------------------------------------------
+# OSC to Multiplay -- when enter zone and exit zone
+# ---------------------------------------------------------------------------
+OSC_TARGET_IP = "127.0.0.1"    # IP of laptop running Multi-play
+OSC_TARGET_PORT = 8888

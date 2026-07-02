@@ -2,7 +2,7 @@ import time
 
 from constants import (ZONE_HIT_TOLERANCE, ZONES, VIEW_BOUNDS, ROUND_SURVIVE, ROUND_EXPAND)
 
-from osc_handler import *
+from osc_sender import *
 
 # ---------------------------------------------------------------------------
 # Zone detection
