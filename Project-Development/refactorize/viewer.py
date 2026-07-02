@@ -26,15 +26,14 @@ from shared_state import SharedState
 # Viewer  (Tkinter + matplotlib)
 # ---------------------------------------------------------------------------
 class ViewerApp:
-    def __init__(self, root, state: SharedState, show_circles, fullscreen, process_zone_transitions, update_zones):
+    def __init__(self, root, state: SharedState, simulate, fullscreen, game_manager):
         self.root         = root
         self.state        = state
-        self.show_circles = show_circles
+        self.simulate     = simulate
         self.anchor_ids   = sorted(ANCHORS.keys())
         self.n_anchors    = len(self.anchor_ids)
 
-        self.process_zone_transitions = process_zone_transitions
-        self.update_zones = update_zones
+        self.game_manager = game_manager
 
         root.title("BU03 Live Tracker — game.py")
         root.configure(bg="#000000")
@@ -128,7 +127,7 @@ class ViewerApp:
     def update_loop(self):
         if not self.state.stop:
             with self.state.lock:
-                self.update_zones(self.state)
+                self.game_manager.update()
 
         if self.state.stop:
             if self.state.game_won:
@@ -228,6 +227,6 @@ class ViewerApp:
 
             tag.last_update = time.time()
 
-            self.process_zone_transitions(0, tag)
+            self.game_manager.process_zone_transitions(0, tag)
 
-        self.update_zones(self.state)
+        self.game_manager.update()

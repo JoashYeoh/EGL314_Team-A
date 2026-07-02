@@ -50,6 +50,9 @@ from trilateration import trilaterate_2d
 from viewer import ViewerApp
 from tutorial import TutorialWindow
 
+from game_manager import GameManager
+
+
 
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone
@@ -443,6 +446,7 @@ def main():
     args = ap.parse_args()
 
     state = SharedState(n_tags=args.tags, simulate=args.simulate)
+    game_manager = GameManager(state, update_zones, process_zone_transitions)
     disp = osc_dispatcher.Dispatcher()
     handler = make_osc_handler(state, sorted(ANCHORS.keys()), [ANCHORS[i] for i in sorted(ANCHORS.keys())])
     disp.map("/distances", handler)
@@ -454,7 +458,7 @@ def main():
     root = tk.Tk()
     root.withdraw()  # Hide root window
 
-    tutorial = TutorialWindow(root, state, not args.windowed, ViewerApp, start_game_bgm, process_zone_transitions, update_zones)
+    tutorial = TutorialWindow(root, state, not args.windowed, ViewerApp, start_game_bgm, game_manager)
 
     root.mainloop()
 

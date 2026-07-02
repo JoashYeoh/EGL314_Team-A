@@ -9,15 +9,14 @@ from constants import *
 # Tutorial/Instructions for game
 #----------------------------------------------------------------------------
 class TutorialWindow: #defines class handling intruction window
-    def __init__(self, parent, state, fullscreen, viewer_class, start_game_bgm, process_zone_transitions, update_zones,): #initialization and take parent and app to communicate with main game
+    def __init__(self, parent, state, fullscreen, viewer_class, start_game_bgm, game_manager): #initialization and take parent and app to communicate with main game
         self.parent = parent #Saves these window references as object variables so any function inside this class can access them later.
         self.state = state
         self.fullscreen = fullscreen
 
         self.viewer_class = viewer_class
         self.start_game_bgm = start_game_bgm
-        self.process_zone_transitions = process_zone_transitions
-        self.update_zones = update_zones
+        self.game_manager = game_manager
                 
         # Create a Toplevel pop-up container
         self.top = tk.Toplevel(parent)
@@ -162,7 +161,7 @@ class TutorialWindow: #defines class handling intruction window
         self.state.game_started = True # toggles the start state of game
 
         # Only after Tutorial Window is destroyed would the ViewerApp (game) run
-        self.viewer_class(self.parent, self.state, True, self.fullscreen, self.process_zone_transitions, self.update_zones)
+        self.viewer_class(self.parent, self.state, True, self.fullscreen, self.game_manager)
 
         self.parent.deiconify() #show the game window after the instruction page closes
         self.parent.lift()
