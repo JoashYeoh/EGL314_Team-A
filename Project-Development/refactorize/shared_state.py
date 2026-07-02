@@ -1,10 +1,10 @@
 import threading
 import time
 
-from constants import ROUND_EXPAND
-
-from kalman import *
 from dataclasses import dataclass, field
+
+from kalman import Kalman2D
+from constants import ROUND_EXPAND
 
 
 # ---------------------------------------------------------------------------
@@ -33,9 +33,9 @@ class SharedState:
         self.game_started = False
         self.stop = False
         self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
-        
-        self.round = ROUND_EXPAND  # for game to start in expand mode (round1)
-        
+                
         self.simulate = simulate # tag simulation state
-        self.survival_start_time = None # survival state for survival round
-        self.game_won = False
+        self.game_won = False   
+
+        self.round = ROUND_EXPAND
+        self.survival_start_time = None
