@@ -31,8 +31,20 @@ def zone_is_occupied(zone, tags):
 
 
 def check_all_zones_lost(state):
-    safe_zones = [z for z in ZONES if z.get("safe")]
-    return all(z.get("destroyed", False) for z in safe_zones)
+    """safe_zones = [z for z in ZONES if z.get("active", True)]
+    return all(z.get("destroyed", False) for z in active_safe_zones)"""
+    for zone in ZONES:
+
+        if not zone.get("safe"):
+            continue
+
+        if not zone.get("active", True):
+            continue
+
+        if not zone.get("destroyed", False):
+            return False
+
+    return True
 
 
 def process_zone_transitions(tag_id, tag):
@@ -40,6 +52,8 @@ def process_zone_transitions(tag_id, tag):
     current_zones = set()
 
     for zi, zone in enumerate(ZONES):
+        if not zone.get("active", True):
+            continue
         if point_in_zone(tag.filt_position, zone):
             current_zones.add(zi)
 
@@ -67,6 +81,8 @@ def update_expansion_phase(state):
 
     for zi, zone in enumerate(ZONES):
         if not zone.get("safe"):
+            continue
+        if not zone.get("active", True):
             continue
 
         occupied = zone_is_occupied(zone, state.tags)
@@ -111,6 +127,9 @@ def update_shrinking_zones(state):
 
     for zone in ZONES:
         if not zone["active"]:
+            continue
+
+        if not zone.get("active", True):
             continue
 
         if zone.get("is_danger"): # skip danger zone

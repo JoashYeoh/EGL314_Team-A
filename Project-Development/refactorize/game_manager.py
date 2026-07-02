@@ -1,3 +1,9 @@
+import time
+
+from level_config import LEVELS
+from constants import ZONES
+from zones import *
+
 class GameManager:
 
     def __init__(self, state, update_fn, transition_fn):
@@ -6,14 +12,105 @@ class GameManager:
         self.update_fn = update_fn
         self.transition_fn = transition_fn
 
-    def update(self):
+        self.current_level = 1
+        self.level_running = False
+        self.level_completed = False
+        self.level_start_time = None
+        self.pause_between_levels = False
+        self.level_data = LEVELS
 
-        # Check zone transitions for every tag
+        self.start_level(1)
+
+
+    def start_level(self, level):
+            self.current_level = level
+            level_data = LEVELS[level]
+            safe_zone_count = level_data["safe_zones"]
+
+            self.level_running = True
+            self.level_completed = False
+            self.pause_between_levels = False
+
+            self.level_start_time = time.time()
+
+            safe_zones = []
+            for zone in ZONES:
+                if zone.get("safe"):
+                    safe_zones.append(zone)
+            
+            for zone in safe_zones:
+                zone["active"] = False
+
+            for zone in safe_zones[:safe_zone_count]:
+                zone["active"] = True
+                zone["captured"] = False
+                zone["expanded_sent"] = False
+                zone["destroyed"] = False
+                zone["radius"] = zone["min_radius"]
+            
+            print("------ ACTIVE ZONES ------")
+            for zone in safe_zones:
+                print(zone["label"], zone["active"])
+                
+
+    def get_level_data(self):
+        return LEVELS[self.current_level]
+
+
+    def get_remaining_time(self):
+
+        if self.level_start_time is None:
+            return 0
+
+        level_data = LEVELS[self.current_level]
+        elapsed = time.time() - self.level_start_time
+        remaining = level_data["survival_time"] - elapsed
+
+        return max(0, remaining)
+    
+
+    def finish_level(self):
+
+        print(f"Level {self.current_level} complete!")
+
+        self.level_running = False
+
+        if self.current_level < len(LEVELS):
+            self.current_level += 1
+            print(f"Waiting to start Level {self.current_level}")
+
+        else:
+            print("GAME WON!")
+            self.state.game_won = True
+            self.state.stop = True
+    
+
+    def update(self):
+        if not self.level_running:
+            return
+
+        # Process enter/exit events
         for tag_id, tag in enumerate(self.state.tags):
             if tag.filt_position is not None:
                 self.process_zone_transitions(tag_id, tag)
 
-        self.update_fn(self.state)
+        # Update the game world
+        update_shrinking_zones(self.state)
+        update_danger_zones(self.state)
+
+        # Lose condition
+        if check_all_zones_lost(self.state):
+            print("GAME OVER")
+
+            self.state.stop = True
+            return
+
+        # Win current level
+        if self.get_remaining_time() <= 0:
+            self.finish_level()
+
 
     def process_zone_transitions(self, tag_id, tag):
         self.transition_fn(tag_id, tag)
+            
+

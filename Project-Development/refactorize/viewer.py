@@ -164,14 +164,21 @@ class ViewerApp:
             self.hud.set_color("white")
 
         for patch, txt, zone_data in self.zone_patches:
-            patch.center = zone_data["center"]
-            patch.set_radius(zone_data["radius"])
-            txt.set_position(zone_data["center"])
-            # this is for survival mode, where if zone shrinks to minimum then remove zone from viewer
-            if zone_data.get("destroyed"):
+            # Hide inactive zones
+            if not zone_data.get("active", True):
                 patch.set_visible(False)
                 txt.set_visible(False)
                 continue
+            # Show active zones
+            patch.set_visible(True)
+            txt.set_visible(True)
+            patch.center = zone_data["center"]
+            patch.set_radius(zone_data["radius"])
+            txt.set_position(zone_data["center"])
+            # Hide destroyed zones
+            if zone_data.get("destroyed"):
+                patch.set_visible(False)
+                txt.set_visible(False)
 
         for row, snap in enumerate(snapshot):
             color = TAG_COLORS[color_indices[row]]
