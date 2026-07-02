@@ -52,6 +52,7 @@ from tutorial import TutorialWindow
 
 from game_manager import GameManager
 
+from zones import (point_in_zone, zone_is_occupied, check_all_zones_lost)
 
 
 # ---------------------------------------------------------------------------
@@ -160,21 +161,7 @@ ROUND_SURVIVE = 1
 
 
 
-# ---------------------------------------------------------------------------
-# Zone detection
-# ---------------------------------------------------------------------------
-def point_in_zone(point, zone):
-    if point is None:
-        return False
 
-    px, py = point
-    zx, zy = zone["center"]
-    r = zone["radius"] + ZONE_HIT_TOLERANCE
-
-    dx = px - zx
-    dy = py - zy
-
-    return (dx * dx + dy * dy) <= (r * r)
 
 
 # ---------------------------------------------------------------------------
@@ -291,17 +278,7 @@ def update_shrinking_zones(state):
                 zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
                 zone["radius"] = min(zone["radius"], zone["max_radius"])
 
-def zone_is_occupied(zone, tags):
-    for tag in tags:
-        if tag.filt_position is None:
-            continue
-        if point_in_zone(tag.filt_position, zone):
-            return True
-    return False
 
-def check_all_zones_lost(state):
-    safe_zones = [z for z in ZONES if z.get("safe")]
-    return all(z.get("destroyed", False) for z in safe_zones)
 
 
 # ---------------------------------------------------------------------------
