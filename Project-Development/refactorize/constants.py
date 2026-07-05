@@ -23,8 +23,8 @@ ZONES = [
         "radius": 0.10,
         "max_radius": 0.25,
         "min_radius": 0.10,
-        "expand_rate": 0.005,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.015,
+        "shrink_rate": 0.0008,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
@@ -38,8 +38,8 @@ ZONES = [
         "radius": 0.10,
         "max_radius": 0.25,
         "min_radius": 0.10,
-        "expand_rate": 0.005,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.015,
+        "shrink_rate": 0.0008,
         "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
@@ -53,8 +53,8 @@ ZONES = [
         "radius": 0.10,
         "max_radius": 0.25,
         "min_radius": 0.10,
-        "expand_rate": 0.005,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.015,
+        "shrink_rate": 0.0008,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
@@ -68,8 +68,8 @@ ZONES = [
         "radius": 0.10,
         "max_radius": 0.25,
         "min_radius": 0.10,
-        "expand_rate": 0.005,
-        "shrink_rate": 0.002,
+        "expand_rate": 0.015,
+        "shrink_rate": 0.0008,
         "color": "#c266ff",
         "label": "ZONE D",
         "active": True,
@@ -82,22 +82,26 @@ ZONES = [
 
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
+        "start_center": (0.5, 0.5),
         "center": [0.5, 0.5],
         "radius": 0.10,          #show big my danger zone is
         "color": "#ff0000",
         "label": "DANGER-V",
         "active": True,
         "is_danger": True,          # Unique flag to identify this as an enemy zone
+        "start_velocity": [0.015, 0.0],
         "velocity": [0.0, 0.015],    # [X-speed, Y-speed] -> Moves ONLY up/down
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
+        "start_center": (0.5, 0.5),
         "center": [0.5, 0.5],
         "radius": 0.10,
         "color": "#ff0000",
         "label": "DANGER-H",
         "active": True,
         "is_danger": True,
+        "start_velocity": [0.015, 0.0],
         "velocity": [0.015, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
     },
 ]

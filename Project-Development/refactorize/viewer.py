@@ -132,7 +132,7 @@ class ViewerApp:
             self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
             print("[SIM] Mouse simulation enabled")
 
-        self.root.bind("<space>", self.on_space_pressed)
+        self.root.bind("<space>", self.on_space_pressed) # bind space keypress
 
         table_frame = tk.Frame(root, bg="#000000")
         table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)

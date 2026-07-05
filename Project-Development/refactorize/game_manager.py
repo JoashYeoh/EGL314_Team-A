@@ -45,6 +45,12 @@ class GameManager:
             self.state.danger_zone_hit = False
             self.state.game_over_delay = None
             self.state.game_over_sent = False
+            
+            # reset all tags
+            for tag in self.state.tags:
+                tag.zones_inside.clear()
+                tag.raw_position = None
+                tag.filt_position = None
 
             self.level_start_time = time.time()
 
@@ -52,6 +58,9 @@ class GameManager:
             for zone in ZONES:
                 if zone.get("safe"):
                     safe_zones.append(zone)
+                if zone.get("is_danger"):
+                    zone["center"] = zone["start_center"]
+                    zone["velocity"] = list(zone["start_velocity"])
             
             for zone in safe_zones:
                 zone["active"] = False
@@ -141,19 +150,53 @@ class GameManager:
         self.transition_fn(tag_id, tag)
     
 
-    def handle_space(self):
-
-        if self.game_state == STATE_LEVEL_COMPLETE:
-            self.start_level(self.current_level)
-
-        elif self.game_state == STATE_GAME_OVER:
-            self.restart_game()
-
-        elif self.game_state == STATE_GAME_WON:
-            self.return_to_menu()
-    
     def trigger_game_over(self, reason="GAME OVER"):
         print(f"[GAME OVER] {reason}")
         if self.state.game_over_delay is None:
             self.state.game_over_delay = time.time() + GAME_OVER_DELAY
 
+
+
+# ---------------------------------------------------------------------------
+# game progression (during overlays)
+# ---------------------------------------------------------------------------
+
+    def handle_space(self):
+        state = self.game_state
+        next_level = self.current_level
+
+        if state == STATE_LEVEL_COMPLETE:
+            self.start_level(next_level)
+
+        elif state == STATE_GAME_OVER:
+            self.retry_level()
+
+        elif state == STATE_GAME_WON:
+            self.new_game()
+
+
+    def retry_level(self):
+
+        print(f"Retrying Level {self.current_level}")
+
+        self.game_state = STATE_PLAYING
+
+        self.level_running = True
+        self.level_completed = False
+        self.pause_between_levels = False
+
+        self.state.stop = False
+        self.state.game_won = False
+
+        self.state.game_over_delay = None
+        self.state.game_over_sent = False
+
+        self.state.safe_zone_lost = False
+        self.state.danger_zone_hit = False
+
+        self.start_level(self.current_level)
+    
+
+    def new_game(self):
+        self.current_level = 1
+        self.retry_level()
