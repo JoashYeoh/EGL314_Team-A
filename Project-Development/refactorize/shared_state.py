@@ -33,9 +33,10 @@ class SharedState:
         self.game_started = False
         self.stop = False
         self.game_over_sent = False # to check if game over state has been sent out on osc (so it doesn't spam)
-                
+        self.game_over_time = None # this is for a slight dealy for UX when game ends
+
         self.simulate = simulate # tag simulation state
         self.game_won = False   
 
         self.round = ROUND_EXPAND
-        self.survival_start_time = None
+        self.game_over_delay = None

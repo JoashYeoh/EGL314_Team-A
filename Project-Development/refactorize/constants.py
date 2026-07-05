@@ -124,6 +124,11 @@ ROUND_EXPAND = 0
 ROUND_SURVIVE = 1
 
 
+STATE_PLAYING = "playing"
+STATE_LEVEL_COMPLETE = "level_complete"
+STATE_GAME_OVER = "game_over"
+STATE_GAME_WON = "game_won"
+
 
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone

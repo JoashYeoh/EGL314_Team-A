@@ -17,7 +17,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-from constants import (TAG_COLORS, COLOR_NAMES, ANCHORS, VIEW_BOUNDS, ZONES, ROUND_SURVIVE)
+from constants import *
 from shared_state import SharedState
 
 
@@ -129,6 +129,18 @@ class ViewerApp:
             with self.state.lock:
                 self.game_manager.update()
 
+        if self.game_manager.game_state == STATE_GAME_OVER:
+            self.draw_game_over()
+
+        elif self.game_manager.game_state == STATE_GAME_WON:
+            self.draw_game_win()
+
+        elif self.game_manager.game_state == STATE_LEVEL_COMPLETE:
+            self.draw_level_complete()
+
+        else:
+            self.draw_gameplay()
+
         if self.state.stop:
             if self.state.game_won:
                 self.hud.set_text("🎉 YOU WIN! 🎉\n"
@@ -237,3 +249,7 @@ class ViewerApp:
             self.game_manager.process_zone_transitions(0, tag)
 
         self.game_manager.update()
+    
+
+    def draw_gameplay(self):
+        pass

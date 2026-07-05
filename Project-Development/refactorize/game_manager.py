@@ -1,7 +1,13 @@
 import time
 
 from level_config import LEVELS
-from constants import ZONES
+from constants import (
+    ZONES,
+    STATE_PLAYING,
+    STATE_LEVEL_COMPLETE,
+    STATE_GAME_OVER,
+    STATE_GAME_WON,
+)
 from zones import *
 
 class GameManager:
@@ -18,6 +24,7 @@ class GameManager:
         self.level_start_time = None
         self.pause_between_levels = False
         self.level_data = LEVELS
+        self.game_state = STATE_PLAYING
 
         self.start_level(1)
 
@@ -28,6 +35,7 @@ class GameManager:
             safe_zone_count = level_data["safe_zones"]
 
             self.level_running = True
+            self.game_state = STATE_PLAYING
             self.level_completed = False
             self.pause_between_levels = False
 
@@ -46,7 +54,7 @@ class GameManager:
                 zone["captured"] = False
                 zone["expanded_sent"] = False
                 zone["destroyed"] = False
-                zone["radius"] = zone["min_radius"]
+                zone["radius"] = zone["max_radius"]
             
             print("------ ACTIVE ZONES ------")
             for zone in safe_zones:
@@ -74,6 +82,9 @@ class GameManager:
         print(f"Level {self.current_level} complete!")
 
         self.level_running = False
+        self.level_completed = True
+        self.pause_between_levels = True
+        self.game_state = STATE_LEVEL_COMPLETE
 
         if self.current_level < len(LEVELS):
             self.current_level += 1
@@ -81,6 +92,7 @@ class GameManager:
 
         else:
             print("GAME WON!")
+            self.game_state = STATE_GAME_WON
             self.state.game_won = True
             self.state.stop = True
     
@@ -98,11 +110,19 @@ class GameManager:
         update_shrinking_zones(self.state)
         update_danger_zones(self.state)
 
+        # 
+        if self.state.game_over_delay is not None:
+            if time.time() >= self.state.game_over_delay:
+                self.game_state = STATE_GAME_OVER
+                self.state.stop = True
+                return
+
         # Lose condition
+        #print("Checking lose condition...")
         if check_all_zones_lost(self.state):
             print("GAME OVER")
-
-            self.state.stop = True
+            if self.state.game_over_delay is None:
+                self.state.game_over_delay = time.time() + 0.5
             return
 
         # Win current level

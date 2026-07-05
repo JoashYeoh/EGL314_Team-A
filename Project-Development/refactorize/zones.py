@@ -31,20 +31,17 @@ def zone_is_occupied(zone, tags):
 
 
 def check_all_zones_lost(state):
-    """safe_zones = [z for z in ZONES if z.get("active", True)]
-    return all(z.get("destroyed", False) for z in active_safe_zones)"""
     for zone in ZONES:
-
+        # Ignore danger zones
         if not zone.get("safe"):
             continue
-
+        # Ignore inactive zones
         if not zone.get("active", True):
             continue
-
-        if not zone.get("destroyed", False):
-            return False
-
-    return True
+        # One destroyed zone = game over
+        if zone.get("destroyed", False):
+            return True
+    return False
 
 
 def process_zone_transitions(tag_id, tag):
@@ -142,8 +139,10 @@ def update_shrinking_zones(state):
                 zone["radius"] -= zone["shrink_rate"]
                 zone["radius"] = max(zone["radius"], zone["min_radius"])
                 if zone["radius"] <= zone["min_radius"]: # checks if zone shrinks to min_radius to trigger game end
+                    """zone["destroyed"] = True
+                    zone["active"] = False"""
+                    zone["radius"] = zone["min_radius"]
                     zone["destroyed"] = True
-                    zone["active"] = False
                     print(f"{zone['label']} LOST!")
 
         else:
