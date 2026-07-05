@@ -120,14 +120,17 @@ class GameManager:
         # Lose condition
         #print("Checking lose condition...")
         if check_all_zones_lost(self.state):
-            print("GAME OVER")
+
             if self.state.game_over_delay is None:
                 self.state.game_over_delay = time.time() + 0.5
-            return
 
-        # Win current level
-        if self.get_remaining_time() <= 0:
-            self.finish_level()
+        if self.state.game_over_delay is not None:
+
+            if time.time() >= self.state.game_over_delay:
+                self.game_state = STATE_GAME_OVER
+                self.level_running = False
+                self.state.stop = True
+                return
 
 
     def process_zone_transitions(self, tag_id, tag):

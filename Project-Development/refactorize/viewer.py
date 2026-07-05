@@ -15,6 +15,7 @@ import matplotlib.patches as mpatches
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.patches import Rectangle
 
 
 from constants import *
@@ -62,6 +63,7 @@ class ViewerApp:
             self.ax_plot.annotate(f"A{aid}", (ax_x, ax_y), xytext=(8, 8),
                                 textcoords="offset points", color="#ffeb3b")
 
+        # Create zone patches
         self.zone_patches = []
         for zone in ZONES:
             circle = mpatches.Circle(zone["center"], zone["radius"], fill=False,
@@ -82,9 +84,44 @@ class ViewerApp:
                                     va="top", color="white", family="monospace",
                                     bbox=dict(facecolor="black", alpha=0.5))
 
+        # Create FigureCanvasTkAgg
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        # ---------------- Overlay ----------------
+        self.overlay_bg = Rectangle(
+            (0, 0),
+            1,
+            1,
+            transform=self.ax_plot.transAxes,
+            facecolor="black",
+            alpha=0.55,
+            zorder=90
+        )
+
+        self.overlay_bg.set_visible(False)
+        self.ax_plot.add_patch(self.overlay_bg)
+
+        self.overlay_box = self.ax_plot.text(
+            0.5,
+            0.5,
+            "",
+            transform=self.ax_plot.transAxes,
+            ha="center",
+            va="center",
+            fontsize=22,
+            color="white",
+            bbox=dict(
+                facecolor="#222222",
+                edgecolor="white",
+                boxstyle="round,pad=1.0"
+            ),
+            zorder=100
+        )
+
+        self.overlay_box.set_visible(False)
+
 
         if self.state.simulate: #-- if on simulate mode, 
             self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
@@ -141,7 +178,7 @@ class ViewerApp:
         else:
             self.draw_gameplay()
 
-        if self.state.stop:
+        """if self.state.stop:
             if self.state.game_won:
                 self.hud.set_text("🎉 YOU WIN! 🎉\n"
                     "All survival objectives completed!"
@@ -156,55 +193,9 @@ class ViewerApp:
                 self.hud.set_color("red")
 
             self.canvas.draw_idle()
-            return
+            return"""
 
-        with self.state.lock:
-            snapshot = [{"filt": t.filt_position, "dists": list(t.last_distances), "last": t.last_update} for t in self.state.tags]
-            total, elapsed = self.state.frame_count, time.time() - self.state.start_time
-            color_indices = list(self.state.row_color_index)
-
-        now = time.time()
-
-        # ----- SURVIVAL TIMER HUD -----
-        if (self.state.round == ROUND_SURVIVE and self.state.survival_start_time is not None):
-            SURVIVAL_TIME = 60
-            remaining = max(0, SURVIVAL_TIME - (time.time() - self.state.survival_start_time))
-            self.hud.set_text(
-                f"SURVIVAL MODE\n"
-                f"Time Left: {remaining:.0f}s"
-            )
-            self.hud.set_color("white")
-
-        for patch, txt, zone_data in self.zone_patches:
-            # Hide inactive zones
-            if not zone_data.get("active", True):
-                patch.set_visible(False)
-                txt.set_visible(False)
-                continue
-            # Show active zones
-            patch.set_visible(True)
-            txt.set_visible(True)
-            patch.center = zone_data["center"]
-            patch.set_radius(zone_data["radius"])
-            txt.set_position(zone_data["center"])
-            # Hide destroyed zones
-            if zone_data.get("destroyed"):
-                patch.set_visible(False)
-                txt.set_visible(False)
-
-        for row, snap in enumerate(snapshot):
-            color = TAG_COLORS[color_indices[row]]
-            pos, stale = snap["filt"], (now - snap["last"] > 1.0) if snap["last"] else True
-            self.row_dots[row].set_color(color)
-            if pos and not stale:
-                self.row_dots[row].set_data([pos[0]], [pos[1]])
-                self.x_labels[row].configure(text=f"{pos[0]:.3f}")
-                self.y_labels[row].configure(text=f"{pos[1]:.3f}")
-            else:
-                self.row_dots[row].set_data([], [])
-                self.x_labels[row].configure(text="—")
-
-        self.canvas.draw_idle()
+        ##
         self.root.after(66, self.update_loop)
 
     def on_color_changed(self, row):
@@ -251,5 +242,106 @@ class ViewerApp:
         self.game_manager.update()
     
 
+# ---------------------------------------------------------------------------
+# In Game Overlays (for differnt states)
+# ---------------------------------------------------------------------------
     def draw_gameplay(self):
+        self.hide_overlay() # Hides any overlays while gameplay is active
+        with self.state.lock:
+            snapshot = [{"filt": t.filt_position, "dists": list(t.last_distances), "last": t.last_update} for t in self.state.tags]
+            total, elapsed = self.state.frame_count, time.time() - self.state.start_time
+            color_indices = list(self.state.row_color_index)
+
+        now = time.time()
+
+        # ----- TIMER HUD -----
+        if self.game_manager.level_running:
+            remaining = self.game_manager.get_remaining_time()
+            self.hud.set_text(
+                f"LEVEL {self.game_manager.current_level}\n"
+                f"Time Left: {remaining:.0f}s"
+            )
+            self.hud.set_color("white")
+
+        # ----- DRAW ZONES -----
+        for patch, txt, zone_data in self.zone_patches:
+            # Hide inactive zones
+            if not zone_data.get("active", True):
+                patch.set_visible(False)
+                txt.set_visible(False)
+                continue
+            # Show active zones
+            patch.set_visible(True)
+            txt.set_visible(True)
+            patch.center = zone_data["center"]
+            patch.set_radius(zone_data["radius"])
+            txt.set_position(zone_data["center"])
+            # Hide destroyed zones
+            if zone_data.get("destroyed"):
+                patch.set_visible(False)
+                txt.set_visible(False)
+
+        # ----- DRAW TAGS -----
+        for row, snap in enumerate(snapshot):
+            color = TAG_COLORS[color_indices[row]]
+            pos, stale = snap["filt"], (now - snap["last"] > 1.0) if snap["last"] else True
+            self.row_dots[row].set_color(color)
+            if pos and not stale:
+                self.row_dots[row].set_data([pos[0]], [pos[1]])
+                self.x_labels[row].configure(text=f"{pos[0]:.3f}")
+                self.y_labels[row].configure(text=f"{pos[1]:.3f}")
+            else:
+                self.row_dots[row].set_data([], [])
+                self.x_labels[row].configure(text="—")
+
+        self.canvas.draw_idle()
+
         pass
+    
+
+    def draw_game_over(self):
+        self.show_overlay(
+            "GAME OVER\n\n"
+            "A Safe Zone Was Lost\n\n"
+            "Press SPACE",
+            "red"
+        )
+        pass
+
+
+    def draw_level_complete(self):
+        next_level = self.game_manager.current_level
+        self.show_overlay(
+            f"LEVEL {next_level - 1} COMPLETE!\n\n"
+            f"Press SPACE to Begin Level {next_level}",
+            "cyan"
+        )
+        pass
+
+
+    def draw_game_win(self):
+        self.show_overlay(
+            "YOU WIN!\n\n"
+            "All Levels Complete",
+            "lime"
+        )
+        pass
+
+
+
+# ---------------------------------------------------------------------------
+# Helper Functions (to call overlay)
+# ---------------------------------------------------------------------------
+    def show_overlay(self, text, colour="white"):
+        print("SHOW OVERLAY")
+        self.overlay_bg.set_visible(True)
+        self.overlay_box.set_text(text)
+        self.overlay_box.set_color(colour)
+        self.overlay_box.set_visible(True)
+        self.canvas.draw_idle()
+    
+
+    def hide_overlay(self):
+        print("HIDE OVERLAY")
+        self.overlay_bg.set_visible(False)
+        self.overlay_box.set_visible(False)
