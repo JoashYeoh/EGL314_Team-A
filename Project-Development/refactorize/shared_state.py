@@ -40,3 +40,7 @@ class SharedState:
 
         self.round = ROUND_EXPAND
         self.game_over_delay = None
+
+        # lose conditions
+        self.danger_zone_hit = False
+        self.safe_zone_lost = False

@@ -24,7 +24,8 @@ def make_osc_handler(state: SharedState, anchor_ids, anchor_positions_list,
         if not state.game_started:
             return
 
-        if state.stop: return 
+        if state.stop:
+            return 
 
         if len(args) < 9:
             print(f"[osc] malformed message (got {len(args)} args)")

@@ -24,7 +24,7 @@ ZONES = [
         "max_radius": 0.25,
         "min_radius": 0.10,
         "expand_rate": 0.005,
-        "shrink_rate": 0.0012,
+        "shrink_rate": 0.002,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
@@ -39,7 +39,7 @@ ZONES = [
         "max_radius": 0.25,
         "min_radius": 0.10,
         "expand_rate": 0.005,
-        "shrink_rate": 0.0005,
+        "shrink_rate": 0.002,
         "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
@@ -69,7 +69,7 @@ ZONES = [
         "max_radius": 0.25,
         "min_radius": 0.10,
         "expand_rate": 0.005,
-        "shrink_rate": 0.0011,
+        "shrink_rate": 0.002,
         "color": "#c266ff",
         "label": "ZONE D",
         "active": True,
@@ -128,6 +128,8 @@ STATE_PLAYING = "playing"
 STATE_LEVEL_COMPLETE = "level_complete"
 STATE_GAME_OVER = "game_over"
 STATE_GAME_WON = "game_won"
+
+GAME_OVER_DELAY = 0.05
 
 
 # ---------------------------------------------------------------------------

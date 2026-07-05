@@ -7,6 +7,7 @@ from constants import (
     STATE_LEVEL_COMPLETE,
     STATE_GAME_OVER,
     STATE_GAME_WON,
+    GAME_OVER_DELAY,
 )
 from zones import *
 
@@ -38,6 +39,12 @@ class GameManager:
             self.game_state = STATE_PLAYING
             self.level_completed = False
             self.pause_between_levels = False
+
+            # refresh lose condition states whenever start
+            self.state.safe_zone_lost = False
+            self.state.danger_zone_hit = False
+            self.state.game_over_delay = None
+            self.state.game_over_sent = False
 
             self.level_start_time = time.time()
 
@@ -110,30 +117,43 @@ class GameManager:
         update_shrinking_zones(self.state)
         update_danger_zones(self.state)
 
-        # 
-        if self.state.game_over_delay is not None:
-            if time.time() >= self.state.game_over_delay:
-                self.game_state = STATE_GAME_OVER
-                self.state.stop = True
-                return
+        # ---------- Events ----------
+        if self.state.safe_zone_lost:
+            self.trigger_game_over("Safe zone destroyed")
+        if self.state.danger_zone_hit:
+            self.trigger_game_over("Danger zone collision")
 
         # Lose condition
-        #print("Checking lose condition...")
-        if check_all_zones_lost(self.state):
-
-            if self.state.game_over_delay is None:
-                self.state.game_over_delay = time.time() + 0.5
-
         if self.state.game_over_delay is not None:
-
             if time.time() >= self.state.game_over_delay:
+
                 self.game_state = STATE_GAME_OVER
                 self.level_running = False
                 self.state.stop = True
                 return
 
+        # Win current level
+        if self.get_remaining_time() <= 0:
+            self.finish_level() 
+
 
     def process_zone_transitions(self, tag_id, tag):
         self.transition_fn(tag_id, tag)
-            
+    
+
+    def handle_space(self):
+
+        if self.game_state == STATE_LEVEL_COMPLETE:
+            self.start_level(self.current_level)
+
+        elif self.game_state == STATE_GAME_OVER:
+            self.restart_game()
+
+        elif self.game_state == STATE_GAME_WON:
+            self.return_to_menu()
+    
+    def trigger_game_over(self, reason="GAME OVER"):
+        print(f"[GAME OVER] {reason}")
+        if self.state.game_over_delay is None:
+            self.state.game_over_delay = time.time() + GAME_OVER_DELAY
 

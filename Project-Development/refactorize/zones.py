@@ -139,11 +139,11 @@ def update_shrinking_zones(state):
                 zone["radius"] -= zone["shrink_rate"]
                 zone["radius"] = max(zone["radius"], zone["min_radius"])
                 if zone["radius"] <= zone["min_radius"]: # checks if zone shrinks to min_radius to trigger game end
-                    """zone["destroyed"] = True
-                    zone["active"] = False"""
                     zone["radius"] = zone["min_radius"]
                     zone["destroyed"] = True
+                    zone["active"] = False
                     print(f"{zone['label']} LOST!")
+                    state.safe_zone_lost = True
 
         else:
             # Tag is inside — grow back up to max_radius
@@ -194,7 +194,7 @@ def update_danger_zones(state):
                     print(f"!!! GAME OVER - {zone['label']} CLASH !!!")   #when game hits the danger zone it will end and show game over
 
                     state.game_over_sent = True
-                    state.stop = True 
+                    state.danger_zone_hit = True
 
 
 

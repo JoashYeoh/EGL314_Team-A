@@ -35,6 +35,11 @@ class ViewerApp:
         self.n_anchors    = len(self.anchor_ids)
 
         self.game_manager = game_manager
+        self.last_game_state = None
+
+        #for debug prints
+        #self.last_debug_state = None
+        #self.last_overlay_text = None
 
         root.title("BU03 Live Tracker — game.py")
         root.configure(bg="#000000")
@@ -127,6 +132,8 @@ class ViewerApp:
             self.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
             print("[SIM] Mouse simulation enabled")
 
+        self.root.bind("<space>", self.on_space_pressed)
+
         table_frame = tk.Frame(root, bg="#000000")
         table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
@@ -166,36 +173,9 @@ class ViewerApp:
             with self.state.lock:
                 self.game_manager.update()
 
-        if self.game_manager.game_state == STATE_GAME_OVER:
-            self.draw_game_over()
+        self.draw_gameplay()
+        self.update_overlay()
 
-        elif self.game_manager.game_state == STATE_GAME_WON:
-            self.draw_game_win()
-
-        elif self.game_manager.game_state == STATE_LEVEL_COMPLETE:
-            self.draw_level_complete()
-
-        else:
-            self.draw_gameplay()
-
-        """if self.state.stop:
-            if self.state.game_won:
-                self.hud.set_text("🎉 YOU WIN! 🎉\n"
-                    "All survival objectives completed!"
-                )
-                self.hud.set_color("lime")
-
-            else:
-                self.hud.set_text(
-                    "!!! GAME OVER !!!\n"
-                    "DANGER ZONE CLASH"
-                )
-                self.hud.set_color("red")
-
-            self.canvas.draw_idle()
-            return"""
-
-        ##
         self.root.after(66, self.update_loop)
 
     def on_color_changed(self, row):
@@ -217,6 +197,9 @@ class ViewerApp:
 
     #Viewerapp simulate
     def on_mouse_move(self, event):
+        if self.game_manager.game_state != STATE_PLAYING:
+            return
+
         if not self.state.game_started:
             return
 
@@ -239,14 +222,16 @@ class ViewerApp:
 
             self.game_manager.process_zone_transitions(0, tag)
 
-        self.game_manager.update()
+
+    #space key-bind
+    def on_space_pressed(self, event):
+        self.game_manager.handle_space()
     
 
 # ---------------------------------------------------------------------------
 # In Game Overlays (for differnt states)
 # ---------------------------------------------------------------------------
     def draw_gameplay(self):
-        self.hide_overlay() # Hides any overlays while gameplay is active
         with self.state.lock:
             snapshot = [{"filt": t.filt_position, "dists": list(t.last_distances), "last": t.last_update} for t in self.state.tags]
             total, elapsed = self.state.frame_count, time.time() - self.state.start_time
@@ -302,7 +287,7 @@ class ViewerApp:
     def draw_game_over(self):
         self.show_overlay(
             "GAME OVER\n\n"
-            "A Safe Zone Was Lost\n\n"
+            #"A Safe Zone Was Lost\n\n"
             "Press SPACE",
             "red"
         )
@@ -327,13 +312,34 @@ class ViewerApp:
         )
         pass
 
+    
+    def update_overlay(self):
+        state = self.game_manager.game_state
+
+        if state == self.last_game_state:
+            return
+
+        print(f"[VIEWER] State changed -> {state}")
+
+        self.last_game_state = state
+
+        if state == STATE_PLAYING:
+            self.hide_overlay()
+
+        elif state == STATE_LEVEL_COMPLETE:
+            self.draw_level_complete()
+
+        elif state == STATE_GAME_OVER:
+            self.draw_game_over()
+
+        elif state == STATE_GAME_WON:
+            self.draw_game_win()
 
 
 # ---------------------------------------------------------------------------
 # Helper Functions (to call overlay)
 # ---------------------------------------------------------------------------
     def show_overlay(self, text, colour="white"):
-        print("SHOW OVERLAY")
         self.overlay_bg.set_visible(True)
         self.overlay_box.set_text(text)
         self.overlay_box.set_color(colour)
@@ -342,6 +348,5 @@ class ViewerApp:
     
 
     def hide_overlay(self):
-        print("HIDE OVERLAY")
         self.overlay_bg.set_visible(False)
         self.overlay_box.set_visible(False)
