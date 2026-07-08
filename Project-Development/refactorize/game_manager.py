@@ -45,7 +45,7 @@ class GameManager:
             self.state.danger_zone_hit = False
             self.state.game_over_delay = None
             self.state.game_over_sent = False
-            
+
             # reset all tags
             for tag in self.state.tags:
                 tag.zones_inside.clear()
@@ -75,7 +75,7 @@ class GameManager:
             print("------ ACTIVE ZONES ------")
             for zone in safe_zones:
                 print(zone["label"], zone["active"])
-                
+
 
     def get_level_data(self):
         return LEVELS[self.current_level]
@@ -91,7 +91,7 @@ class GameManager:
         remaining = level_data["survival_time"] - elapsed
 
         return max(0, remaining)
-    
+
 
     def finish_level(self):
 
@@ -111,7 +111,7 @@ class GameManager:
             self.game_state = STATE_GAME_WON
             self.state.game_won = True
             self.state.stop = True
-    
+
 
     def update(self):
         if not self.level_running:
@@ -195,7 +195,7 @@ class GameManager:
         self.state.danger_zone_hit = False
 
         self.start_level(self.current_level)
-    
+
 
     def new_game(self):
         self.current_level = 1
