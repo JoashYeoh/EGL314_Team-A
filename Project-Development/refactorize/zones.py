@@ -92,7 +92,7 @@ def update_expansion_phase(state):
 
                 # Check if respective zone fully expanded
                 if zone["radius"] == zone["max_radius"] and not zone["expanded_sent"]:
-                    send_zone_expanded(zi)
+                    #send_zone_expanded(zi)
                     zone["expanded_sent"] = True
                     zone["captured"] = True
         
@@ -157,10 +157,6 @@ def update_shrinking_zones(state):
 # Danger Zone Movement logic
 # ---------------------------------------------------------------------------
 def update_danger_zones(state):
-    # Anchor Boundaries (0.0 to 1.0)
-    L_X_MIN, L_X_MAX = 0.0, 1.0   # Set the left and right outer boundary walls
-    L_Y_MIN, L_Y_MAX = 0.0, 1.0   # Set the bottom and top outer boundary walls
-
     x_min, x_max, y_min, y_max = VIEW_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
@@ -189,12 +185,12 @@ def update_danger_zones(state):
 
                 if not state.game_over_sent and tag.filt_position and point_in_zone(tag.filt_position, zone):
 
-                    send_game_over(tag_id, zone["label"])
-
                     print(f"!!! GAME OVER - {zone['label']} CLASH !!!")   #when game hits the danger zone it will end and show game over
 
                     state.game_over_sent = True
                     state.danger_zone_hit = True
+
+
 
 
 
@@ -210,7 +206,6 @@ def update_zones(state):
         if state.round == ROUND_SURVIVE:
             elapsed = time.time() - state.survival_start_time
             if elapsed >= SURVIVAL_TIME:
-                send_game_win()
                 state.game_won = True
                 state.stop = True
 
@@ -218,7 +213,6 @@ def update_zones(state):
 
         if check_all_zones_lost(state):
             print("ALL SAFE ZONES LOST")
-            send_game_over(-1, "ALL SAFE ZONES")
             state.stop = True
 
     update_danger_zones(state)

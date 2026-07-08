@@ -155,7 +155,6 @@ class TutorialWindow: #defines class handling intruction window
             self.update_page_view()
 
     def start_game(self):
-        self.start_game_bgm(self.state)   # send OSC
         """Destroys the tutorial overlay completely and launches tracker interface."""
         self.top.destroy()
         self.state.game_started = True # toggles the start state of game

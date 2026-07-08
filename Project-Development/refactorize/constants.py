@@ -3,14 +3,14 @@
 # ---------------------------------------------------------------------------
 ANCHORS = {
     0: (0.0, 0.0),
-    1: (0.0, 0.50),
-    2: (0.0, 1.0),
-    3: (1.0, 1.0),
-    4: (1.0, 0.50),
-    5: (1.0, 0.0),
+    1: (0.0, 2.235),
+    2: (0.0, 4.470),
+    3: (9.858, 4.470),
+    4: (9.858, 2.235),
+    5: (9.858, 0.0),
 }
 
-VIEW_BOUNDS = (-0.50, 1.50, -0.50, 1.50)
+VIEW_BOUNDS = (-0.50, 10.50, -0.50, 5.50)
 
 # ---------------------------------------------------------------------------
 # Zone configs
@@ -19,9 +19,9 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (0.25, 0.25),  #top left
+        "center": (2.45, 3.67),  #top left
         "radius": 0.10,
-        "max_radius": 0.25,
+        "max_radius": 1.15,
         "min_radius": 0.10,
         "expand_rate": 0.015,
         "shrink_rate": 0.0008,
@@ -34,9 +34,9 @@ ZONES = [
         "destroyed": False,
     },
     {
-        "center": (0.25, 0.75),  #top right
+        "center": (7.35, 3.67),  #top right
         "radius": 0.10,
-        "max_radius": 0.25,
+        "max_radius": 1.15,
         "min_radius": 0.10,
         "expand_rate": 0.015,
         "shrink_rate": 0.0008,
@@ -49,9 +49,9 @@ ZONES = [
         "destroyed": False,
     },
     {
-        "center": (0.75, 0.75),  #bottom left
+        "center": (7.35, 1.135),  #bottom left
         "radius": 0.10,
-        "max_radius": 0.25,
+        "max_radius": 1.15,
         "min_radius": 0.10,
         "expand_rate": 0.015,
         "shrink_rate": 0.0008,
@@ -64,9 +64,9 @@ ZONES = [
         "destroyed": False,
     },
     {
-        "center": (0.75, 0.25),  #bottom right
+        "center": (2.45, 1.135),  #bottom right
         "radius": 0.10,
-        "max_radius": 0.25,
+        "max_radius": 1.15,
         "min_radius": 0.10,
         "expand_rate": 0.015,
         "shrink_rate": 0.0008,
@@ -82,21 +82,21 @@ ZONES = [
 
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
-        "start_center": (0.5, 0.5),
-        "center": [0.5, 0.5],
-        "radius": 0.10,          #show big my danger zone is
+        "start_center": (5, 2),
+        "center": [5, 2],
+        "radius": 0.30,          #show big my danger zone is
         "color": "#ff0000",
         "label": "DANGER-V",
         "active": True,
         "is_danger": True,          # Unique flag to identify this as an enemy zone
-        "start_velocity": [0.015, 0.0],
+        "start_velocity": [0.0, 0.015],
         "velocity": [0.0, 0.015],    # [X-speed, Y-speed] -> Moves ONLY up/down
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
-        "start_center": (0.5, 0.5),
-        "center": [0.5, 0.5],
-        "radius": 0.10,
+        "start_center": (5, 2),
+        "center": [5, 2],
+        "radius": 0.30,
         "color": "#ff0000",
         "label": "DANGER-H",
         "active": True,
@@ -105,6 +105,11 @@ ZONES = [
         "velocity": [0.015, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
     },
 ]
+
+
+# Anchor Boundaries
+L_X_MIN, L_X_MAX = 0.0, 9.858   # Set the left and right outer boundary walls
+L_Y_MIN, L_Y_MAX = 0.0, 4.929   # Set the bottom and top outer boundary walls
 
 
 TAG_COLORS = [
@@ -139,5 +144,5 @@ GAME_OVER_DELAY = 0.05
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_TARGET_IP = "127.0.0.1"    # IP of laptop running Multi-play
-OSC_TARGET_PORT = 8888
+OSC_TARGET_IP = "192.168.254.12"    # IP of laptop running Multi-play
+OSC_TARGET_PORT = 8000
