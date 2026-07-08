@@ -1,4 +1,5 @@
 import time
+from threading import Timer
 
 from level_config import LEVELS
 from constants import (
@@ -76,6 +77,9 @@ class GameManager:
             for zone in safe_zones:
                 print(zone["label"], zone["active"])
 
+            self.state.game_music_started = True
+            send_start_game_bgm()
+
 
     def get_level_data(self):
         return LEVELS[self.current_level]
@@ -111,6 +115,9 @@ class GameManager:
             self.game_state = STATE_GAME_WON
             self.state.game_won = True
             self.state.stop = True
+            
+        send_game_win()
+        Timer(2.0, send_pause_reaper).start()
 
 
     def update(self):
@@ -128,8 +135,10 @@ class GameManager:
 
         # ---------- Events ----------
         if self.state.safe_zone_lost:
+            self.state.safe_zone_lost = False
             self.trigger_game_over("Safe zone destroyed")
         if self.state.danger_zone_hit:
+            self.state.safe_zone_hit = False
             self.trigger_game_over("Danger zone collision")
 
         # Lose condition
@@ -151,9 +160,14 @@ class GameManager:
     
 
     def trigger_game_over(self, reason="GAME OVER"):
-        print(f"[GAME OVER] {reason}")
+        if self.game_state == STATE_GAME_OVER:
+            return
+
         if self.state.game_over_delay is None:
+            print(f"[GAME OVER] {reason}")
             self.state.game_over_delay = time.time() + GAME_OVER_DELAY
+            send_game_over()
+            Timer(2.0, send_pause_reaper).start()
 
 
 

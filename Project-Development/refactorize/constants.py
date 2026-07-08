@@ -144,5 +144,5 @@ GAME_OVER_DELAY = 0.05
 # ---------------------------------------------------------------------------
 # OSC to Multiplay -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_TARGET_IP = "192.168.254.12"    # IP of laptop running Multi-play
+OSC_TARGET_IP = "192.168.1.108"    # IP of laptop running Multi-play
 OSC_TARGET_PORT = 8000
