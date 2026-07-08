@@ -132,6 +132,7 @@ class GameManager:
         # Update the game world
         update_shrinking_zones(self.state)
         update_danger_zones(self.state)
+        #  self.update_fn(self.state)
 
         # ---------- Events ----------
         if self.state.safe_zone_lost:
