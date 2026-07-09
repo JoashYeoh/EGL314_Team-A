@@ -101,7 +101,7 @@ def send_game_over():  #-- when tag hit danger zone triger multiplay
     osc_tx_reaper.send_message("/action/40341", 1)   #mute all tracks
     osc_tx_reaper.send_message("/action/40162", 1)   #jump marker 2
     osc_tx_reaper.send_message("/action/40805", 1)    #select track 2
-    osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
+    osc_tx_reaper .send_message("/action/40731", 1)  #selected track unmute
     osc_tx_reaper.send_message("/action/1007", 1) #play
 
     print(

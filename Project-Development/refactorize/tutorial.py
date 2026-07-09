@@ -156,6 +156,9 @@ class TutorialWindow: #defines class handling intruction window
 
     def start_game(self):
         """Destroys the tutorial overlay completely and launches tracker interface."""
+        
+        self.game_manager.start_level(1)
+
         self.top.destroy()
         self.state.game_started = True # toggles the start state of game
 

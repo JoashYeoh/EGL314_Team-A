@@ -28,7 +28,7 @@ class GameManager:
         self.level_data = LEVELS
         self.game_state = STATE_PLAYING
 
-        self.start_level(1)
+        # self.start_level(1)
 
 
     def start_level(self, level):

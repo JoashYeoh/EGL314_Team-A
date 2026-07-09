@@ -7,7 +7,7 @@ LEVELS = {
     1: {
         "safe_zones": 2,
         "danger_speed": 1.0,
-        "survival_time": 10,
+        "survival_time": 11,
         "instruction": "Keep both safe zones alive for 10 seconds.",
     },
     2: {
@@ -22,4 +22,4 @@ LEVELS = {
         "survival_time": 20,
         "instruction": "Keep all four safe zones alive for 20 seconds.",
     },
-}
+}           
