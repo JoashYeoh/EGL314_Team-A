@@ -1,6 +1,12 @@
 import time
 
-from constants import (ZONE_HIT_TOLERANCE, ZONES, VIEW_BOUNDS, ROUND_SURVIVE, ROUND_EXPAND)
+from constants import (
+    ZONE_HIT_TOLERANCE,
+    ZONES,
+    VIEW_BOUNDS,
+    ROUND_SURVIVE,
+    ROUND_EXPAND,
+)
 
 from osc_sender import *
 
@@ -138,6 +144,11 @@ def update_shrinking_zones(state):
             if zone["radius"] > zone["min_radius"]:
                 zone["radius"] -= zone["shrink_rate"]
                 zone["radius"] = max(zone["radius"], zone["min_radius"])
+
+                #--------------- Lighting Cue ---------------
+                update_zone_cue(zone)
+
+                #--------------- Lose Condition ---------------
                 if zone["radius"] <= zone["min_radius"]: # checks if zone shrinks to min_radius to trigger game end
                     zone["radius"] = zone["min_radius"]
                     zone["destroyed"] = True
@@ -150,6 +161,9 @@ def update_shrinking_zones(state):
             if zone["radius"] < zone["max_radius"]:
                 zone["radius"] += zone.get("grow_rate", zone["shrink_rate"] * 0.5)
                 zone["radius"] = min(zone["radius"], zone["max_radius"])
+
+            # -------- Lighting Cue --------
+            update_zone_cue(zone)
 
 
 
@@ -192,6 +206,45 @@ def update_danger_zones(state):
 
 
 
+# ---------------------------------------------------------------------------
+# Zone Update Size Checker
+# ---------------------------------------------------------------------------
+def get_zone_percentage(zone):
+    """
+    Returns how full a safe zone is from 0-100%.
+    """
+    radius = zone["radius"]
+    min_r = zone["min_radius"]
+    max_r = zone["max_radius"]
+
+    if max_r == min_r:
+        return 100
+
+    percent = ((radius - min_r) / (max_r - min_r)) * 100
+    return max(0, min(100, percent))
+
+
+def percentage_to_cue(percentage):
+    """
+    Converts 0-100% into Cue 1-11.
+
+    100% -> Cue 1
+     90% -> Cue 2
+      ...
+      0% -> Cue 11
+    """
+    cue = 11 - int(percentage / 10)
+    return max(1, min(11, cue))
+
+
+def update_zone_cue(zone):
+    percentage = get_zone_percentage(zone)
+    new_cue = percentage_to_cue(percentage)
+
+    if new_cue != zone["current_cue"]:
+        zone["current_cue"] = new_cue
+        print(f"{zone['label']} -> Cue {new_cue}")
+        send_zone_cue(zone, new_cue)
 
 
 # ---------------------------------------------------------------------------

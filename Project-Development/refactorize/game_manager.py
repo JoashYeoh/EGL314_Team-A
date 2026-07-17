@@ -72,6 +72,7 @@ class GameManager:
                 zone["expanded_sent"] = False
                 zone["destroyed"] = False
                 zone["radius"] = zone["max_radius"]
+                zone["current_cue"] = 1
             
             print("------ ACTIVE ZONES ------")
             for zone in safe_zones:
