@@ -3,7 +3,7 @@ from pythonosc import udp_client
 import time
 
 # ───────── CONFIGURE THIS ─────────
-receiver_ip = "192.168.254.189"		# client IP (e.g. laptop with Reaper) 
+receiver_ip = "192.168.1.108"		# client IP (e.g. laptop with Reaper) 
 receiver_port = 8000          # client listening port number (e.g. Reaper listening port number)	
 # ──────────────────────────────────
 
@@ -23,7 +23,7 @@ def send_message(address, message):
 
 # ───────── CALLING OF FUNTIONS ─────────
 
-print("START BUTTON PRESSED")
+"""print("START BUTTON PRESSED")
 #start
 send_message("/action/40161", 1)   #jump marker 1
 send_message("/action/40804", 1)    #select track 1
@@ -78,4 +78,10 @@ send_message("/action/40730", 1)  #selected track mute
 
 #zone4un
 send_message("/action/40810", 1)    #select track 7
-send_message("/action/40730", 1)  #selected track mute
+send_message("/action/40730", 1)  #selected track mute"""
+
+
+send_message("/action/1068", 1) #toggle repeat
+send_message("/action/41761", 1) #jump to region
+send_message("/action/43102", 1) #set loop points to region
+send_message("/action/1007", 1) #play

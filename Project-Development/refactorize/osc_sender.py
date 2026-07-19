@@ -12,7 +12,7 @@ from constants import *
 # OSC to Multiplay -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
 osc_tx_reaper = udp_client.SimpleUDPClient(OSC_TARGET_IP, OSC_TARGET_PORT)
-osc_tx_gma3 = udp_client.SimpleUDPClient("192.168.1.252", 8080)
+osc_tx_gma3 = udp_client.SimpleUDPClient("192.168.1.108", 8080)
 
 
 
@@ -20,8 +20,12 @@ def send_start_game_bgm(): #-- start game track
 
     print("START BUTTON PRESSED")
     #start
-    osc_tx_reaper.send_message("/action/40161", 1)   #jump marker 1
-    osc_tx_reaper.send_message("/action/40804", 1)    #select track 1
+    osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
+    osc_tx_reaper.send_message("/action/41761", 1) #jump to region
+    osc_tx_reaper.send_message("/action/43102", 1) #set loop points to region
+
+    #--osc_tx_reaper.send_message("/action/40161", 1)   #jump marker 1
+    #--osc_tx_reaper.send_message("/action/40804", 1)    #select track 1
     osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
     osc_tx_reaper.send_message("/action/1007", 1) #play
 
@@ -30,22 +34,22 @@ def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multipla
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 2")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 2")
         osc_tx_reaper.send_message("/action/40807", 1)    #select track 4
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE B":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 3")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 3")
         osc_tx_reaper.send_message("/action/40808", 1)    #select track 5
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE C":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 4")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 4")
         osc_tx_reaper.send_message("/action/40809", 1)    #select track 6
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
     if zone_name == "ZONE D":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 5")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 5")
         osc_tx_reaper.send_message("/action/40810", 1)    #select track 7
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
@@ -54,27 +58,26 @@ def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multipla
         f"Tag={tag_id} Zone={zone_name}"
     )
 
-
 def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 2")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 2")
         osc_tx_reaper.send_message("/action/40807", 1)    #select track 4
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE B":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 3")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 3")
         osc_tx_reaper.send_message("/action/40808", 1)    #select track 5
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE C":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 4")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 4")
         osc_tx_reaper.send_message("/action/40809", 1)    #select track 6
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
     
     if zone_name == "ZONE D":
-        osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 5")
+        #--osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 2 Sequence 5")
         osc_tx_reaper.send_message("/action/40810", 1)    #select track 7
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
