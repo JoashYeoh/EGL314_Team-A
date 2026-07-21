@@ -31,14 +31,7 @@ class TutorialWindow: #defines class handling intruction window
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"},
-            {"text": "2. The objective of this game is to capture all safe zones, by standing withitn the zone.", "img": "Assets/step2.png"},
-            {"text": "3. Upon reaching a safe zone, you have to remain in the zone, as capturing commences! (zone stops expanding when captured)", "img": "Assets/step3.png"},
-            {"text": "4. Once all safe zones have been captured successfully, you will progress to the next round.", "img": "Assets/step4.png"},
-            {"text": "5. However, beware of the DANGER ZONES. AVOID THEM AT ALL COST! Coming into contact with them would end the game.", "img": "Assets/step5.png"},
-            {"text": "6. There will be two rounds in total. In the second round, the speed of the moving danger zones increases!", "img": "Assets/step6.png"},
-            {"text": "7. Leaving the safe zones, will cause the safe zones to shrink. STAY ON IT!", "img": "Assets/step7.png"},
-            {"text": "8. That's it! Are you ready to take on the challenge explorer? If you are, click on 'start game'.", "img": "Assets/Step68.png"}
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"}
         ]
         self.current_page = 0
 

@@ -21,10 +21,10 @@ ZONES = [
     {
         "center": (3.5,5.15),  #top left
         "radius": 0.10,
-        "max_radius": 1.15,
-        "min_radius": 0.10,
-        "expand_rate": 0.010,
-        "shrink_rate": 0.004,
+        "max_radius": 1.25,
+        "min_radius": 0.30,
+        "expand_rate": 0.0045,
+        "shrink_rate": 0.0032,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
@@ -36,10 +36,10 @@ ZONES = [
     {
         "center": (6.00, 5.15),  #top right
         "radius": 0.10,
-        "max_radius": 1.15,
-        "min_radius": 0.10,
-        "expand_rate": 0.010,
-        "shrink_rate": 0.004,
+        "max_radius": 1.25,
+        "min_radius": 0.30,
+        "expand_rate": 0.0045,
+        "shrink_rate": 0.0032,
         "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
@@ -51,10 +51,10 @@ ZONES = [
     {
         "center": (6.00, 2.65),  #bottom right
         "radius": 0.10,
-        "max_radius": 1.15,
-        "min_radius": 0.10,
-        "expand_rate": 0.010,
-        "shrink_rate": 0.004,
+        "max_radius": 1.25,
+        "min_radius": 0.30,
+        "expand_rate": 0.0045,
+        "shrink_rate": 0.0032,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
@@ -66,10 +66,10 @@ ZONES = [
     {
         "center": (3.5, 2.65),  #bottom left
         "radius": 0.10,
-        "max_radius": 1.15,
-        "min_radius": 0.10,
-        "expand_rate": 0.010,
-        "shrink_rate": 0.004,
+        "max_radius": 1.25,
+        "min_radius": 0.30,
+        "expand_rate": 0.0045,
+        "shrink_rate": 0.0032,
         "color": "#c266ff",
         "label": "ZONE D",
         "active": True,
@@ -142,7 +142,10 @@ GAME_OVER_DELAY = 0.05
 
 
 # ---------------------------------------------------------------------------
-# OSC to Reaper -- when enter zone and exit zone
+# OSC -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_TARGET_IP = "192.168.1.108"    # IP of laptop running Multi-play
-OSC_TARGET_PORT = 8000
+OSC_REAPER_TARGET_IP = "192.168.254.12"    # IP of laptop running REAPER
+OSC_REAPER_TARGET_PORT = 8000
+
+OSC_GMA3_TARGET_IP = "192.168.254.252"    # IP of laptop running GMA3
+OSC_GMA3_TARGET_PORT = 8080
