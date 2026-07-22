@@ -121,14 +121,6 @@ def update_expansion_phase(state):
         print("=== ROUND 2: SURVIVAL PHASE ===")
         state.round = ROUND_SURVIVE
         state.survival_start_time = time.time()
-        
-        # --- NEW CONDITION ADDED HERE  when it goes to stage 2 for the danger zone ---
-        SPEED_MULTIPLIER = 2.0  #when it reach zone 2 the game will speed up
-        for zone in ZONES:
-            if zone.get("is_danger"):
-                # Multiplies both X and Y components of the velocity vector
-                zone["velocity"] = [v * SPEED_MULTIPLIER for v in zone["velocity"]] # Multiply both the horizontal (X) and vertical (Y) speed values by your multiplier
-        print(f"[GAME] Danger zone speeds increased by {SPEED_MULTIPLIER}x!")   # Print an alert to the terminal to tell people that it is moving faster
 
 
 
