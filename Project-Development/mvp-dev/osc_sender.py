@@ -99,7 +99,7 @@ def send_game_over():  #-- when tag hit danger zone triger multiplay
     )
 
 
-def send_game_win():
+def send_level_win():
     osc_tx_reaper.send_message("/action/40341", 1)   #mute all tracks
     osc_tx_reaper.send_message("/action/40163", 1)   #jump marker 3
     osc_tx_reaper.send_message("/action/40957", 1)    #select track 19
@@ -151,3 +151,73 @@ def send_danger_movement(axis, cue):
     print(f"Goto Sequence {sequence} Cue {cue}")
 
 
+def send_tutorial_cue():
+    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 8")
+
+
+
+
+# ---------------------------------------------------------------------------
+# End-of-game sequence
+# ---------------------------------------------------------------------------
+
+def send_game_end_default_lighting():
+    """
+    Sent immediately after Level 3 is completed.
+
+    This should restore GrandMA to the desired default or neutral
+    lighting state before the final show sequence begins.
+    """
+
+    command = "Goto Cue 5 Sequence 8"
+
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 5 Sequence 8")
+    send_level_win()
+    Timer(2.0, send_pause_reaper).start()
+
+    print(
+        f"[OSC GMA3] Game-end default lighting: "
+        f"{command}"
+    )
+
+
+def send_game_end_finale():
+    """
+    Sent after the game-end delay.
+
+    Triggers the final GrandMA lighting sequence and the
+    final REAPER audio sequence.
+    """
+
+    # ---------------------------------------------
+    # GrandMA finale
+    # ---------------------------------------------
+    grandma_command = "Goto Cue 1 Sequence 9"
+
+    osc_tx_gma3.send_message(
+        "/gma3/cmd",
+        "Goto Cue 1 Sequence 10"
+    )
+    osc_tx_gma3.send_message(
+        "/gma3/cmd",
+        "Goto Cue 1 Sequence 11"
+    )
+
+    print(
+        f"[OSC GMA3] Game-end finale: "
+        f"{grandma_command}"
+    )
+
+    # ---------------------------------------------
+    # REAPER finale
+    # ---------------------------------------------
+
+    osc_tx_reaper.send_message("/action/40341", 1)   #mute all tracks
+    osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
+    osc_tx_reaper.send_message("/action/41762", 1)  #jump to region 1
+    osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
+    osc_tx_reaper.send_message("/action/40957", 1)    #select track 19
+    osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
+    osc_tx_reaper.send_message("/action/1007", 1)  #play
+
+    print("[OSC REAPER] Game-end finale triggered")

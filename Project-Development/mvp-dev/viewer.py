@@ -307,7 +307,7 @@ class ViewerApp:
     def draw_game_win(self):
         self.show_overlay(
             "YOU WIN!\n\n"
-            "All Levels Complete",
+            "All Levels Complete\n\n Final sequence starting...",
             "lime"
         )
         pass

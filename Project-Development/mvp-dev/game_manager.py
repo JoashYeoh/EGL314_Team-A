@@ -30,6 +30,11 @@ class GameManager:
 
         # self.start_level(1)
 
+        # Game-end Sequence
+        self.game_end_timer = None
+        self.game_end_sequence_started = False
+        self.game_end_finale_sent = False
+
 
     def start_level(self, level):
             self.current_level = level
@@ -112,21 +117,35 @@ class GameManager:
 
         self.level_running = False
         self.level_completed = True
-        self.pause_between_levels = True
-        self.game_state = STATE_LEVEL_COMPLETE
 
+        # ---------------------------------------------
+        # Levels 1 and 2
+        # ---------------------------------------------
         if self.current_level < len(LEVELS):
-            self.current_level += 1
-            print(f"Waiting to start Level {self.current_level}")
 
-        else:
-            print("GAME WON!")
-            self.game_state = STATE_GAME_WON
-            self.state.game_won = True
-            self.state.stop = True
-            
-        send_game_win()
-        Timer(2.0, send_pause_reaper).start()
+            completed_level = self.current_level
+
+            self.current_level += 1
+            self.pause_between_levels = True
+            self.game_state = STATE_LEVEL_COMPLETE
+
+            print(
+                f"Level {completed_level} complete. "
+                f"Waiting to start Level {self.current_level}"
+            )
+
+            send_level_win()
+            # Pause gameplay audio between levels.
+            Timer(2.0, send_pause_reaper).start()
+ 
+            return
+
+        # ---------------------------------------------
+        # Level 3 completed
+        # ---------------------------------------------
+        print("LEVEL 3 WON — STARTING GAME-END SEQUENCE")
+
+        self.start_game_end_sequence()
 
 
     def update(self):
@@ -141,7 +160,6 @@ class GameManager:
         # Update the game world
         update_shrinking_zones(self.state)
         update_danger_zones(self.state)
-        #  self.update_fn(self.state)
 
         # ---------- Events ----------
         if self.state.safe_zone_lost:
@@ -181,6 +199,90 @@ class GameManager:
 
 
 
+#------------- Level 3 Game End Sequence --------------
+    def start_game_end_sequence(self):
+        """
+        Runs once after Level 3 has been completed.
+
+        Stage 1:
+            Freeze gameplay and send default GrandMA lighting.
+
+        Stage 2:
+            After GAME_END_SEQUENCE_DELAY, send the final
+            GrandMA and REAPER commands.
+        """
+
+        if self.game_end_sequence_started:
+            return
+
+        print("[GAME END] Starting game-end sequence")
+
+        self.game_end_sequence_started = True
+        self.game_end_finale_sent = False
+
+        # ---------------------------------------------
+        # Freeze gameplay
+        # ---------------------------------------------
+        self.level_running = False
+        self.level_completed = True
+        self.pause_between_levels = False
+
+        self.game_state = STATE_GAME_WON
+
+        self.state.game_won = True
+
+        # Do not set state.stop=True here.
+        #
+        # ViewerApp only calls game_manager.update() when
+        # state.stop is False. Keeping it False allows the
+        # viewer and overlay to continue refreshing.
+        self.state.stop = False
+
+        # ---------------------------------------------
+        # Stop all zone movement
+        # ---------------------------------------------
+        for zone in ZONES:
+            if zone.get("is_danger"):
+                zone["active"] = False
+
+        # ---------------------------------------------
+        # Stage 1: default GrandMA lighting
+        # ---------------------------------------------
+        send_game_end_default_lighting()
+
+        # ---------------------------------------------
+        # Stage 2: delayed finale
+        # ---------------------------------------------
+        self.game_end_timer = Timer(
+            GAME_END_SEQUENCE_DELAY,
+            self.complete_game_end_sequence
+        )
+
+        self.game_end_timer.daemon = True
+        self.game_end_timer.start()
+
+        print(
+            f"[GAME END] Finale scheduled in "
+            f"{GAME_END_SEQUENCE_DELAY:.1f} seconds"
+        )
+    
+
+    def complete_game_end_sequence(self):
+        """
+        Called once after the game-end delay.
+        """
+
+        if self.game_end_finale_sent:
+            return
+
+        self.game_end_finale_sent = True
+
+        print("[GAME END] Triggering final GrandMA and REAPER sequence")
+
+        send_game_end_finale()
+
+
+
 # ---------------------------------------------------------------------------
 # game progression (during overlays)
 # ---------------------------------------------------------------------------
@@ -196,7 +298,12 @@ class GameManager:
             self.retry_level()
 
         elif state == STATE_GAME_WON:
-            self.new_game()
+            # The game has ended.
+            # Do not automatically return to Level 1.
+            print(
+                "[GAME END] SPACE ignored — "
+                "game-end sequence is active"
+            )
 
 
     def retry_level(self):

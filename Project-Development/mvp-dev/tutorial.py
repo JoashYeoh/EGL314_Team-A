@@ -3,6 +3,7 @@ import sys
 import tkinter as tk
 
 from constants import *
+from osc_sender import *
 
 
 # ---------------------------------------------------------------------------
@@ -31,11 +32,14 @@ class TutorialWindow: #defines class handling intruction window
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"}
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"},
+            {"text": "2. This is safe zone", "img": "Assets/Step67.png"},
+            {"text": "3. This is danger zone", "img": "Assets/Step67.png"},
+            {"text": "4. Ready to play?", "img": "Assets/Step67.png"},
         ]
         self.current_page = 0
 
-        
+        send_tutorial_cue()
 
         # --- UI LAYOUT STRUCTURE ---
         # Configure grid row weights to allocate vertical space: Text (Top) -> Image (Middle) -> Buttons (Bottom)
@@ -143,6 +147,7 @@ class TutorialWindow: #defines class handling intruction window
         if self.current_page < len(self.pages) - 1:
             self.current_page += 1
             self.update_page_view()
+            send_tutorial_cue()
 
     def show_prev_page(self):
         if self.current_page > 0:
@@ -163,6 +168,8 @@ class TutorialWindow: #defines class handling intruction window
         self.parent.deiconify() #show the game window after the instruction page closes
         self.parent.lift()
         self.parent.focus_force() #pull focus onto the game application so keybinds work immediately at the game window
+
+        send_tutorial_cue()
 
     def on_close(self):
         # Force clean terminate on early cancellation exit routines
