@@ -61,7 +61,7 @@ class GameManager:
                     safe_zones.append(zone)
                 if zone.get("is_danger"):
                     zone["center"] = zone["start_center"]
-                    zone["velocity"] = list(zone["start_velocity"])
+                    zone["velocity"] = list(zone["velocity"])
             
             for zone in safe_zones:
                 zone["active"] = False

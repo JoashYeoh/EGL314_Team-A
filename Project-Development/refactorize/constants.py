@@ -19,7 +19,7 @@ ZONE_HIT_TOLERANCE = 0.0
 
 ZONES = [
     {
-        "center": (3.5,5.15),  #top left
+        "center": (3.5, 5.15),  #top left
         "radius": 0.10,
         "max_radius": 1.25,
         "min_radius": 0.30,
@@ -83,33 +83,32 @@ ZONES = [
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
     {
         "start_center": (4.75, 3.9),
-        "center": [4.9, 1.26],
+        "center": [4.75, 3.9],
         "radius": 0.30,          #show big my danger zone is
         "color": "#ff0000",
         "label": "DANGER-V",
         "active": True,
         "is_danger": True,          # Unique flag to identify this as an enemy zone
-        "start_velocity": [0.0, 0.03],
-        "velocity": [0.0, 0.03],    # [X-speed, Y-speed] -> Moves ONLY up/down
+        #"start_velocity": [0.0, 0.03],
+        "velocity": [0.0, 0.1],    # [X-speed, Y-speed] -> Moves ONLY up/down
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
-        "start_center": (4.9, 3.9),
-        "center": [4.9, 1.26],
+        "start_center": (4.75, 3.9),
+        "center": [4.75, 3.9],
         "radius": 0.30,
         "color": "#ff0000",
         "label": "DANGER-H",
         "active": True,
         "is_danger": True,
-        "start_velocity": [0.05, 0.0],
-        "velocity": [0.05, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
+        #"start_velocity": [0.05, 0.0],
+        "velocity": [0.1, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
     },
 ]
 
 
-# Anchor Boundaries
-L_X_MIN, L_X_MAX = 0.0, 9.858   # Set the left and right outer boundary walls
-L_Y_MIN, L_Y_MAX = 0.0, 4.929   # Set the bottom and top outer boundary walls
+# Danger Zone Boundaries
+DANGER_BOUNDS = (2.25, 7.25, 1.4, 6.4) #(xmin, xmax, ymin, ymax)
 
 
 TAG_COLORS = [

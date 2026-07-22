@@ -83,6 +83,8 @@ def main():
 
     tutorial = TutorialWindow(root, state, not args.windowed, ViewerApp, send_start_game_bgm, game_manager)
 
+    #viewer = ViewerApp(root, state, args.simulate, not args.windowed, game_manager)
+
     root.mainloop()
 
 if __name__ == "__main__":

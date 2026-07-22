@@ -171,7 +171,7 @@ def update_shrinking_zones(state):
 # Danger Zone Movement logic
 # ---------------------------------------------------------------------------
 def update_danger_zones(state):
-    x_min, x_max, y_min, y_max = VIEW_BOUNDS
+    x_min, x_max, y_min, y_max = DANGER_BOUNDS
     for zone in ZONES:
         if not zone["active"]:
             continue   # Skip checking this zone if it's turned off
@@ -183,10 +183,12 @@ def update_danger_zones(state):
             new_x, new_y = cx + vx, cy + vy  # Calculate its potential next position step
             
             # Bounce logic at Anchor edges
-            if new_x - zone["radius"] < L_X_MIN or new_x + zone["radius"] > L_X_MAX:
+            if new_x - zone["radius"] < x_min or new_x + zone["radius"] > x_max:
                 vx = -vx
-            if new_y - zone["radius"] < L_Y_MIN or new_y + zone["radius"] > L_Y_MAX:
+                send_danger_movement()
+            if new_y - zone["radius"] < y_min or new_y + zone["radius"] > y_max:
                 vy = -vy
+                send_danger_movement()
                 # Reverse the horizontal direction (bounce!)
                 
             zone["center"] = (cx + vx, cy + vy)

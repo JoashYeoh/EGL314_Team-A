@@ -1,3 +1,4 @@
+from threading import Timer
 
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
@@ -21,7 +22,7 @@ def send_start_game_bgm(): #-- start game track
     print("START BUTTON PRESSED")
     #start
     osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
-    osc_tx_reaper.send_message("/action/41761", 1)  #jump to regionx
+    osc_tx_reaper.send_message("/action/41761", 1)  #jump to region 1
     osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
     osc_tx_reaper.send_message("/action/40955", 1)  #select track 17
     osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
@@ -91,6 +92,7 @@ def send_game_over():  #-- when tag hit danger zone triger multiplay
     osc_tx_reaper.send_message("/action/40956", 1)    #select track 18
     osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
     osc_tx_reaper.send_message("/action/1007", 1) #play
+    osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
 
     print(
         f"[OSC] Sent Game Over "
@@ -102,7 +104,8 @@ def send_game_win():
     osc_tx_reaper.send_message("/action/40163", 1)   #jump marker 3
     osc_tx_reaper.send_message("/action/40957", 1)    #select track 19
     osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute
-    osc_tx_reaper.send_message("/action/1007", 1) #play
+    osc_tx_reaper.send_message("/action/1007", 1)  #play
+    osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
     
     print("[OSC] WIN")
 
@@ -131,4 +134,14 @@ def send_zone_cue(zone, cue):
     print(
         f"[OSC GMA3] Sent "
         f"Cue {cue} {zone_name}"
+    )
+
+
+def send_danger_movement():
+    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 6")
+    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 7")
+
+    print(
+        f"[OSC GMA3] Sent "
+        f"Go Sequence 6 & 7"
     )
