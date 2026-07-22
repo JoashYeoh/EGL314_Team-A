@@ -72,8 +72,16 @@ class GameManager:
                 zone["expanded_sent"] = False
                 zone["destroyed"] = False
                 zone["radius"] = zone["max_radius"]
+                zone["last_direction"] = None
+                zone["hysteresis_active"] = False
                 zone["current_cue"] = 1
             
+            # ---------------------------------------------
+            # Initialise danger-zone movement and OSC cues.
+            # Call this once per level, after zone reset.
+            # ---------------------------------------------
+            initialise_danger_zones()
+
             print("------ ACTIVE ZONES ------")
             for zone in safe_zones:
                 print(zone["label"], zone["active"])

@@ -137,11 +137,15 @@ def send_zone_cue(zone, cue):
     )
 
 
-def send_danger_movement():
-    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 6")
-    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 7")
+def send_danger_movement(axis, cue):
+    if axis == "horizontal":
+        sequence = 6
+    elif axis == "vertical":
+        sequence = 7
+    else:
+        print(f"Unknown danger axis: {axis}")
+        return
 
-    print(
-        f"[OSC GMA3] Sent "
-        f"Go Sequence 6 & 7"
-    )
+    command = f"Goto Sequence {sequence} Cue {cue}"
+    osc_tx_gma3.send_message("/gma3/cmd", command)
+    print(f"Goto Sequence {sequence} Cue {cue}")

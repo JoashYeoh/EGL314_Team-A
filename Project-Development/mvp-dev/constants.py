@@ -23,8 +23,8 @@ ZONES = [
         "radius": 0.10,
         "max_radius": 1.25,
         "min_radius": 0.30,
-        "expand_rate": 0.0045,
-        "shrink_rate": 0.0032,
+        "expand_rate": 0.0060,
+        "shrink_rate": 0.0045,
         "color": "#00e5ff",
         "label": "ZONE A",
         "active": True,
@@ -32,14 +32,17 @@ ZONES = [
         "expanded_sent": False,
         "captured": False,
         "destroyed": False,
+        "current_cue": 10,
+        "last_direction": None,
+        "hysteresis_active": False,
     },
     {
         "center": (6.00, 5.15),  #top right
         "radius": 0.10,
         "max_radius": 1.25,
         "min_radius": 0.30,
-        "expand_rate": 0.0045,
-        "shrink_rate": 0.0032,
+        "expand_rate": 0.0060,
+        "shrink_rate": 0.0045,
         "color": "#ff40c3",
         "label": "ZONE B",
         "active": True,
@@ -47,14 +50,17 @@ ZONES = [
         "expanded_sent": False,
         "captured": False,
         "destroyed": False,
+        "current_cue": 10,
+        "last_direction": None,
+        "hysteresis_active": False,
     },
     {
         "center": (6.00, 2.65),  #bottom right
         "radius": 0.10,
         "max_radius": 1.25,
         "min_radius": 0.30,
-        "expand_rate": 0.0045,
-        "shrink_rate": 0.0032,
+        "expand_rate": 0.0060,
+        "shrink_rate": 0.0045,
         "color": "#66ff66",
         "label": "ZONE C",
         "active": True,
@@ -62,14 +68,17 @@ ZONES = [
         "expanded_sent": False,
         "captured": False,
         "destroyed": False,
+        "current_cue": 10,
+        "last_direction": None,
+        "hysteresis_active": False,
     },
     {
         "center": (3.5, 2.65),  #bottom left
         "radius": 0.10,
         "max_radius": 1.25,
         "min_radius": 0.30,
-        "expand_rate": 0.0045,
-        "shrink_rate": 0.0032,
+        "expand_rate": 0.0060,
+        "shrink_rate": 0.0045,
         "color": "#c266ff",
         "label": "ZONE D",
         "active": True,
@@ -77,6 +86,9 @@ ZONES = [
         "expanded_sent": False,
         "captured": False,
         "destroyed": False,
+        "current_cue": 10,
+        "last_direction": None,
+        "hysteresis_active": False,
     },
 
 
@@ -90,7 +102,10 @@ ZONES = [
         "active": True,
         "is_danger": True,          # Unique flag to identify this as an enemy zone
         #"start_velocity": [0.0, 0.03],
-        "velocity": [0.0, 0.1],    # [X-speed, Y-speed] -> Moves ONLY up/down
+        "velocity": [0.0, 0.08],    # [X-speed, Y-speed] -> Moves ONLY up/down
+        "axis": "vertical",
+        "movement_target": "max",
+        "current_osc_cue": None,
     },
     # --- DANGER ZONE 2: Horizontal (Left/Right) within Anchors ---
     {
@@ -102,7 +117,10 @@ ZONES = [
         "active": True,
         "is_danger": True,
         #"start_velocity": [0.05, 0.0],
-        "velocity": [0.1, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
+        "velocity": [0.08, 0.0],  # [X-speed, Y-speed] -> Moves ONLY left/right
+        "axis": "horizontal",
+        "movement_target": "max",
+        "current_osc_cue": None,
     },
 ]
 
