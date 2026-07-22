@@ -164,8 +164,8 @@ GAME_END_SEQUENCE_DELAY = 10.0
 # ---------------------------------------------------------------------------
 # OSC -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_REAPER_TARGET_IP = "192.168.254.12"    # IP of laptop running REAPER
+OSC_REAPER_TARGET_IP = "192.168.1.12"    # IP of laptop running REAPER
 OSC_REAPER_TARGET_PORT = 8000
 
-OSC_GMA3_TARGET_IP = "192.168.254.252"    # IP of laptop running GMA3
+OSC_GMA3_TARGET_IP = "192.168.1.252"    # IP of laptop running GMA3
 OSC_GMA3_TARGET_PORT = 8080
