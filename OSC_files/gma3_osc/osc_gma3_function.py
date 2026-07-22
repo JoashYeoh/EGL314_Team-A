@@ -4,7 +4,7 @@ import time
 
 
 # ───────── CONFIGURE THIS ─────────
-receiver_ip = "0.0.0.0"		# client IP (e.g. laptop with grandMA3) 
+receiver_ip = "192.168.254.252"		# client IP (e.g. laptop with grandMA3) 
 receiver_port = 8080                # client listening port number (e.g. grandMA3 listening port number)
 addr = "/gma3/cmd"		# /<Must match the Prefix in GrandMA3 In & Out Configuration>/cmd
 # ──────────────────────────────────
@@ -71,7 +71,7 @@ send_message(addr, "Goto Cue 3 Sequence 1")	# Jump to Cue 3 on Sequence 1
 send_message(addr, "Fixture 1 At 50") # Set Fixture 1 brightness to 50%
 """
 
-# ────────────────── BACKLOG 1 SPRINT 2 ──────────────────
+"""# ────────────────── BACKLOG 1 SPRINT 2 ──────────────────
 # ───────── CALLING OF FUNTIONS (Calling custom defined function with corresponding MA command) ─────────
 
 x = 0 # initialising value of x
@@ -87,3 +87,6 @@ for x in range(0, 4): # Runs the bellow set of code for 4 times.
 
     x += 1 # changing value of x
 
+"""
+
+send_message(addr, "off sequence *")
