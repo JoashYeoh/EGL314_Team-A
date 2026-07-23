@@ -81,7 +81,7 @@ def main():
     root = tk.Tk()
     root.withdraw()  # Hide root window
 
-    tutorial = TutorialWindow(root, state, not args.windowed, ViewerApp, send_start_game_bgm, game_manager)
+    tutorial = TutorialWindow(root, state, not args.windowed, ViewerApp, send_start_game, game_manager)
 
     #viewer = ViewerApp(root, state, args.simulate, not args.windowed, game_manager)
 

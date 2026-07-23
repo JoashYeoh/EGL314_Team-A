@@ -92,7 +92,7 @@ class GameManager:
                 print(zone["label"], zone["active"])
 
             self.state.game_music_started = True
-            send_start_game_bgm()
+            send_start_game()
 
 
     def get_level_data(self):

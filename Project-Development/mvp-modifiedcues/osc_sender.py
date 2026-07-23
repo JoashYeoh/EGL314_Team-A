@@ -16,11 +16,26 @@ osc_tx_reaper = udp_client.SimpleUDPClient(OSC_REAPER_TARGET_IP, OSC_REAPER_TARG
 osc_tx_gma3 = udp_client.SimpleUDPClient(OSC_GMA3_TARGET_IP, OSC_GMA3_TARGET_PORT)
 
 
+def send_bgm():
+    osc_tx_reaper.send_message("/action/41763", 1)  #jump to region 3
+    osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
+    osc_tx_reaper.send_message("/action/1007", 1) #play
 
-def send_start_game_bgm(): #-- start game track
 
-    print("START BUTTON PRESSED")
-    #start
+def send_start_sequence():
+    osc_tx_gma3.send_message("/gma3/cmd", "off sequence *")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 78")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 79")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 80")
+    send_tutorial_cue()
+
+
+def send_start_game(): 
+    print("[OSC Reaper] START BUTTON PRESSED")
+    #gma
+    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 78")
+    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 80")
+    #reaper
     osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
     osc_tx_reaper.send_message("/action/41761", 1)  #jump to region 1
     osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
@@ -169,15 +184,15 @@ def send_game_end_default_lighting():
     lighting state before the final show sequence begins.
     """
 
-    command = "Goto Cue 5 Sequence 8"
-
-    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 5 Sequence 8")
+    osc_tx_gma3.send_message("/gma3/cmd", "off sequence *")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 78")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 79")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 80")
     send_level_win()
     Timer(2.0, send_pause_reaper).start()
 
     print(
         f"[OSC GMA3] Game-end default lighting: "
-        f"{command}"
     )
 
 
@@ -192,20 +207,13 @@ def send_game_end_finale():
     # ---------------------------------------------
     # GrandMA finale
     # ---------------------------------------------
-    grandma_command = "Goto Cue 1 Sequence 9"
-
-    osc_tx_gma3.send_message(
-        "/gma3/cmd",
-        "Goto Cue 1 Sequence 10"
-    )
-    osc_tx_gma3.send_message(
-        "/gma3/cmd",
-        "Goto Cue 1 Sequence 11"
-    )
+    osc_tx_gma3.send_message("/gma3/cmd", "off sequence *")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 10")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 11")
 
     print(
         f"[OSC GMA3] Game-end finale: "
-        f"{grandma_command}"
+        f"SIREN!!"
     )
 
     # ---------------------------------------------
@@ -214,7 +222,7 @@ def send_game_end_finale():
 
     osc_tx_reaper.send_message("/action/40341", 1)   #mute all tracks
     osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
-    osc_tx_reaper.send_message("/action/41762", 1)  #jump to region 1
+    osc_tx_reaper.send_message("/action/41762", 1)  #jump to region 2
     osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
     osc_tx_reaper.send_message("/action/40957", 1)    #select track 19
     osc_tx_reaper.send_message("/action/40731", 1)  #selected track unmute

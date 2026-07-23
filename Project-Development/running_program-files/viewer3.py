@@ -30,14 +30,16 @@ import matplotlib.patches as mpatches
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# To enter physical coordinate of anchor wrt to room
+# ---------------------------------------------------------------------------
+# Anchor layout and view config  (must match uart.py)
+# ---------------------------------------------------------------------------
 ANCHORS = {
     0: (0.0, 0.0),
-    1: (0.0, 0.50),
-    2: (0.0, 1.0),
-    3: (1.0, 1.0),
-    4: (1.0, 0.50),
-    5: (1.0, 0.0),
+    1: (0.0, 3.9),
+    2: (0.0, 8.16),
+    3: (9.5, 8.14),
+    4: (9.5, 3.8),
+    5: (9.5, 0.0),
 }
 
 ANCHOR_OFFSETS = {
@@ -49,9 +51,7 @@ ANCHOR_OFFSETS = {
     5: +0.052,
 }
 
-
-# To enter plot limit (x_min, x_max, y_min, y_max)
-VIEW_BOUNDS = (-0.50, 1.50, -0.50, 1.50)
+VIEW_BOUNDS = (-1.50, 11.50, -1.50, 10.50) #(xmin, xmax, ymin, ymax)
 
 TAG_COLORS = [
     "#ff5252", "#42a5f5", "#66bb6a", "#ffb74d",

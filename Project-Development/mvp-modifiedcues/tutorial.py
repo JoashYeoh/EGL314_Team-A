@@ -39,7 +39,8 @@ class TutorialWindow: #defines class handling intruction window
         ]
         self.current_page = 0
 
-        send_tutorial_cue()
+        send_start_sequence()
+        send_bgm()
 
         # --- UI LAYOUT STRUCTURE ---
         # Configure grid row weights to allocate vertical space: Text (Top) -> Image (Middle) -> Buttons (Bottom)
