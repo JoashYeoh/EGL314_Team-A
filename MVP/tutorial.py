@@ -32,14 +32,15 @@ class TutorialWindow: #defines class handling intruction window
 
         # Define the instruction pages (Text + optional placeholder image file)
         self.pages = [
-            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "Assets/Step67.png"},
-            {"text": "2. This is safe zone", "img": "Assets/Step67.png"},
-            {"text": "3. This is danger zone", "img": "Assets/Step67.png"},
-            {"text": "4. Ready to play?", "img": "Assets/Step67.png"},
+            {"text": "1. Welcome to Zone Capturing. click next to view how to play the game.", "img": "/Assets/media/image1.jpg"},
+            {"text": "2. This is safe zone", "img": "/Assets/media/image2.jpg"},
+            {"text": "3. This is danger zone", "img": "/Assets/media/image3.jpg"},
+            {"text": "4. Ready to play?", "img": "/Assets/media/image4.jpg"},
         ]
         self.current_page = 0
 
-        send_tutorial_cue()
+        send_start_sequence()
+        send_bgm()
 
         # --- UI LAYOUT STRUCTURE ---
         # Configure grid row weights to allocate vertical space: Text (Top) -> Image (Middle) -> Buttons (Bottom)
