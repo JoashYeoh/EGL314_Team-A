@@ -130,7 +130,7 @@ Below are some links that may be useful.
 ```
 file -> Perferences -> OSC Control
 ```
-2. Clik on Enable Control Incoming (Orange Box) and define a Port Number (Green Box)
+2. Click on Enable Control Incoming (Orange Box) and define a Port Number (Green Box)
 ![Alt text](assets/oscsetting.png)
 **Important note: the Port number set here has to be the port number that 'game.py' is sending osc command to.*
 
