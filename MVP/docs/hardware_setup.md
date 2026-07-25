@@ -1,15 +1,32 @@
 # Hardware Set-up Documentation
-In this document, you will get to see how the game setup looks like.
+UWB Tag Holder
+Overview
 
-1. Here we are using a laptop to run the plotting graph for users to locate the safe zones and danger zones. On the right is our tag used to track the players.
-![Alt text](assets/Setup1.jpg)
+The UWB tag holder was designed to securely hold the UWB tag during gameplay while allowing it to be positioned at different angles. Instead of designing a holder from scratch, an existing open-source 3D model was used as the base and modified to fit the UWB tag.
 
-2. This is how our setup looks like, each container on the table marks as a anchor to try and keep the players within the playing area. There are six anchors in total and two tags for two players. The tags will be held and move around by the players in the game.
-![Alt text](assets/Setup2.jpg)
+Original model used
+https://makerworld.com/en/models/2815216-heavy-duty-gravity-phone-mount-articulated-arm?from=search#profileId-3134209
 
-3. All the tags are powered by a power bank. As for the anchors, they are stationary and connected to a power strip instead of a power bank. The first anchor which is A00 is our main anchor where we connected it to our Raspberri PI.
+ **2**.**Materials Required**                    
+| **Item**                                          | **Purpose**                  |
+| ---------------------------------------------- | ------------------------ |
+| 3D Printer                                     | Print all required parts |
+| PLA/PETG filament                              | Printing material        |
+| UWB Tag                                        | Device to be mounted     |
+| Elastic band                                   | Keeps the holder closed  |
+| Super glue (if required)                       | Secures modified parts   |
+| CAD software (Fusion 360/Onshape/Bambu Studio) | Modify the holder design |
+**3**
+This is just 1 of the 6 finish product that we made.Noted that we did not use every single part of the arm,and clamp and we only used what we though was needed for us.
+![alt text](<assets/holder for tag.jpg>)
 
-![Alt text](assets/AnchorSetup.drawio.png)
+**4** We made a special holder for the tag to sit on so that it would not drop.Below is a picture of how holder was made for the tag.
+![alt text](<assets/Screenshot 2026-07-26 002405.png>)
+
+
+
+
+
 
 ## Draft Tag holder design
 1. Below is our creative design for our tags used in our game and how it is implemented with our tag and powerbank.
