@@ -1,46 +1,13 @@
-# OSC References Documentation
-This document describes the OSC commands **recieved** and **sent** by the `game.py` application and **explains how each command corresponds to an action in the game**.
+# OSC Cue Reference
 
+## 1. Purpose
 
-## 1. Communication Flow
-```mermaid
-flowchart LR
-    B[Sensor Pi -> uart.py]
-    B -->|OSC| C[Game Pi -> game.py]
-    C -->|OSC| D[REAPER]
-    C -->|OSC| J[GrandMA3]
+This document describes the OSC commands sent by the game application and explains how each command corresponds to an action in the game.
 
-```
-The OSC communication layer serves two purposes:
-
-1. Transmitting UWB distance measurements from the Sensor Pi to the Game Pi.
-
-2. Triggering audio and media events from the Game Pi to the Multiplay media server.
-
----
-
-### Sensor Pi -> Game Pi
-The `uart.py` script reads UART data from the AI Thinker BU03 UWB receiver and forwards the processed distance measurements to the Game Pi via OSC.
-
-| **OSC Address**   | **Arguments**    | **Description**    | **Trigger**        |
-|-------------------|------------------|--------------------|--------------------|
-| `/distances`      | `tag_id(int)` `d0...d7(float)`   |Transmits the latest distance measurements between a tracked tag and all anchors.|Sent whenever a complete UWB measurement frame is received from the BU03 receiver.
-
----
-
-### Receiver Behaviour
-The Game Pi:
-1. Receives the distance measurements.
-2. Performs trilateration.
-3. Calculates the player's position.
-4. Updates the game state.
-
----
-
-### Game Pi -> GrandMA3 & REAPER
 The game communicates with two external systems:
+
 | System | Purpose |
-|---     |---      |
+|---|---|
 | REAPER | Background music, zone audio layers, game-over audio, level-win audio, and finale audio |
 | grandMA3 | Tutorial lighting, zone lighting, danger-zone movement, default lighting, and finale lighting |
 
@@ -59,24 +26,30 @@ MVP/game/constants.py
 ---
 
 ## 2. OSC Destinations
+
 | Destination | OSC Client | Address Format | Purpose |
 |---|---|---|---|
 | REAPER | `osc_tx_reaper` | `/action/<command_id>` | Executes REAPER action commands |
 | grandMA3 | `osc_tx_gma3` | `/gma3/cmd` | Executes grandMA3 command-line instructions |
 
-
 ### REAPER message format
-```python
-osc_tx_reaper.send_message("/action/1007", 1)  # Play Cue
-```
-The OSC address contains the **REAPER action ID**. The value `1` triggers the action.
 
+```python
+osc_tx_reaper.send_message("/action/41763", 1)
+```
+
+The OSC address contains the REAPER action ID. The value `1` triggers the action.
 
 ### grandMA3 message format
+
 ```python
-osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 78") # Go+ Cue 1 Sequence 78
+osc_tx_gma3.send_message(
+    "/gma3/cmd",
+    "Goto Cue 1 Sequence 78"
+)
 ```
-The OSC address remains `/gma3/cmd`, while the **OSC value contains the grandMA3 command**.
+
+The OSC address remains `/gma3/cmd`, while the OSC value contains the grandMA3 command.
 
 ---
 
@@ -109,16 +82,21 @@ Finale lighting and audio
 ---
 
 ## 4. Game Start Sequences
+
 ### 4.1 Background Music
+
 #### Python function
+
 ```python
 send_bgm()
 ```
 
 #### Game trigger
+
 Called when background music should begin before or during the introductory stage.
 
 #### REAPER commands
+
 | Order | OSC Address | Action | Game Result |
 |---:|---|---|---|
 | 1 | `/action/41763` | Jump to Region 3 | Moves playback to the background-music region |
@@ -126,18 +104,22 @@ Called when background music should begin before or during the introductory stag
 | 3 | `/action/1007` | Play | Starts playback |
 
 #### Expected result
-**REAPER** begins **continuously playing** the introductory background music from Region 3. 
+
+REAPER begins continuously playing the introductory background music from Region 3.
 
 ---
 
 ### 4.2 Start-Up Lighting Sequence
+
 #### Python function
+
 ```python
 send_start_sequence()
 ```
 
 #### Game trigger
-Called right **at the start of running `game.py`** script. This is to set the room's lighting to be at its initialised default setting to welcome players in. 
+
+Called when the full game application or pre-game experience starts.
 
 #### grandMA3 commands
 
@@ -150,44 +132,54 @@ Called right **at the start of running `game.py`** script. This is to set the ro
 | 5 | `Go Sequence 8` | Starts the tutorial lighting sequence |
 
 #### Expected result
-The lighting system is **reset to the required starting state** before the tutorial sequence begins.
+
+The lighting system is reset to the required starting state before the tutorial sequence begins.
 
 ---
 
 ### 4.3 Tutorial Cue
+
 #### Python function
+
 ```python
 send_tutorial_cue()
 ```
 
 #### Game trigger
-Called as part of the start sequence and as the player progresses the tutrial stages.
+
+Called as part of the start sequence or whenever the tutorial lighting should begin.
 
 | Destination | Command | Purpose |
 |---|---|---|
 | grandMA3 | `Go Sequence 8` | Starts the tutorial lighting sequence |
 
 #### Expected result
-grandMA3 runs Sequence 8, which contains the lighting programmed for the tutorial.
+
+grandMA3 runs Sequence 8, which contains the lighting programmed for the playable tutorial.
 
 ---
 
 ### 4.4 Start Game
+
 #### Python function
+
 ```python
 send_start_game()
 ```
 
 #### Game trigger
-Called when the player **presses the Start button** after **completing the introduction**.
+
+Called when the player presses the Start button after completing or skipping the introduction.
 
 #### grandMA3 commands
+
 | Order | Command | Purpose |
 |---:|---|---|
 | 1 | `Off Sequence 78` | Stops one of the pre-game lighting sequences |
 | 2 | `Off Sequence 80` | Stops one of the pre-game lighting sequences |
 
 #### REAPER commands
+
 | Order | OSC Address | Action | Game Result |
 |---:|---|---|---|
 | 1 | `/action/1068` | Toggle repeat | Changes REAPER's repeat state |
@@ -198,11 +190,13 @@ Called when the player **presses the Start button** after **completing the intro
 | 6 | `/action/1007` | Play | Starts the main-game audio |
 
 #### Expected result
-The **pre-game lighting and soundtrack is stopped** and **REAPER begins playing the main game soundtrack**.
+
+The pre-game lighting is stopped and REAPER begins playing the main game soundtrack.
 
 ---
 
 ## 5. Safe-Zone Audio
+
 Each safe zone is assigned a dedicated REAPER track.
 
 | Zone | REAPER Track | Select Track Action |
@@ -213,15 +207,19 @@ Each safe zone is assigned a dedicated REAPER track.
 | Zone D | Track 23 | `/action/40961` |
 
 ### 5.1 Player Enters a Zone
+
 #### Python function
+
 ```python
 send_zone_enter(tag_id, zone_index)
 ```
 
 #### Game trigger
-Called when a player **tag position enters** into that **safe zone**.
+
+Called when a player tag transitions from outside a safe zone to inside that safe zone.
 
 #### Command behaviour
+
 | Zone | Select Track | Audio Action | Result |
 |---|---|---|---|
 | Zone A | `/action/40958` | `/action/40731` | Select and unmute Track 20 |
@@ -230,9 +228,11 @@ Called when a player **tag position enters** into that **safe zone**.
 | Zone D | `/action/40961` | `/action/40731` | Select and unmute Track 23 |
 
 #### Expected result
-The **audio layer** associated with the occupied zone **becomes audible (unmute)** when **player enters respective zones**.
+
+The audio layer associated with the occupied zone becomes audible.
 
 #### Debug output
+
 ```text
 [OSC] Sent ENTER Tag=<tag_id> Zone=<zone_name>
 ```
@@ -240,15 +240,19 @@ The **audio layer** associated with the occupied zone **becomes audible (unmute)
 ---
 
 ### 5.2 Player Exits a Zone
+
 #### Python function
+
 ```python
 send_zone_exit(tag_id, zone_index)
 ```
 
 #### Game trigger
-Called when a player **tag position exits** from that **safe zone**.
+
+Called when a player tag transitions from inside a safe zone to outside that safe zone.
 
 #### Command behaviour
+
 | Zone | Select Track | Audio Action | Result |
 |---|---|---|---|
 | Zone A | `/action/40958` | `/action/40730` | Select and mute Track 20 |
@@ -257,50 +261,31 @@ Called when a player **tag position exits** from that **safe zone**.
 | Zone D | `/action/40961` | `/action/40730` | Select and mute Track 23 |
 
 #### Expected result
-The **audio layer** associated with the zone **is muted** after the player leaves it (exits).
+
+The audio layer associated with the zone is muted after the player leaves it.
 
 #### Debug output
+
 ```text
 [OSC] Sent EXIT Tag=<tag_id> Zone=<zone_name>
 ```
 
-
+---
 
 ## 6. Safe-Zone Lighting Cues
+
 ### Python function
+
 ```python
 send_zone_cue(zone, cue)
 ```
 
 ### Game trigger
-Called when the **visual state of a safe zone changes**. This may occur when the **zone expands**, **shrinks**, **reaches a threshold** or **completes an objective**.  
 
-The game uses a **loop to check the actual size** of the zone on the viewer and the **state that it is in** (expanding or shrinking), which then **sends a corresponding cue to grandma**. 
-```python
-## Code snipet from zones.py
-
-current_cue = zone["current_cue"]
-
-    if direction == "growing":
-        # Growing moves toward Cue 1.
-        new_cue = max(1, current_cue - 1)
-
-    elif direction == "shrinking":
-        # Shrinking moves toward Cue 11.
-        new_cue = min(11, current_cue + 1)
-
-    else:
-        return
-
-    if new_cue == current_cue:
-        return
-```
-
-For example:  
-Player **enters Zone A**. Loop identifies **Zone A to be at 65%**, it would have **sent grandma cue 4 sequence 2 (70% size)** as the light has to grow to the next size up.  
-If player **exits Zone A**, and the **size is 65%**, it reverses the cue being sent and **sends grandma cue 5 sequence 2 (50% size)** as the light has to start shrinking.
+Called when the visual state of a safe zone changes. This may occur when the zone expands, shrinks, reaches a threshold, becomes active, or completes an objective.
 
 ### Zone-to-sequence assignment
+
 | Zone | grandMA3 Sequence |
 |---|---:|
 | Zone A | Sequence 2 |
@@ -309,6 +294,7 @@ If player **exits Zone A**, and the **size is 65%**, it reverses the cue being s
 | Zone D | Sequence 5 |
 
 ### Commands
+
 | Zone | Generated command |
 |---|---|
 | Zone A | `Goto Cue <cue> Sequence 2` |
@@ -317,126 +303,71 @@ If player **exits Zone A**, and the **size is 65%**, it reverses the cue being s
 | Zone D | `Goto Cue <cue> Sequence 5` |
 
 ### Cue meaning
-| Cue | Suggested meaning           | Actual GrandMA3 Programming |
-|---: |---                          |---                          | 
-| 1   | Zone active at maximum size | Spot Fixture at given maximum zoom |
-| 2   | Zone active at 90% size     | Spot Fixture at 90% of maximum zoom |
-| 3   | Zone active at 80% size     | Spot Fixture at 80% of maximum zoom |
-| 4   | Zone active at 70% size     | Spot Fixture at 70% of maximum zoom |
-| 5   | Zone active at 60% size     | Spot Fixture at 60% of maximum zoom |
-| 6   | Zone active at 50% size     | Spot Fixture at 50% of maximum zoom |
-| 7   | Zone active at 40% size     | Spot Fixture at 40% of maximum zoom |
-| 8   | Zone active at 30% size     | Spot Fixture at 30% of maximum zoom |
-| 9   | Zone active at 20% size     | Spot Fixture at 20% of maximum zoom |
-| 10  | Zone active at 10% size     | Spot Fixture at 10% of maximum zoom |
-| 11  | Zone active at minimum size | Spot Fixture at given minimum zoom |
+
+The precise meaning of each cue should be documented according to the grandMA3 show file.
+
+| Cue | Suggested meaning | Actual grandMA3 programming |
+|---:|---|---|
+| 1 | Zone inactive or minimum size | To be confirmed |
+| 2 | Zone active | To be confirmed |
+| 3 | Zone growing | To be confirmed |
+| 4 | Zone warning | To be confirmed |
+| 5 | Zone fully expanded | To be confirmed |
+
+Replace the suggested meanings with the actual cue names from the grandMA3 sequence sheet.
 
 #### Debug output
+
 ```text
 [OSC GMA3] Sent Cue <cue> <zone_name>
 ```
 
-#### Snippet of how it looks in real life
-![Zone Expanding & Shrinking Lighting](/assets/zone-shrinking-expanding.gif)
-
-
+---
 
 ## 7. Danger-Zone Movement Lighting
+
 ### Python function
+
 ```python
 send_danger_movement(axis, cue)
 ```
 
 ### Game trigger
-Called when the corresponding danger zone hits its boundary and changes direction and moves or when passing the central positon.
 
-When danger zone hits the maximum position, it send the trigger to cue 1 (center) so that the lighting will start moving to center as the zone moves towards it's minimum position. 
-```python
-## Code snipet from zones.py
-
-DANGER_CUES = {
-    "centre": 1,
-    "min": 2,
-    "max": 3,
-}
-
-def initialise_danger_zones():
-    x_min, x_max, y_min, y_max = DANGER_BOUNDS
-
-    centre_x = (x_min + x_max) / 2
-    centre_y = (y_min + y_max) / 2
-
-    for zone in ZONES:
-        if not zone.get("is_danger"):
-            continue
-
-        zone["current_osc_cue"] = None
-
-        if zone["axis"] == "horizontal":
-            cx, cy = zone["center"]
-            zone["center"] = (centre_x, cy)
-
-            vx, vy = zone["velocity"]
-            zone["velocity"] = [abs(vx), 0]
-
-            send_danger_target(zone, "max")
-
-        elif zone["axis"] == "vertical":
-            cx, cy = zone["center"]
-            zone["center"] = (cx, centre_y)
-
-            vx, vy = zone["velocity"]
-            zone["velocity"] = [0, abs(vy)]
-
-            send_danger_target(zone, "max")
-
-
-def send_danger_target(zone, target):
-    cue = DANGER_CUES[target]
-
-    # Avoid sending the same cue repeatedly.
-    if zone.get("current_osc_cue") == cue:
-        return
-
-    zone["current_osc_cue"] = cue
-    zone["movement_target"] = target
-
-    print(
-        f"[DANGER OSC] {zone['label']} "
-        f"-> {target} | Cue {cue}"
-    )
-
-    send_danger_movement(
-        zone["axis"],
-        cue
-    )
-```
+Called when a danger zone changes its movement state or reaches a programmed position.
 
 ### Axis-to-sequence assignment
+
 | Danger-zone axis | grandMA3 Sequence |
-|---               |---                |
-| Horizontal       | Sequence 6        |
-| Vertical         | Sequence 7        |
+|---|---:|
+| Horizontal | Sequence 6 |
+| Vertical | Sequence 7 |
 
 ### Commands
-| Axis       | Generated command           |
-|---         |---                          |
+
+| Axis | Generated command |
+|---|---|
 | Horizontal | `Goto Sequence 6 Cue <cue>` |
-| Vertical   | `Goto Sequence 7 Cue <cue>` |
+| Vertical | `Goto Sequence 7 Cue <cue>` |
 
 ### Suggested cue map
-*both horizontal and vertical zone sequences have the same cue sequence, just different position of lights.*
+
+The actual values should match the programming inside grandMA3.
 
 | Cue | Suggested game state |
-|---: |---                   |
-| 1   | Center position      |
-| 2   | Maximum position     |
-| 3   | Minimum position     |
+|---:|---|
+| 1 | Starting position |
+| 2 | Movement stage 1 |
+| 3 | Movement stage 2 |
+| 4 | Movement stage 3 |
+| 5 | Final or danger position |
 
 ### Invalid axis handling
+
 If an axis other than `horizontal` or `vertical` is supplied, no OSC command is sent.
 
 Example console output:
+
 ```text
 Unknown danger axis: diagonal
 ```
@@ -444,15 +375,19 @@ Unknown danger axis: diagonal
 ---
 
 ## 8. Game Over Sequence
+
 ### Python function
+
 ```python
 send_game_over()
 ```
 
 ### Game trigger
-Called when the **player loses**, such as **when a danger zone collides** with tag position (player) or **when safe zones shrinks to  minimum size**. 
+
+Called when the player loses, such as when a danger zone collides with a protected area or another game-over condition is reached.
 
 ### REAPER commands
+
 | Order | OSC Address | Action | Game Result |
 |---:|---|---|---|
 | 1 | `/action/40341` | Mute all tracks | Stops normal gameplay audio layers |
@@ -463,9 +398,11 @@ Called when the **player loses**, such as **when a danger zone collides** with t
 | 6 | `/action/1068` | Toggle repeat | Changes the repeat state |
 
 ### Expected result
-**All gameplay audio is muted** and the **dedicated game-over audio is played**.
+
+All gameplay audio is muted and the dedicated game-over audio is played.
 
 #### Debug output
+
 ```text
 [OSC] Sent Game Over
 ```
@@ -473,15 +410,19 @@ Called when the **player loses**, such as **when a danger zone collides** with t
 ---
 
 ## 9. Level Win Sequence
+
 ### Python function
+
 ```python
 send_level_win()
 ```
 
 ### Game trigger
-Called when the **player successfully completes a level**. This occurs when **all zones are still active** by the end of the countdown timer for that level.
+
+Called when the player successfully completes a level.
 
 ### REAPER commands
+
 | Order | OSC Address | Action | Game Result |
 |---:|---|---|---|
 | 1 | `/action/40341` | Mute all tracks | Stops normal gameplay audio |
@@ -492,9 +433,11 @@ Called when the **player successfully completes a level**. This occurs when **al
 | 6 | `/action/1068` | Toggle repeat | Changes the repeat state |
 
 ### Expected result
-The **gameplay audio is muted** and the **level-completion sound is played**.
+
+The gameplay audio is muted and the level-completion sound is played.
 
 #### Debug output
+
 ```text
 [OSC] WIN
 ```
@@ -502,7 +445,9 @@ The **gameplay audio is muted** and the **level-completion sound is played**.
 ---
 
 ## 10. Pause REAPER
+
 ### Python function
+
 ```python
 send_pause_reaper()
 ```
@@ -511,11 +456,12 @@ send_pause_reaper()
 |---|---|
 | `/action/1008` | Pause REAPER playback |
 
-This function is used at various posints **to pause the REAPER cursur** to keep playing indefinitely. such as **after level won/loss sewuences**, or when the **game is completed**. 
+This function is currently used by the game-end default-lighting sequence.
 
 ---
 
 ## 11. End-of-Game Sequence
+
 The end-game sequence consists of two stages:
 
 ```text
@@ -533,23 +479,19 @@ Finale lighting and audio
 ```
 
 ### 11.1 Default End Lighting
+
 #### Python function
+
 ```python
 send_game_end_default_lighting()
 ```
 
 #### Game trigger
-Called immediately after Level 3 is completed.
-```python 
-## Code snippet taken from game_manager.py
 
-# ---------------------------------------------
-# Stage 1: default GrandMA lighting
-# ---------------------------------------------
-send_game_end_default_lighting()
-```
+Called immediately after Level 3 is completed.
 
 #### grandMA3 commands
+
 | Order | Command | Purpose |
 |---:|---|---|
 | 1 | `Off Sequence *` | Stops all current lighting sequences |
@@ -558,47 +500,41 @@ send_game_end_default_lighting()
 | 4 | `Goto Cue 1 Sequence 80` | Restores default lighting layer 3 |
 
 #### Additional actions
+
 The function also:
+
 1. Calls `send_level_win()`.
 2. Starts a two-second timer.
 3. Calls `send_pause_reaper()` when the timer completes.
 
 #### Expected result
-The **venue returns to its default lighting state** while the **level-win audio plays** briefly before being paused.
+
+The venue returns to its default lighting state while the level-win audio plays briefly before being paused.
 
 ---
 
 ### 11.2 Finale Sequence
+
 #### Python function
+
 ```python
 send_game_end_finale()
 ```
 
 #### Game trigger
-Called after the configured game-end delay. In this case, it is 15 seconds.
-```python 
-## Code snippet taken from game_manager.py
 
-# ---------------------------------------------
-# Stage 2: delayed finale
-# ---------------------------------------------
-self.game_end_timer = Timer(
-    GAME_END_SEQUENCE_DELAY,
-    self.complete_game_end_sequence
-)
-```
+Called after the configured game-end delay.
 
 #### grandMA3 commands
+
 | Order | Command | Purpose |
 |---:|---|---|
 | 1 | `Off Sequence *` | Stops all active lighting sequences |
 | 2 | `Goto Cue 1 Sequence 10` | Starts finale lighting sequence 10 |
 | 3 | `Goto Cue 1 Sequence 11` | Starts finale lighting sequence 11 |
 
-**Seuence 10** is a siren look lighting sequence  
-**Sequence 11** is a suggested player movement sequence
-
 #### REAPER commands
+
 | Order | OSC Address | Action | Game Result |
 |---:|---|---|---|
 | 1 | `/action/40341` | Mute all tracks | Clears previous audio layers |
@@ -610,11 +546,13 @@ self.game_end_timer = Timer(
 | 7 | `/action/1007` | Play | Starts finale playback |
 
 #### Expected result
-**grandMA3** starts the **finale lighting sequences** while **REAPER** begins **playing the final audio sequence**.
+
+grandMA3 starts the finale lighting sequences while REAPER begins playing the final audio sequence.
 
 ---
 
 ## 12. Master Function Reference
+
 | Python function | Game event | Destination |
 |---|---|---|
 | `send_bgm()` | Introductory background music begins | REAPER |
@@ -634,6 +572,7 @@ self.game_end_timer = Timer(
 ---
 
 ## 13. Cue Programming Worksheet
+
 Use this table to keep the Python code, grandMA3 show file, and REAPER project aligned.
 
 | Game event | Python function | System | Sequence/Track | Cue/Action | Operator notes |
@@ -654,12 +593,37 @@ Use this table to keep the Python code, grandMA3 show file, and REAPER project a
 | Finale begins | `send_game_end_finale()` | grandMA3 | Sequences 10–11 | Cue 1 | Finale lighting |
 | Finale begins | `send_game_end_finale()` | REAPER | Track 19 | Region 2 | Finale audio |
 
+---
 
+## 14. Maintenance Rules
 
+Whenever an OSC cue changes:
 
+1. Update the relevant function in `osc_sender.py`.
+2. Update the corresponding table in this document.
+3. Confirm that the REAPER action ID still matches the intended action.
+4. Confirm that the grandMA3 sequence and cue exist.
+5. Test the cue manually before running the complete game.
+6. Record the change in the repository changelog or pull request.
 
+When adding a new OSC function, document:
 
+- The Python function name.
+- The game event that calls it.
+- The target system.
+- The OSC address.
+- The OSC value or command.
+- The expected visible or audible result.
+- Any delay or timer involved.
+- Failure behaviour and console output.
 
+---
 
+## 15. Items to Verify
 
+Before treating this reference as final, verify the following:
 
+- The comments in `send_zone_exit()` should reference Tracks 20–23 rather than Tracks 4–7.
+- `/action/1068` toggles REAPER repeat mode, so its result depends on the current repeat state.
+- Consider standardising the grandMA3 command order used by `send_zone_cue()` and `send_danger_movement()`.
+- `send_game_end_default_lighting()` pauses REAPER after two seconds, while the larger delay before the finale may be controlled elsewhere in the game logic.
