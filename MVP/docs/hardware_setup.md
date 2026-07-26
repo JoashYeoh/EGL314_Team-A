@@ -23,6 +23,10 @@ This is just 1 of the 6 finish product that we made.Noted that we did not use ev
 **4** We made a special holder for the tag to sit on so that it would not drop.Below is a picture of how holder was made for the tag.
 ![alt text](<assets/Screenshot 2026-07-26 002405.png>)
 
+**5** 
+This are the stl files that we used for the arms, phone holder, screws and the special holder for the tages to sit on
+
+
 
 ## Tag holder design
 1. Here is how our tag's powerbank was stored. The bag below is our "tag holder" design. Inside the bag would not only store the powerbank but also the other teams design.
