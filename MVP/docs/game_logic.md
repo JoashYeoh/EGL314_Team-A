@@ -10,8 +10,11 @@ The objective of the game is to keep every Safe Zone alive throughout all three 
 ## Game Elements
 ### Safe Zone
 In ViewerApp, it looks like
+
 ![Alt text](assets/SafeZoneViewer.jpg)
+
 Physically, this is what the players should see
+
 ![Alt text](assets/SafeZonesLabelled.jpg)
 
 #### Behavior
