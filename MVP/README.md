@@ -7,8 +7,8 @@
     * [1.2. docs/ ](#12-docs)
     * [1.3. game/ ](#13-game)
     * [1.4. module_config-files/ ](#14-module_config-files)
-    * [1.5 README.md ](#15-README)
-    * [1.6 uart.py ](#16-uart)
+    * [1.5 README.md ](#15-READMEmd)
+    * [1.6 uart.py ](#16-uartpy)
 * [2. Project Overview](#2-project-overview)
 * [3. Core System Architecture](#3-Core-System-Architecture)
 
