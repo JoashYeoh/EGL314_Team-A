@@ -1,130 +1,236 @@
-# Troubleshooting Documentation
+# Troubleshooting
 
-## 1. No Player Position Appears on Screen
+This section lists common issues that may occur while setting up or running the UWB game system, along with their possible causes and recommended solutions.
 
-Symptoms:
+---
 
-1:Game launches successfully.
+## 1. No UWB Data Received
 
-2:No player marker is visible.
+### Symptoms
 
-3:Player movement is not detected.
+* Player position does not appear on the game screen.
+* No distance values are displayed.
+* The player icon does not move.
 
-Possible Cause:
-The Game Pi is not receiving UWB data from the Sensor Pi.
+### Possible Causes
 
-Solution:
+* UART cable is not connected properly.
+* UWB tag is powered off.
+* Incorrect serial port selected.
+* Sensor Raspberry Pi is not running `uart.py`.
 
-1:Verify uart.py is running on the Sensor Pi.
+### Solution
 
-2:Check that both Raspberry Pis are connected to the same network.
+* Check that the UWB tag is powered on.
+* Verify that all UART connections are secure.
+* Confirm that the correct serial port is configured.
+* Restart `uart.py` on the sensor Raspberry Pi.
 
-3:Verify the Game Pi IP address configured in uart.py.
+---
 
-4:Ensure OSC messages are being transmitted correctly.
+## 2. OSC Communication Not Working
 
-## 2. Player Position Is Inaccurate
+### Symptoms
 
-Symptoms:
+* `uart.py` is receiving data, but `game.py` does not update.
+* No player movement is shown on the game display.
 
-1:Marker appears in the wrong location.
+### Possible Causes
 
-2:Position jumps around unexpectedly.
+* Incorrect IP address.
+* Incorrect OSC port.
+* Network connection between the Raspberry Pis has failed.
 
-3:Physical position does not match screen position.
+### Solution
 
-Possible Cause:
-The UWB system has not been calibrated correctly.
+* Ensure both Raspberry Pis are connected to the same network.
+* Verify the destination IP address in `uart.py`.
+* Confirm that both programs are using the same OSC port.
+* Test connectivity using the `ping` command.
 
-Solution:
-1:Run viewer_calibrate.py.
-2:Verify anchor coordinates are correct.
-3:Ensure anchors have not been moved after calibration.
-4:Remove large metal objects that may interfere with UWB signals.
+---
 
-## 3. No UWB Data Received
+## 3. Incorrect Player Position
 
-Symptoms:
+### Symptoms
 
-1:No distance readings are displayed.
+* Player appears in the wrong location.
+* Position jumps unexpectedly.
+* Player moves even when standing still.
 
-2:Player tracking does not start.
+### Possible Causes
 
-Possible Cause
-UART communication between the UWB receiver and Sensor Pi has failed.
+* Incorrect anchor coordinates.
+* Poor UWB signal quality.
+* Tag is blocked by large objects.
+* Calibration has not been completed.
 
-Solution
-Run:
-./check_uart.sh
+### Solution
 
-1:Check UART wiring.
+* Verify all anchor positions in the configuration file.
+* Ensure anchors are mounted securely.
+* Remove large metal objects that may interfere with the signal.
+* Recalibrate the system before starting the game.
 
-2:Verify the correct serial port is being used.
+---
 
-3:Restart the UWB receiver module.
+## 4. Player Position is Jittery
 
-## 4. Audio or Media Effects Do Not Trigger
+### Symptoms
 
-Symptoms:
+* Player marker constantly shakes.
+* Movement appears unstable.
 
-1:Gameplay works normally.
+### Possible Causes
 
-2:Music and sound effects do not play.
+* Signal reflections.
+* Temporary UWB interference.
+* Kalman filter settings require adjustment.
 
-Possible Cause:
-OSC communication between the Game Pi and media server is not working.
+### Solution
 
-Solution:
+* Ensure the play area has minimal obstacles.
+* Check that the Kalman filter is enabled.
+* Reduce sources of wireless interference where possible.
 
-1: Verify the media server / Multiplay is running.
+---
 
-2: Confirm both devices are connected to the same network.
+## 5. Safe Zone Does Not Shrink
 
-3: Check that Sensor Pi is running uart.py
+### Symptoms
 
-4: Confirm correct IP addresses (Sensor Pi → Game Pi → Multiplay).
+* Safe zone remains the same size throughout the game.
 
-5: Ensure OSC port numbers match on all devices.
+### Possible Causes
 
-6: Check OSC IP settings are correct.
+* Game timer has not started.
+* Zone update function is not running.
+* Game has not entered the active state.
 
-7: Confirm Multiplay is listening on the correct port.
+### Solution
 
-8: Allow UDP traffic / check firewall settings if needed.
+* Verify that the game has started successfully.
+* Confirm that the zone update function is being called.
+* Restart the game if necessary.
 
-## 5. Game Starts but Immediately Ends
+---
 
-Symptoms:
+## 6. Game Does Not End
 
-1:Game launches.
+### Symptoms
 
-2:Game Over appears almost instantly.
+* Game continues running after players leave the safe zone.
 
-Possible Cause:
-The player's detected position is inside a danger zone due to incorrect calibration.
+### Possible Causes
 
-Solution:
+* Safe zone has not fully shrunk.
+* Game-ending condition has not been reached.
 
-1:Re-run calibration using viewer_calibrate.py.
+### Solution
 
-2:Verify the player's starting position.
+* Allow the safe zone to shrink completely.
+* Verify that the game-ending logic is enabled.
+* Check that the final zone radius reaches its minimum value.
 
-3:Confirm danger zones are displayed in the correct locations.
+---
 
-**Quick Checklist Before Running the Game:**
+## 7. GUI Does Not Open
 
-✓ UWB modules powered on
+### Symptoms
 
-✓ UART connection verified
+* `game.py` starts but no window appears.
 
-✓ Sensor Pi running uart.py
+### Possible Causes
 
-✓ Game Pi running game.py
+* Missing Python libraries.
+* Display configuration issue.
+* Tkinter installation problem.
 
-✓ Both Pis connected to same network
+### Solution
 
-✓ Calibration completed
+* Install all required Python packages.
+* Verify that Tkinter is installed correctly.
+* Restart the Raspberry Pi.
 
-✓ Player position visible on screen
+---
 
-✓ OSC communication working
+## 8. Python Module Not Found
+
+### Symptoms
+
+```
+ModuleNotFoundError
+```
+
+### Possible Causes
+
+* Required library is missing.
+* Virtual environment is not activated.
+
+### Solution
+
+* Activate the correct Python environment.
+* Install the missing package using:
+
+```
+pip install <package_name>
+```
+
+* Verify that all project dependencies are installed.
+
+---
+
+## 9. UWB Tag Not Detected
+
+### Symptoms
+
+* Tag never appears in the game.
+
+### Possible Causes
+
+* Battery is empty.
+* Tag firmware is incorrect.
+* Tag ID does not match the game configuration.
+
+### Solution
+
+* Recharge or replace the battery.
+* Verify the firmware version.
+* Check that the tag ID matches the configured player ID.
+
+---
+
+## 10. High CPU Usage or Slow Performance
+
+### Symptoms
+
+* Game becomes laggy.
+* Display updates slowly.
+
+### Possible Causes
+
+* Too many background applications.
+* High rendering load.
+* Insufficient Raspberry Pi resources.
+
+### Solution
+
+* Close unnecessary applications.
+* Restart the Raspberry Pi.
+* Reduce debugging output if enabled.
+* Ensure only the required programs are running.
+
+---
+
+## General Checks Before Running the Game
+
+Before each game session, verify the following:
+
+* All UWB anchors are powered on.
+* UWB tags are fully charged.
+* UART connections are secure.
+* Both Raspberry Pis are connected to the same network.
+* `uart.py` is running on the sensor Raspberry Pi.
+* `game.py` is running on the game Raspberry Pi.
+* OSC IP address and port are correct.
+* The game arena is free from large obstacles that may interfere with UWB signals.

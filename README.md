@@ -1,14 +1,14 @@
 # EGL314 - Immersive Media Powered By Raspberry Pi
 
 ## Table of Contents
-* [1. Repository Structure](#3-repository-structure-(EGL314_Team-A/))
-    * [3.1. assets/ ](#31-assets)
-    * [3.2. docs/ ](#32-docs)
-    * [3.3. module_config-files/ ](#33-module_config-files)
-    * [3.4. game.py ](#34-gamepy)
-    * [3.5. uart.py ](#35-uartpy)
-* [2. Project Overview](#1-project-overview)
-* [3. Core System Architecture](#2-system-architecture-poc)
+* [1. Repository Structure](#1-repository-structure-(EGL314_Team-A/))
+    * [3.1. LoopMIDI Integration/ ](#11-LoopMIDI_Integration/)
+    * [3.2. MVP/ ](#12-MVP/)
+    * [3.3. OSC_files/ ](#13-OSC_files/)
+    * [3.4. POC/ ](#14-POC/)
+    * [3.5 Project-Development/ ](#15-Project-Development/)
+* [2. Project Overview](#2-project-overview)
+* [3. Core System Architecture](#3-system-architecture-poc)
 
 
 
@@ -17,8 +17,9 @@
 ```
 .
 ├── README.md          # this file (overview of repo)
+├── LoopMIDI Integration/ 
 ├── MVP/ 
-    ├── assets/        # assets used in
+    ├── assets/        # assets used in MVP/ dir
     ├── docs/
         ├── assets/                    # assets used in documentation
         ├── architecture.md            # system architecture overview
@@ -32,18 +33,18 @@
         └── uwb_configuration.md       # BU03 board pinout
     ├── game/          # scripts for game pi/laptop
         ├── assets/                    # assets used in game scripts
-        ├── constants.py
-        ├── game_manager.py
-        ├── game.py
-        ├── kalman.py
-        ├── level_config.py
-        ├── osc_handler.py
-        ├── osc_sender.py
-        ├── shared_state.py
-        ├── trilateration.py
-        ├── tutorial.py
-        ├── viewer.py
-        └── zones.py
+        ├── constants.py               # shared constants
+        ├── game_manager.py            # main script managing game states, flows, win/loss, zone updates
+        ├── game.py                    # main entry point
+        ├── kalman.py                  # Smooths tag position data using a Kalman filter
+        ├── level_config.py            # level specefic settings
+        ├── osc_handler.py             # recivies OSC data from uart Pi to update tag position
+        ├── osc_sender.py              # sends OSC cues to grandMA3 and REAPER
+        ├── shared_state.py            # shared runtime states
+        ├── trilateration.py           # calculates 2D tag position from anchor distance data
+        ├── tutorial.py                # tutorial/instructions window 
+        ├── viewer.py                  # main game display using Tkinter and Matplotlib
+        └── zones.py                   # zone configs and behaviour functions
     ├── module_config-files
         ├── check_uart.sh              # confirms /dev/serial0 mapping
         ├── bu03_detect.py             # UART smoke test
@@ -51,6 +52,7 @@
         ├── bu03_inspect.py            # read back saved config
         └── viewer_calibrate.py        # per-anchor offset measurement
     └── uart.py        # script to run on Sensor Pi to pull UART data
+├── OSC_files/ 
 ├── POC/ 
     ├── assets/        # assets used in game developtment
     ├── docs/
@@ -71,66 +73,27 @@
         └── viewer_calibrate.py        # per-anchor offset measurement
     ├── game.py         # main game script to run on Game Pi
     └── uart.py         # script to run on Sensor Pi to pull UART data
-├── LoopMIDI Integration/ 
-├── OSC_files/ 
 └── Project-Development/        
 ```
 
-### 3.1. assets/
-Contains:
-- Tutorial images
-- Gameplay images
-- Audio assets
-- UI resources
+### 3.1. LoopMIDI Integration/
+This is a dir that contains a guide on how to setup LoopMIDI for REAPER to send MTC to L-ISA Controller.
 
 
-### 3.2. docs/
-| **Documentation**    | **Purpose**                           |
-|----------------------|---------------------------------------|
-| `architecture.md`      | Explain Software pipeline             |
-| `hardware_setup.md`    | Hardware setup utilised               |
-| `uwb_configuration.md` | Configuration workflow                |
-| `calibration.md`       | Anchor layout and calibration         |
-| `software_setup.md`    | Software configuration                |
-| `game_logic.md`        | Explain game itself                   |
-| `osc_reference.md`     | All OSC traffic                       |
-| `troubleshooting.md`   | Some possible troubles and what to do |
+### 3.2. MVP/
+This is a dir that contains all the updated work that my team had accomplished up to our project's MVP stage.
 
 
-### 3.3. module_config-files/
-These are the scripts used during deployment and setup of anchors and tags.
-
-| **Script**           | **Purpose**                             |
-|----------------------|-----------------------------------------|
-| `bu03_detect.py`       | Detect connected module                 |
-| `bu03_inspect.py`      | Read module information                 |
-| `bu03_multi_config.py` | Configure connected module              |
-| `check_uart.sh`        | Verify UART communication               |
-| `viewer_calibrate.py`  | Calibration and coordinate verification |
+### 3.3. OSC_files/
+Within this dir, there are respective dirs that contain specific example osc command scripts to the corresponding softwares.
 
 
-### 3.4 game.py
-This is the script that runs on the **Game Pi**.
-
-Responsibilities of this script: 
-- Receives OSC distance data
-- Performs trilateration
-- Applies Kalman filtering
-- Handles zone detection
-- Runs game state machine
-- Sends OSC commands to Multiplay
-- Displays GUI
+### 3.4 POC/
+This is a dir that contains all the past work that my team had accomplished up to our project's POC stage.
 
 
-### 3.5 uart.py
-This is the script that runs on the **Sensor Pi**.
-
-Responsibilities of this script:
-- Reads UART data from BU03 UWB anchor that is connected to the **Sensor Pi**
-- Parses distance frames
-- Applies calibration offsets
-- Assigns tag IDs
-- Sends distance data to **Game Pi** via OSC
+### 3.5 Project-Development/
+This is a dir where the team and I make copies of files to test certain edits. Something like a development sandbox before re-organising files into its respective dir.
 
 
 
@@ -142,14 +105,16 @@ The system consists of:
 - 6 Anchors (BU03-Kit UWB modules)
 - 2 Tags (BU03-Kit UWB modules)
 - Sensor Pi (UWB data acquisition)
-- Game Pi (game engine & visualisation)
-- Multiplay (audio playback)
+- Game Pi/Laptop (game engine & visualisation)
+- Reaper (multi-track digital audio workstation)
+- L-ISA Processor & Controller (surround sound processing)
+- GrandMA3 onPC (lighting control)
 
-In the game, players must capture safe zones while avoiding moving danger zones. Visualised through `game.py` running on the Game Pi.
+In the game, players must occupy safe zones while avoiding moving danger zones. Visualised through `game.py` running on the Game Pi.
 
 
 
-## 3. Core System Architecture (POC)
+## 3. Core System Architecture
 ```mermaid
 flowchart 
     A[AI Thinker UWB Kit] -->|UART| B[Sensor Pi -> uart.py]

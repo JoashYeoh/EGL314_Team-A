@@ -1,7 +1,5 @@
 from threading import Timer
 
-from pythonosc import dispatcher as osc_dispatcher
-from pythonosc import osc_server
 from pythonosc import udp_client
 
 from MVP.game.constants import *
