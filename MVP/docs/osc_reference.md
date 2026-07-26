@@ -264,7 +264,7 @@ The **audio layer** associated with the zone **is muted** after the player leave
 [OSC] Sent EXIT Tag=<tag_id> Zone=<zone_name>
 ```
 
-
+---
 
 ## 6. Safe-Zone Lighting Cues
 ### Python function
@@ -338,8 +338,8 @@ If player **exits Zone A**, and the **size is 65%**, it reverses the cue being s
 
 #### Snippet of how it looks in real life
 ![Zone Expanding & Shrinking Lighting](assets/zone-shrinking-expanding.gif)
-<video controls src="assets/ShrinknExpand.mp4" title="Title"></video>
 
+---
 
 ## 7. Danger-Zone Movement Lighting
 ### Python function
