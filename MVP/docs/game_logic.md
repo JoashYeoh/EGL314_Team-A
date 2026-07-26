@@ -9,11 +9,11 @@ The objective of the game is to keep every Safe Zone alive throughout all three 
 
 ## Game Elements
 ### Safe Zone
-In ViewerApp, it looks like
+In ViewerApp, it should look like the picture below.
 
 ![Alt text](assets/SafeZoneViewer.jpg)
 
-Physically, this is what the players should see
+Physically, the picture below is what the players should see.
 
 ![Alt text](assets/SafeZonesLabelled.jpg)
 
@@ -36,9 +36,12 @@ If any Safe Zone reaches its minimum radius, it disappears and the game immediat
 ![Safe Zone disappearing](assets/zone-disappear.gif)
 
 ### Danger Zone
-In ViewerApp, it looks like
+In ViewerApp, it should look like the picture below.
+
 ![Alt text](assets/DangerzoneViewer.jpg)
-Physically, this is what the players see
+
+Physically, the picture below is what the players should see.
+
 ![Alt text](assets/DangerZoneLabelled.jpg)
 
 #### Behavior
@@ -58,7 +61,9 @@ Before the game begins, each player is required to wear a backpack containing a 
 
 The backpack allows players to move freely while ensuring the tracking tag remains securely positioned throughout the game.
 
-- Insert a photograph of the backpack with the UWB tag installed.
+The image below shows a player correctly wearing the required equipment and ready for gameplay.
+
+![Alt text](assets/Player.jpg)
 
 ## Gameplay Flow:
 
