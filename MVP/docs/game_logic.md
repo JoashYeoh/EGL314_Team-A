@@ -25,11 +25,12 @@ When the player leaves:
 
 - The Safe Zone resumes shrinking.
 
+![Expansion and shrinking of Safe Zone](assets/zone-shrinking-expanding.gif)
+
 If any Safe Zone reaches its minimum radius, it disappears and the game immediately ends.
 
-[Expansion and shrinking of Safe Zone](assets/ShrinknExpand.mp4)
+![Safe Zone disappearing](assets/zone-disappear.gif)
 
-[Safe Zone disappearing ](assets/ZoneDisappear.mp4)
 ### Danger Zone
 
 - A screenshot from the Viewer App showing a Danger Zone.
@@ -43,7 +44,8 @@ If a player enters a Danger Zone:
 
 Their movement increases the challenge by limiting safe paths between Safe Zones.
 
-[Danger Zone Behavior](assets/DangerZone.mp4)
+![Danger Zone Behavior](assets/danger-zone-colide.gif)
+
 
 ## Player Equipment
 
