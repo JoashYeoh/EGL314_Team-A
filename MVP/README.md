@@ -10,7 +10,7 @@
     * [1.5 README.md ](#15-README.md)
     * [1.6 uart.py ](#16-uart.py)
 * [2. Project Overview](#2-project-overview)
-* [3. Core System Architecture](#3-system-architecture-poc)
+* [3. Core System Architecture](#3-Core-System-Architecture)
 
 
 
