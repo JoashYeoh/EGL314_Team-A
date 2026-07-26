@@ -46,6 +46,25 @@ This is just 1 of the 6 finish product that we made.Noted that we did not use ev
 
 6. Players will move around in the game trying to light up the room as they move into the safe zones with the candle tray.
 
+## Final Tag holder design
+1. After some brainstorming, it was decided we should change the design of our tag holders to fit the theme of the project. Hence, we decided to place our tags and powerbanks in and on top of the bag. The bag is supposed to imitate the bag wore by ghostbusters.
+![Alt text](assets/tag&pbinbag.jpg)
+
+2. The tag is then attached to a wooden rod that is attached to the bag, coated in black paint. This is done so when the players move around the area, the tags will move smoothly and have no interuptions. The black cylinder on the rod is meant to conceal the tag so it does not look too ugly and contribute to the theme of the project.
+![Alt text](assets/tagconcealed.jpg)
+
+3. Players are then task to hold a torchlight to "light up the room". The torch is 3D printed and do not actually shine any light. They are just props to simulate the whole experience. The torchlight was then painted to give it more vibrance and not look too plain.
+![Alt text](assets/torchdesign.jpg)
+![Alt text](assets/torchdesign2.jpg)
+
+4. Here is the overall look of the players after equipping our designs. 
+![Alt text](assets/playerlook.jpg)
+
+Below are the links to some of our designs.
+- For more information on **Candletray design**, vist [link](https://makerworld.com/en/models/2201416-minimalist-ribbed-decor-trays-candle-holders#profileId-2391643)
+- For more information on **candleholder design**, visit [link](https://makerworld.com/en/models/1955423-crystal-light-sparkling-tealight#profileId-2101555)
+- For more information on **Torchlight**, visit [link](https://makerworld.com/en/models/2142601-nuclear-torch#profileId-2320995)
+
 
 
 
