@@ -3,10 +3,10 @@
 
 ## Table of Contents
 * [1. Repository Structure](#1-Repository-Structure-(MVP/))
-    * [1.1. assets/ ](#11-assets/)
-    * [1.2. docs/ ](#12-docs/)
-    * [1.3. game/ ](#13-game/)
-    * [1.4. module_config-files/ ](#14-module_config-files/)
+    * [1.1. assets/ ](#11-assets)
+    * [1.2. docs/ ](#12-docs)
+    * [1.3. game/ ](#13-game)
+    * [1.4. module_config-files/ ](#14-module_config-files)
     * [1.5 README.md ](#15-README.md)
     * [1.6 uart.py ](#16-uart.py)
 * [2. Project Overview](#2-project-overview)
