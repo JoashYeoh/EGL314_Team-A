@@ -2,7 +2,7 @@
 
 
 ## Table of Contents
-* [1. Repository Structure](#1-repository-structure-(MVP/))
+* [1. Repository Structure](#1-Repository-Structure-(MVP/))
     * [1.1. assets/ ](#11-assets/)
     * [1.2. docs/ ](#12-docs/)
     * [1.3. game/ ](#13-game/)
