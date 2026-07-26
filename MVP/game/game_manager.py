@@ -1,8 +1,8 @@
 import time
 from threading import Timer
 
-from MVP.game.level_config import LEVELS
-from MVP.game.constants import (
+from level_config import LEVELS
+from constants import (
     ZONES,
     STATE_PLAYING,
     STATE_LEVEL_COMPLETE,
@@ -10,7 +10,7 @@ from MVP.game.constants import (
     STATE_GAME_WON,
     GAME_OVER_DELAY,
 )
-from MVP.game.zones import *
+from zones import *
 
 class GameManager:
 

@@ -43,19 +43,19 @@ from pythonosc import osc_server
 from pythonosc import udp_client
 
 
-from MVP.game.constants import *
-from MVP.game.shared_state import *
+from constants import *
+from shared_state import *
 
-from MVP.game.viewer import ViewerApp
-from MVP.game.tutorial import TutorialWindow
+from viewer import ViewerApp
+from tutorial import TutorialWindow
 
-from MVP.game.game_manager import GameManager
+from game_manager import GameManager
 
-from MVP.game.zones import *
+from zones import *
 
-from MVP.game.osc_handler import *
+from osc_handler import *
 
-from MVP.game.osc_sender import *
+from osc_sender import *
 
 
 

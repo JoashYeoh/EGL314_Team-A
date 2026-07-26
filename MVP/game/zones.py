@@ -1,6 +1,6 @@
 import time
 
-from MVP.game.constants import (
+from constants import (
     ZONE_HIT_TOLERANCE,
     ZONES,
     DANGER_BOUNDS,
@@ -8,7 +8,7 @@ from MVP.game.constants import (
     ROUND_EXPAND,
 )
 
-from MVP.game.osc_sender import *
+from osc_sender import *
 
 # ---------------------------------------------------------------------------
 # Zone detection
