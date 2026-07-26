@@ -169,26 +169,13 @@ OSC_GMA3_TARGET_PORT
 
 Once all hardware and software have been configured, launch the system in the following order.
 
-### Step 1
-
-Power on all UWB anchors.
-
-### Step 2
-
-Power on the UWB tag(s).
-
-### Step 3
-
-On the Sensor Raspberry Pi, run:
-
+1. Power on all UWB anchors.
+2. Power on the UWB tag(s).
+3. On the Sensor Raspberry Pi, run:
 ```bash
 python uart.py
 ```
-
-### Step 4
-
-On the Game Laptop, run:
-
+4. On the Game Laptop, run:
 ```bash
 python game.py
 ```
