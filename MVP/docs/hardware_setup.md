@@ -26,6 +26,13 @@ This is just 1 of the 6 finish product that we made.Noted that we did not use ev
 **5** 
 This are the stl files that we used for the arms, phone holder, screws and the special holder for the tages to sit on
 
+[ARMS](assets/ARMS.3mf)
+
+[PHONE CLAMP](<assets/PHONE CLAMP.3mf>)
+
+[SCREWS](assets/SCREWS.3mf)
+
+[SPECIAL HOLDER](<assets/SPECIAL HOLDER.3mf>)
 
 
 ## Tag holder design
