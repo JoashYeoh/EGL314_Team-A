@@ -3,12 +3,12 @@
 
 ## Table of Contents
 * [1. Repository Structure](#1-repository-structure-(MVP/))
-    * [3.1. assets/ ](#11-assets/)
-    * [3.2. docs/ ](#12-docs/)
-    * [3.3. game/ ](#13-game/)
-    * [3.4. module_config-files/ ](#14-module_config-files/)
-    * [3.5 README.md ](#15-README.md)
-    * [3.6 uart.py ](#16-uart.py)
+    * [1.1. assets/ ](#11-assets/)
+    * [1.2. docs/ ](#12-docs/)
+    * [1.3. game/ ](#13-game/)
+    * [1.4. module_config-files/ ](#14-module_config-files/)
+    * [1.5 README.md ](#15-README.md)
+    * [1.6 uart.py ](#16-uart.py)
 * [2. Project Overview](#2-project-overview)
 * [3. Core System Architecture](#3-system-architecture-poc)
 
@@ -58,14 +58,14 @@
     └── uart.py        # script to run on Sensor Pi to pull UART data
 ```
 
-### 3.1. assets/
+### 1.1. assets/
 Contains:
 - REAPER File
 - L-ISA Controller File
 - GrandMA3 Showfile
 
 
-### 3.2. docs/
+### 1.2. docs/
 | **Documentation**    | **Purpose**                           |
 |----------------------|---------------------------------------|
 | `architecture.md`      | Explain Software pipeline             |
@@ -79,11 +79,11 @@ Contains:
 | `uwb_configuration.md` | Configuration workflow                |
 
 
-### 3.3. game/
+### 1.3. game/
 Within this dir, there are respective dirs that contain specific example osc command scripts to the corresponding softwares.
 
 
-### 3.4 module_config-files/
+### 1.4 module_config-files/
 These are the scripts used during deployment and setup of anchors and tags.
 
 | **Script**           | **Purpose**                             |
@@ -95,11 +95,11 @@ These are the scripts used during deployment and setup of anchors and tags.
 | `viewer_calibrate.py`  | Calibration and coordinate verification |
 
 
-### 3.5 README.md
+### 1.5 README.md
 This is the current file that you are reading. An overview of this checkpoint of the project.
 
 
-### 3.6 uart.py
+### 1.6 uart.py
 This is the script run on the uart Pi, that is responsible of sending tag position data via OSC to the game Pi.
 
 
