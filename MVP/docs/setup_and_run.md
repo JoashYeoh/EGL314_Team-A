@@ -131,6 +131,7 @@ game.py
 └── osc_sender.py
     └── constants.py
 ```
+The dependency diagram above shows how the main scripts in the game are connected through imports. Each indented level represents a module imported by the module above it, giving an overview of the project's structure and how the different components work together.
 
 ### Module Responsibilities
 
@@ -212,17 +213,7 @@ Display Tutorial Window
       │
 User presses Start Game
       │
-Launch Game Viewer
-      │
-Tutorial Mode
-      │
-Press SPACE to continue
-      │
-Level 1
-      │
-Level 2
-      │
-Level 3
+Levels 1 → 2 → 3 
       │
 Game End Sequence
 ```
