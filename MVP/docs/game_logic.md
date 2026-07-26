@@ -1,11 +1,57 @@
 # Game Logic Documentation
 
 ## Overview:
-The UWB Interactive Game is a location-based game that uses Ultra-Wideband (UWB) tracking to monitor the player's position in real time.
+This UWB Interactive Game is a multiplayer location-based game in which players physically move around a designated play area to interact with virtual game elements displayed on screen.
 
-The player's physical movement is translated into actions within the game. By moving around the play area, players interact with different zones that appear on the game screen.
+Throughout the game, players must work together to keep all Safe Zones alive while avoiding moving Danger Zones. Safe Zones gradually shrink over time and must be maintained by players before they disappear.
 
-The objective is to capture safe zones while avoiding danger zones and survive until the end of the game.
+The objective of the game is to keep every Safe Zone alive throughout all three rounds while avoiding Danger Zones. Players achieve victory by successfully completing the final round with all Safe Zones still active.
+
+## Game Elements
+### Safe Zone
+
+- A screenshot from the Viewer App showing a Safe Zone.
+- A photo of the corresponding physical light in the play area.
+
+#### Behavior
+Each Safe Zone continuously shrinks over time.
+
+When a player enters a Safe Zone:
+
+- The shrinking immediately stops.
+- The Safe Zone expands until it reaches its maximum radius.
+
+When the player leaves:
+
+- The Safe Zone resumes shrinking.
+
+If any Safe Zone reaches its minimum radius, it disappears and the game immediately ends.
+
+[Expansion and shrinking of Safe Zone](assets/ShrinknExpand.mp4)
+
+[Safe Zone disappearing ](assets/ZoneDisappear.mp4)
+### Danger Zone
+
+- A screenshot from the Viewer App showing a Danger Zone.
+- A photo of the physical danger light.
+
+#### Behavior
+Danger Zones continuously move around the play area throughout the game.
+
+If a player enters a Danger Zone:
+- Game immediately ends.
+
+Their movement increases the challenge by limiting safe paths between Safe Zones.
+
+[Danger Zone Behavior](assets/DangerZone.mp4)
+
+## Player Equipment
+
+Before the game begins, each player is required to wear a backpack containing a UWB tracking tag. The tracking tag continuously monitors the player's position within the play area and translates their physical movement into in-game actions.
+
+The backpack allows players to move freely while ensuring the tracking tag remains securely positioned throughout the game.
+
+- Insert a photograph of the backpack with the UWB tag installed.
 
 ## Gameplay Flow:
 
@@ -13,176 +59,90 @@ The game is divided into three main stages:
 
 Tutorial
     →
-Zone Capture Phase
-   →
-Survival Phase
+Gameplay
      →
 Victory / Game Over
 
 ## Stage 1: Tutorial
 
-When the game starts, players are presented with a tutorial screen.
+Before the game starts, players are presented with a tutorial explaining: 
 
-The tutorial explains:
+- How player movement is tracked
+- The difference between Safe Zones and Danger Zones
+- Behavior of Safe and Danger Zones
+- How to win or lose the game
 
-1:How player movement is tracked
+To help players understand the game mechanics, the game elements are demonstrated visually.
 
-2:The difference between Safe Zones and Danger Zones
+When the Safe Zone is introduced, the corresponding lights illuminate the floor to display the Safe Zone within the play area.
 
-3:How to capture zones
+When the Danger Zone is introduced, the corresponding lights illuminate the floor to demonstrate the appearance of the Danger Zone.
 
-4:How to win or lose the game
+These visual demonstrations allow players to familiarise themselves with the game elements before the gameplay rounds begin.
 
-Once all players understand the rules, the game begins.
+Once the tutorial is completed, the first gameplay round starts.
 
-## Stage 2: Zone Capture Phase:
 
-During this phase, several Safe Zones appear on the game field.
+## Stage 2: Gameplay Rounds 
 
-**What is a Safe Zone?**
+The game is divided into three rounds, with each round increasing in difficulty by introducing additional Safe Zones.
 
-A Safe Zone is an area that players must enter and remain inside to capture.
+|**Round**	| **Safe Zones** |	**Round Duration** |
+|----------|------------|----------------|
+| 1	     |   2       |	10 seconds   |
+| 2	     |   3	  |  15 seconds   | 
+| 3       |   4	  |  20 seconds   |
 
- **WHAT HAPPENS WHEN U GET INTO THE SAFE ZONE:**
-
-Player enters Safe Zone
-           →
-Zone begins expanding
-           →
-Player remains inside
-           →
-Zone reaches maximum size
-           →
-Zone is captured
-
-Capturing a Zone
-
-To successfully capture a zone:
-
-1:Move into the Safe Zone.
-
-2:Stay within the zone boundary.
-
-3:Allow the zone to fully expand.
-
-4:Once fully expanded, the zone is considered captured.
-
-The process is repeated until all Safe Zones have been captured.
-
-## Danger Zones:
-
-While players are capturing Safe Zones, Danger Zones are also present on the field.
-
-**What is a Danger Zone?**
-
-Danger Zones are hazardous areas that players must avoid.
-
-If a player enters a Danger Zone:
-
-Player enters Danger Zone
-           →
-      Game Over
-
-Danger Zones move throughout the play area, forcing players to constantly reposition themselves.      
-
-## Stage 3: Survival Phase
-
-After all Safe Zones have been captured, the game enters Survival Mode.
-
-During this phase:
-
-1:No new Safe Zones appear.
-2:Existing Safe Zones gradually shrink.
-3:Danger Zones become more aggressive.
-4:Players must survive for a fixed duration.
-
-All Safe Zones Captured
-          ↓
-Survival Mode Begins
-          ↓
-Avoid Danger Zones
-          ↓
-Survive Countdown Timer
-
-The goal is to remain alive until the timer reaches zero.
+At the beginning of each round, the corresponding number of Safe Zones appears within the play area.  
 
 ## Win Condition
 
-A player wins if they successfully survive until the end of the Survival Phase.
+Players win if they:
 
-Capture All Safe Zones
-          ↓
-Enter Survival Phase
-          ↓
-Survive Entire Timer
-          ↓
-      Victory
+- Successfully complete all three rounds.
+- Keep every Safe Zone alive throughout the game.
+- Avoid entering any Danger Zone.
 
-**When this happens:**
+When this happens:
 
-1:Victory audio is played
-
-2:Victory visuals are displayed
-
-3:The game ends successfully
+- Victory audio is played.
+- Victory visuals are displayed.
+- The game ends successfully.
 
 ## Lose Conditions
 
-The game can end in failure under the following situations:
+The game ends immediately if either of the following occurs.
 
-1. Entering a Danger Zone:
+1. Player Enters a Danger Zone
 
-   Player touches Danger Zone
-           →
-     Game Over
-
-2. Safe Zones Destroyed
-
-If all Safe Zones disappear before the player successfully completes the objective:
-
-No Remaining Safe Zones
-          ↓
-     Game Over
-
-Real-Time Player Tracking:
-
-The game uses AI Thinker UWB modules to continuously track player positions.
-
-The tracking process works as follows:
-
-Player Carries UWB Tag
-           →
-Anchors Measure Distances
-           →
-Sensor Pi Receives Data
-           →
-Game Pi Calculates Position
-           →
-Player Marker Updated On Screen
-
-This allows the game to accurately determine whether a player is inside a Safe Zone or Danger Zone.
+2. A Safe Zone Disappears
 
 ## Audio and Visual Feedback
 
-The game provides immediate feedback to players through audio and visual effects.
+The game provides immediate feedback through audio and visual effects.
 
-Examples include:
 
-| Event                 | Feedback                  |
-| --------------------- | ------------------------- |
-| Game Start            | Start music plays         |
-| Zone Captured         | Capture sound effect      |
-| Enter Danger Zone     | Warning / Game Over sound |
-| Survival Phase Starts | New background music      |
-| Victory               | Victory music and visuals |
+| Event                 | Audio Feedback            | Visual Feedback        |
+| --------------------- | ------------------------- | ---------|
+| Game Start            | Background music plays    | All illuminated zones for round 1 appears|
+| Players enter Safe Zone   | Zone expansion effect | The illuminated Safe Zone expands, until it reaches the maximum size.|
+| Players leave Safe Zone   | Zone expansion effect stop |The illuminated Safe Zone gradually shrinks.|
+| Players enter Danger Zone | Warning followed by Game Over sound | All illuminated zones stop moving|
+| Round Complete            | Winning audio cue   | All illuminated zones stop moving.|
+| Victory                   | Victory sound |All illuminated zones disappears|
 
 This feedback helps players understand what is happening during gameplay without needing to look at technical information.
-     
-## Summary
 
-The objective of the game is simple:
 
-1:Capture all Safe Zones.
-2:Avoid all Danger Zones.
-3:Survive the final Survival Phase.
-4:Reach the end of the timer to win.
+<!-- 
+## Technologies Demonstracted:
+The UWB Interactive Game demonstrates the integration of multiple hardware and software technologies to create a real-time, location-based interactive game experience. The gameplay mechanics are supported by several embedded systems, communication protocols, and real-time processing techniques.
+
+| **Technology**      | **Description**           |
+|---------------------|-----------------------|
+| Technology	Description Ultra-Wideband (UWB) Positioning |Utilises AI Thinker UWB modules to accurately determine the real-time positions of players within the play area.
+|Indoor Localization        |Calculates player locations using distance measurements obtained from multiple fixed UWB anchors. |
+| UART Serial Communication              |Transfers raw distance measurements from the UWB hardware to the Sensor Raspberry Pi for processing.       |
+|      Open Sound Control (OSC)      | Enables communication between the Sensor Pi, Game Pi, grandMA and Reaper for transmitting tracking data and triggering audio events.     |
+|      Trilateration      | Computes player coordinates using distance measurements collected from multiple UWB anchors.    |
+|      Kalman Filtering     | Reduces measurement noise and provides smoother player position tracking for more stable gameplay.     | -->
