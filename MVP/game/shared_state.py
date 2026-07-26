@@ -3,8 +3,8 @@ import time
 
 from dataclasses import dataclass, field
 
-from MVP.game.kalman import Kalman2D
-from MVP.game.constants import ROUND_EXPAND
+from kalman import Kalman2D
+from constants import ROUND_EXPAND
 
 
 # ---------------------------------------------------------------------------

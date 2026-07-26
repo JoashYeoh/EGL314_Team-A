@@ -2,7 +2,7 @@ from threading import Timer
 
 from pythonosc import udp_client
 
-from MVP.game.constants import *
+from constants import *
 
 
 

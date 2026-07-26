@@ -2,8 +2,8 @@ import sys
 
 import tkinter as tk
 
-from MVP.game.constants import *
-from MVP.game.osc_sender import *
+from constants import *
+from osc_sender import *
 
 
 # ---------------------------------------------------------------------------

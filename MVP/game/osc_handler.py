@@ -4,15 +4,15 @@ from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
 from pythonosc import udp_client
 
-from MVP.game.constants import *
+from constants import *
 
-from MVP.game.trilateration import trilaterate_2d
+from trilateration import trilaterate_2d
 
-from MVP.game.shared_state import SharedState
+from shared_state import SharedState
 
 """from zones import point_in_zone"""
 
-from MVP.game.osc_sender import *
+from osc_sender import *
 
 
 # ---------------------------------------------------------------------------

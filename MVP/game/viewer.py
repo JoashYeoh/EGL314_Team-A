@@ -18,8 +18,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Rectangle
 
 
-from MVP.game.constants import *
-from MVP.game.shared_state import SharedState
+from constants import *
+from shared_state import SharedState
 
 
 
