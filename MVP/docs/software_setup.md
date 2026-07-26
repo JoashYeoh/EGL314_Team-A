@@ -16,7 +16,7 @@ Documentation Guide:
     * [4.2. L-ISA Controller](#42-L-ISA-Controller)
     * [4.3. REAPER](#43-REAPER)
 * [5. GrandMA3 Setup](#5-GrandMA3-Set-Up)
-* [6. Appendix](#6-gamepy-Set-Up)
+* [6. Appendix](#6-Appendix)
     * [6.1. Lasptop as Game Pi Set-up](#61-Laptop-as-Game-Pi-Set-up)
     * [6.2. About L-ISA Processor](#61-About-L-ISA-Processor-(Desktop))
     * [6.3. About L-ISA Controller](#61-About-L-ISA-Controller)
