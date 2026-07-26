@@ -336,7 +336,7 @@ If player **exits Zone A**, and the **size is 65%**, it reverses the cue being s
 [OSC GMA3] Sent Cue <cue> <zone_name>
 ```
 
-#### Snippet of how it looks in real life
+#### Snippet of Zone Expansion and Shrinking cues in real life
 ![Zone Expanding & Shrinking Lighting](assets/zone-shrinking-expanding.gif)
 
 ---
@@ -441,6 +441,10 @@ Example console output:
 Unknown danger axis: diagonal
 ```
 
+#### Snippet of danger zone movement cues in real life (look at the red spot)
+![Danger Zone Movement](assets/danger-zone-movement.gif)
+
+
 ---
 
 ## 8. Game Over Sequence
@@ -451,6 +455,9 @@ send_game_over()
 
 ### Game trigger
 Called when the **player loses**, such as **when a danger zone collides** with tag position (player) or **when safe zones shrinks to  minimum size**. 
+
+#### Snippet of danger zone colision in real life (look at the red spot)      
+![Danger Zone Colission](assets/danger-zone-colide.gif)
 
 ### REAPER commands
 | Order | OSC Address | Action | Game Result |
