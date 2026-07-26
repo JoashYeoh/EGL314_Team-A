@@ -337,8 +337,8 @@ If player **exits Zone A**, and the **size is 65%**, it reverses the cue being s
 ```
 
 #### Snippet of how it looks in real life
-![Zone Expanding & Shrinking Lighting](/assets/zone-shrinking-expanding.gif)
-
+![Zone Expanding & Shrinking Lighting](assets/zone-shrinking-expanding.gif)
+<video controls src="assets/ShrinknExpand.mp4" title="Title"></video>
 
 
 ## 7. Danger-Zone Movement Lighting
