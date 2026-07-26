@@ -95,7 +95,7 @@ python3 uart.py --tags X
 ---
 
 
-## 3. `game.py` Setup
+## 3. `game.py` Set-Up
 The game application has been refactored into multiple Python modules. *Each module is responsible for a specific part of the system*, while `game.py` remains the **main entry point** used to launch the application.
 
 Before starting the game, **configure the OSC network addresses**, **tracking-data port**, and **number of UWB tags**.
