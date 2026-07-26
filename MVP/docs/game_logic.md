@@ -9,9 +9,10 @@ The objective of the game is to keep every Safe Zone alive throughout all three 
 
 ## Game Elements
 ### Safe Zone
-
-- A screenshot from the Viewer App showing a Safe Zone.
-- A photo of the corresponding physical light in the play area.
+In ViewerApp, it looks like
+![Alt text](assets/SafeZoneViewer.jpg)
+Physically, this is what the players should see
+![Alt text](assets/SafeZonesLabelled.jpg)
 
 #### Behavior
 Each Safe Zone continuously shrinks over time.
@@ -32,9 +33,10 @@ If any Safe Zone reaches its minimum radius, it disappears and the game immediat
 ![Safe Zone disappearing](assets/zone-disappear.gif)
 
 ### Danger Zone
-
-- A screenshot from the Viewer App showing a Danger Zone.
-- A photo of the physical danger light.
+In ViewerApp, it looks like
+![Alt text](assets/DangerzoneViewer.jpg)
+Physically, this is what the players see
+![Alt text](assets/DangerZoneLabelled.jpg)
 
 #### Behavior
 Danger Zones continuously move around the play area throughout the game.

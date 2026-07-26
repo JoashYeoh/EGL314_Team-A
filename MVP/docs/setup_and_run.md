@@ -55,10 +55,6 @@ project/
 ├── trilateration.py
 ├── kalman.py
 │
-├── Assets/
-│   ├── Step67.png
-│   └── ...
-│
 └── (other supporting files)
 ```
 
@@ -82,6 +78,8 @@ Required audio assets include:
 - Game over audio
 - Final game sequence audio
 
+For step-by-step configuration guide, click [here](software_setup.md#43-reaper).
+
 ### L-ISA
 
 Ensure the following are prepared:
@@ -90,9 +88,13 @@ Ensure the following are prepared:
 - Speaker configuration
 - Audio routing configuration
 
+For step-by-step configuration guide, click [here](software_setup.md#4-reaper-laptop-set-up).
+
 ### GrandMA3
 
 Ensure all required lighting sequences and OSC commands are configured before running the game.
+
+For step-by-step configuration guide, click [here](software_setup.md#5-grandma3-set-up).
 
 ## Script Dependencies
 
