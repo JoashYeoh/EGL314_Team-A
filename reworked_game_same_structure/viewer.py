@@ -80,8 +80,12 @@ class ViewerApp:
         self.overlay_box=self.ax_plot.text(.5,.5,'',transform=self.ax_plot.transAxes,ha='center',va='center',fontsize=22,color='white',bbox=dict(facecolor='#222222',edgecolor='white',boxstyle='round,pad=1.0'),zorder=100)
         self.overlay_box.set_visible(False)
 
-        if self.state.simulate:self.canvas.mpl_connect('motion_notify_event',self.on_mouse_move)
-        print('[SIM] Mouse simulation enabled')
+        if self.state.simulate:
+            self.canvas.mpl_connect('motion_notify_event',self.on_mouse_move)
+            print('[SIM] Mouse simulation enabled')
+        else:
+            print('[SIM] Mouse simulation disabled')
+
         table=tk.Frame(root,bg='#000000')
         table.grid(row=1,column=0,sticky='nsew',padx=10,pady=10)
         self.id_labels=[]; self.x_labels=[]

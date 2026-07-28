@@ -1,7 +1,7 @@
 import sys
 import tkinter as tk
 
-from osc_sender import send_start_sequence, send_bgm
+from osc_sender import send_start_lobby, send_start_tutorial, send_start_game
 
 
 #----------------------------------------------------------------------------
@@ -31,8 +31,7 @@ class TutorialWindow:
         self.top.protocol('WM_DELETE_WINDOW',self.on_close)
 
         # OSC
-        send_start_sequence()
-        send_bgm()
+        send_start_lobby()
 
         tk.Label(self.top,text='ZONE CAPTURING',bg='#111111',fg='white',font=('Helvetica',42,'bold')).pack(pady=(100,25))
         tk.Label(self.top,text='Enter a zone to expand it. Exit before completion and it shrinks.\nCapture all five zones to win.',bg='#111111',fg='#cccccc',font=('Helvetica',20),justify='center').pack(pady=20)
@@ -44,10 +43,13 @@ class TutorialWindow:
 
     def start_tutorial(self):
         self.game_manager.start_tutorial(); self.open_viewer()
+        # OSC
+        send_start_tutorial()
 
 
     def start_game(self):
         self.game_manager.start_game(); self.open_viewer()
+        send_start_game()
 
 
     def open_viewer(self):

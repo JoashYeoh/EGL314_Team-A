@@ -19,23 +19,26 @@ def send_bgm():
     osc_tx_reaper.send_message("/action/1007", 1) #play
 
 
-def send_start_sequence():
-    osc_tx_gma3.send_message("/gma3/cmd", "off sequence *")
-    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 78")
-    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 79")
-    osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 80")
-    send_tutorial_cue()
+def send_start_lobby():
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 100 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 101 cue 1")
+    return
 
-
-def send_tutorial_cue():
-    osc_tx_gma3.send_message("/gma3/cmd", "Go Sequence 8")
-
+def send_start_tutorial():
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 109 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 1")
+    return
 
 def send_start_game(): 
     print("[OSC Reaper] START BUTTON PRESSED")
     #gma
-    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 78")
-    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 80")
+    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 100 fade 5")
+    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 101 fade 5")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 111 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 112 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 113 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 114 cue 1")
     #reaper
     osc_tx_reaper.send_message("/action/1068", 1) #toggle repeat
     osc_tx_reaper.send_message("/action/41761", 1)  #jump to region 1
@@ -53,18 +56,27 @@ def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multipla
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
+        osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 2")
         osc_tx_reaper.send_message("/action/40958", 1)    #select track 20
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE B":
+        osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 111 cue 2")
         osc_tx_reaper.send_message("/action/40959", 1)    #select track 21
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE C":
+        osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 112 cue 2")
         osc_tx_reaper.send_message("/action/40960", 1)    #select track 22
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
     if zone_name == "ZONE D":
+        osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 113 cue 2")
+        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
+        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
+
+    if zone_name == "ZONE D":
+        osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 114 cue 2")
         osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
         osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
@@ -78,18 +90,27 @@ def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
     zone_name = ZONES[zone_index]["label"]
 
     if zone_name == "ZONE A":
+        osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 110 cue 1")
         osc_tx_reaper.send_message("/action/40958", 1)    #select track 20
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE B":
+        osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 111 cue 1")
         osc_tx_reaper.send_message("/action/40959", 1)    #select track 21
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE C":
+        osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 112 cue 1")
         osc_tx_reaper.send_message("/action/40960", 1)    #select track 22
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
     
     if zone_name == "ZONE D":
+        osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 113 cue 1")
+        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
+        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
+
+    if zone_name == "ZONE E":
+        osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 114 cue 1")
         osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
@@ -134,7 +155,9 @@ def send_danger_movement(axis, cue):
     print(f"Goto Cue {cue} Sequence {sequence}")
 
 
-def send_game_over():  #-- when tag hit danger zone triger multiplay
+def send_game_over():  #-- when tag hit danger zone
+    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence *")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 115 cue 1")
     osc_tx_reaper.send_message("/action/40341", 1)   #mute all tracks
     osc_tx_reaper.send_message("/action/40162", 1)   #jump marker 2
     osc_tx_reaper.send_message("/action/40956", 1)    #select track 18
@@ -226,13 +249,13 @@ def send_game_end_finale():
 def send_zone_complete(zone_index):
     zone_name = ZONES[zone_index]["label"]
     sequence_map = {
-        "ZONE A": 2,
-        "ZONE B": 3,
-        "ZONE C": 4,
-        "ZONE D": 5,
-        "ZONE E": 9,  # Change this to the actual GrandMA sequence for Zone E.
+        "ZONE A": 110,
+        "ZONE B": 111,
+        "ZONE C": 112,
+        "ZONE D": 113,
+        "ZONE E": 114,  # Change this to the actual GrandMA sequence for Zone E.
     }
     sequence = sequence_map.get(zone_name)
     if sequence is not None:
-        osc_tx_gma3.send_message("/gma3/cmd", f"Goto Cue 1 Sequence {sequence}")
+        osc_tx_gma3.send_message("/gma3/cmd", f"Goto Cue 4 Sequence {sequence}")
     print(f"[OSC] Zone completed: {zone_name}")
