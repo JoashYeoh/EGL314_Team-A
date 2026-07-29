@@ -26,14 +26,14 @@ def send_start_lobby():
 
 def send_start_tutorial():
     osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 109 cue 1")
-    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 107 cue 1")
+    osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 108 cue 1")
     return
 
 def send_start_game(): 
     print("[OSC Reaper] START BUTTON PRESSED")
     #gma
     osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 100 fade 5")
-    osc_tx_gma3.send_message("/gma3/cmd", "off Sequence 101 fade 5")
     osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 1")
     osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 111 cue 1")
     osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 112 cue 1")

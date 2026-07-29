@@ -12,6 +12,57 @@ ANCHORS = {
 
 VIEW_BOUNDS = (-1.50, 11.50, -1.50, 10.50) #(xmin, xmax, ymin, ymax)
 
+
+
+# ---------------------------------------------------------------------------
+# Tutorial-only zones
+# ---------------------------------------------------------------------------
+def tutorial_safe(label, center, colour):
+    return {
+        "center": center,
+        "radius": 0.30,
+        "max_radius": 1.10,
+        "min_radius": 0.30,
+        "expand_rate": 0.00835,
+        "shrink_rate": 0.00835,
+        "color": colour,
+        "label": label,
+        "active": False,
+        "safe": True,
+        "tutorial": True,
+        "expanded_sent": False,
+        "captured": False,
+    }
+
+
+TUTORIAL_ZONES = [
+    tutorial_safe("TUTORIAL ZONE 1", (3.50, 3.90),"#00e5ff",),
+    tutorial_safe("TUTORIAL ZONE 2",(6.00, 3.90),"#ffb300",)
+]
+
+
+TUTORIAL_DANGER_ZONE = {
+    "center": (4.75, 3.90),
+    "radius": 1.00,
+    "min_radius": 1.00,
+    "max_radius": 1.00,
+
+    "expand_rate": 0.0,
+    "shrink_rate": 0.0,
+
+    "color": "#ff1744",
+    "label": "TUTORIAL DANGER",
+
+    "active": False,
+    "safe": False,
+    "tutorial": True,
+    "is_danger": True,
+
+    # Keep it stationary during the tutorial.
+    "velocity": (0.0, 0.0),
+}
+
+
 # ---------------------------------------------------------------------------
 # Zone configs
 # ---------------------------------------------------------------------------
@@ -39,7 +90,6 @@ ZONES = [
     safe("ZONE C", (6.00, 2.65), "#66ff66"), #top left
     safe("ZONE D", (3.5, 2.65), "#c266ff"), #top left
     safe("ZONE E", (4.75, 3.9), "#bdbdbd"), #center
-
 
 
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
@@ -74,7 +124,7 @@ ZONES = [
     },
 ]
 
-
+ALL_ZONES = ZONES + TUTORIAL_ZONES + [TUTORIAL_DANGER_ZONE]
 # Danger Zone Boundaries
 DANGER_BOUNDS = (2.25, 7.25, 1.4, 6.4) #(xmin, xmax, ymin, ymax)
 
@@ -105,9 +155,13 @@ STATE_PLAYING="playing"
 STATE_GAME_OVER="game_over"
 STATE_GAME_WON="game_won"
 
-TUTORIAL_ENTER="enter"
+"""TUTORIAL_ENTER="enter"
 TUTORIAL_EXIT="exit"
-TUTORIAL_COMPLETE="complete"
+TUTORIAL_COMPLETE="complete"""
+
+TUTORIAL_EXPAND = "tutorial_expand"
+TUTORIAL_SHRINK = "tutorial_shrink"
+TUTORIAL_DANGER = "tutorial_danger"
 
 GAME_END_SEQUENCE_DELAY = 15.0
 
@@ -117,7 +171,7 @@ GAME_END_SEQUENCE_DELAY = 15.0
 # ---------------------------------------------------------------------------
 # OSC -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_REAPER_TARGET_IP = "192.168.254.12"    # IP of laptop running REAPER
+OSC_REAPER_TARGET_IP = "192.168.1.12"    # IP of laptop running REAPER
 OSC_REAPER_TARGET_PORT = 8000
 
 OSC_GMA3_TARGET_IP = "192.168.254.252"    # IP of laptop running GMA3

@@ -57,7 +57,7 @@ class ViewerApp:
             self.ax_plot.annotate(f'A{aid}',(x,y),xytext=(8,8),textcoords='offset points',color='#ffeb3b')
         self.zone_patches=[]
 
-        for z in ZONES:
+        for z in ALL_ZONES:
             danger=z.get('is_danger',False)
             circle=mpatches.Circle(z['center'],z['radius'],fill=danger,linewidth=3,linestyle='-' if danger else '--',edgecolor=z['color'],facecolor=z['color'] if danger else 'none',alpha=.7 if danger else 1)
             self.ax_plot.add_patch(circle)
@@ -225,25 +225,67 @@ class ViewerApp:
 
 
     def draw_tutorial_hud(self):
-        step=self.game_manager.tutorial_step
+        step = self.game_manager.tutorial_step
         self.tutorial_button.grid()
-        self.game_master_button.configure(state="disabled",)
 
-        if step==TUTORIAL_ENTER:
-            done=self.game_manager.tutorial_enter_done
-            self.hud.set_text('STEP 1 COMPLETE\nZone expands while the tag is inside.\nClick NEXT.' if done else 'TUTORIAL STEP 1\nBring the tag into Zone A.')
-            self.tutorial_button.configure(text='NEXT' if done else 'ENTER ZONE A',state='normal' if done else 'disabled')
+        if step == TUTORIAL_ENTER:
+            done = self.game_manager.tutorial_enter_done
 
-        elif step==TUTORIAL_EXIT:
-            done=self.game_manager.tutorial_exit_done
-            self.hud.set_text('STEP 2 COMPLETE\nZone shrinks after the tag exits.\nClick NEXT.' if done else 'TUTORIAL STEP 2\nMove the tag outside Zone A.')
-            self.tutorial_button.configure(text='NEXT' if done else 'EXIT ZONE A',state='normal' if done else 'disabled')
+            if done:
+                self.hud.set_text("STEP 1 COMPLETE\n"
+                    "Tutorial Zone 1 expands while occupied.\n"
+                    "Click NEXT."
+                )
+                
+            else:
+                self.hud.set_text(
+                    "TUTORIAL STEP 1\n"
+                    "Bring the tag into Tutorial Zone 1."
+                )
+
+            self.tutorial_button.configure(
+                text="NEXT" if done else "ENTER TUTORIAL ZONE 1",
+                state="normal" if done else "disabled",
+            )
+
+        elif step == TUTORIAL_EXIT:
+            entered = self.game_manager.tutorial_zone_2_entered
+            done = self.game_manager.tutorial_exit_done
+
+            if done:
+                self.hud.set_text(
+                    "STEP 2 COMPLETE\n"
+                    "The zone shrinks after the tag leaves.\n"
+                    "Click NEXT."
+                )
+            elif entered:
+                self.hud.set_text(
+                    "TUTORIAL STEP 2\n"
+                    "Now move out of Tutorial Zone 2."
+                )
+            else:
+                self.hud.set_text(
+                    "TUTORIAL STEP 2\n"
+                    "Enter Tutorial Zone 2 first."
+                )
+
+            self.tutorial_button.configure(
+                text="NEXT" if done else "COMPLETE THE MOVEMENT",
+                state="normal" if done else "disabled",
+            )
 
         else:
-            self.hud.set_text('TUTORIAL COMPLETE\nCapture all five zones to win.')
-            self.tutorial_button.configure(text='START GAME',state='normal')
+            self.hud.set_text(
+                "TUTORIAL COMPLETE\n"
+                "Capture all five game zones to win."
+            )
 
-        self.hud.set_color('#00e5ff')
+            self.tutorial_button.configure(
+                text="START GAME",
+                state="normal",
+            )
+
+        self.hud.set_color("#00e5ff")
 
 
     def update_overlay(self):

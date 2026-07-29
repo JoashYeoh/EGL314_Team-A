@@ -14,9 +14,12 @@ class GameManager:
         self.game_state = STATE_LOBBY
         self.game_running = False
 
-        self.tutorial_step = TUTORIAL_ENTER
+        self.tutorial_step = TUTORIAL_EXPAND
         self.tutorial_enter_done = False
         self.tutorial_exit_done = False
+        self.tutorial_expanded_zones = set()
+        self.tutorial_shrinking_zones = set()
+        #self.tutorial_zone_2_entered = False
 
         # Game-end Sequence
         self.game_end_sequence_started = False
@@ -26,40 +29,60 @@ class GameManager:
     def start_tutorial(self):
         reset_zones(self.state)
 
-        count=0
-        for z in ZONES:
-            if z.get('safe'):
-                z['active']=(count==0); count+=1
-            elif z.get('is_danger'): z['active']=False
+        # Hide all game zones and danger zones.
+        for zone in ZONES:
+            zone["active"] = False
 
-        self.tutorial_step=TUTORIAL_ENTER
-        self.tutorial_enter_done=False
-        self.tutorial_exit_done=False
+        # Start with Tutorial Zone 1 visible.
+        for index, zone in TUTORIAL_ZONES:
+            zone["radius"] = zone["min_radius"]
+            zone["captured"] = False
+            zone["expanded_sent"] = False
+            zone["active"] = True
 
-        self.game_state=STATE_TUTORIAL
-        self.game_running=True
-        self.state.game_started=True
-        self.state.stop=False
-        self.state.game_won=False
+        # Tutorial danger appears only in Step 3.
+        TUTORIAL_DANGER_ZONE["active"] = False
+
+        self.tutorial_step = TUTORIAL_EXPAND
+        self.tutorial_enter_done = False
+        self.tutorial_exit_done = False
+
+        self.tutorial_expanded_zones.clear()
+        self.tutorial_shrinking_zones.clear()
+
+        for tag in self.state.tags:
+            tag.zones_inside.clear()
+
+        self.game_state = STATE_TUTORIAL
+        self.game_running = True
+
+        # UART/OSC tag positions must continue being processed.
+        self.state.game_started = True
+        self.state.stop = False
+        self.state.game_won = False
 
 
     def start_game(self):
         reset_zones(self.state)
         initialise_danger_zones()
 
-        # Make all safe and danger zones visible again.
-        for z in ZONES:
-            z['active']=True
+        # Activate game zones and danger zones.
+        for zone in ZONES:
+            zone["active"] = True
+
+        # Tutorial zones must not appear in the game.
+        for zone in TUTORIAL_ZONES:
+            zone["active"] = False
 
         self.game_state = STATE_PLAYING
         self.game_running = True
-
         self.game_end_sequence_started = False
 
         self.state.game_started = True
         self.state.stop = False
         self.state.game_won = False
-        send_start_game()   # OSC
+
+        send_start_game() # OSC
 
 
     def update(self):
@@ -82,13 +105,26 @@ class GameManager:
     def process_zone_transitions(self,tag_id,tag):
         entered,exited=self.transition_fn(tag_id,tag)
 
-        if self.game_state==STATE_TUTORIAL:
+        if self.game_state != STATE_TUTORIAL:
+            return
+
+        if (self.tutorial_step == TUTORIAL_ENTER and "TUTORIAL ZONE 1" in entered):
+            self.tutorial_enter_done = True
+
+        if (self.tutorial_step == TUTORIAL_EXIT and "TUTORIAL ZONE 2" in exited):
+            self.tutorial_exit_done = True
+            self.tutorial_zone_2_entered = True
+
+        if (self.tutorial_step == TUTORIAL_EXIT and self.tutorial_zone_2_entered and "TUTORIAL ZONE 2" in exited):
+            self.tutorial_exit_done = True
+
+        """if self.game_state==STATE_TUTORIAL:
 
             if self.tutorial_step==TUTORIAL_ENTER and 0 in entered:
                 self.tutorial_enter_done = True
 
             if self.tutorial_step==TUTORIAL_EXIT and 0 in exited:
-                self.tutorial_exit_done = True
+                self.tutorial_exit_done = True"""
 
 
     def trigger_danger_clash(self):
@@ -134,13 +170,27 @@ class GameManager:
 
 
     def next_tutorial_step(self):
-        if self.tutorial_step==TUTORIAL_ENTER and self.tutorial_enter_done:
-            self.tutorial_step = TUTORIAL_EXIT  # transition to next step (by changing state)
+        if (self.tutorial_step == TUTORIAL_ENTER and self.tutorial_enter_done):
+            # Hide the first tutorial zone.
+            TUTORIAL_ZONES[0]["active"] = False
 
-        elif self.tutorial_step==TUTORIAL_EXIT and self.tutorial_exit_done:
-            self.tutorial_step = TUTORIAL_COMPLETE  # transition to next step (by changing state)
+            # Reset and show the second tutorial zone.
+            TUTORIAL_ZONES[1]["radius"] = (TUTORIAL_ZONES[1]["min_radius"])
+            TUTORIAL_ZONES[1]["captured"] = False
+            TUTORIAL_ZONES[1]["active"] = True
 
-        elif self.tutorial_step==TUTORIAL_COMPLETE:
+            # Clear old zone membership so the new zone gets
+            # a fresh enter event.
+            for tag in self.state.tags:
+                tag.zones_inside.clear()
+
+            self.tutorial_step = TUTORIAL_EXIT
+
+        elif (self.tutorial_step == TUTORIAL_EXIT and self.tutorial_exit_done):
+            TUTORIAL_ZONES[1]["active"] = False
+            self.tutorial_step = TUTORIAL_COMPLETE
+
+        elif self.tutorial_step == TUTORIAL_COMPLETE:
             self.start_game()
 
 

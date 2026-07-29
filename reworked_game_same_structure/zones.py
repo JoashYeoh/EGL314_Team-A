@@ -1,5 +1,5 @@
 import random
-from constants import ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
+from constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
 from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_danger_movement
 
 
@@ -26,67 +26,130 @@ def zone_is_occupied(zone,tags):
     return False
 
 
-def safe_zones(): 
+def safe_zones(zone_list=None): 
+    if zone_list is None:
+        zone_list = ZONES
     return [z for z in ZONES if z.get('safe')]
 
 
+def reset_zone_list(zone_list):
+    for zone in zone_list:
+        if not zone.get("safe"):
+            continue
+
+        zone["radius"] = zone["min_radius"]
+        zone["captured"] = False
+        zone["expanded_sent"] = False
+        zone["active"] = False
+
+
 def reset_zones(state):
-    for z in safe_zones():
-        z['radius']=z['min_radius']
-        z['captured']=False
-        z['expanded_sent']=False
-        z['active']=True
+    # Reset game zones.
+    reset_zone_list(ZONES)
+    # Reset tutorial zones.
+    reset_zone_list(TUTORIAL_ZONES)
+    # Clear which zones each tag thinks it is inside.
+    for tag in state.tags:
+        tag.zones_inside.clear()
 
-    for t in state.tags:
-        t.zones_inside.clear()
 
+def process_zone_transitions(tag_id, tag):
+    current = set()
+    zone_lookup = {}
 
-def process_zone_transitions(tag_id,tag):
-    current=set()
-    for i,z in enumerate(ZONES):
-        if z.get('safe') and z.get('active',True) and point_in_zone(tag.filt_position,z):
-            current.add(i)
+    for zone in ALL_ZONES:
+        if not zone.get("safe"):
+            continue
+        if not zone.get("active", True):
+            continue
 
-    entered=current-tag.zones_inside
-    exited=tag.zones_inside-current
+        zone_label = zone["label"]
+        zone_lookup[zone_label] = zone
 
-    for i in entered:
-        print(f"[ZONE] Tag {tag_id} ENTERED {ZONES[i]['label']}")
-        send_zone_enter(tag_id,i)   # OSC
+        if point_in_zone(tag.filt_position, zone):
+            current.add(zone_label)
 
-    for i in exited:
-        print(f"[ZONE] Tag {tag_id} EXITED {ZONES[i]['label']}")
-        send_zone_exit(tag_id,i)    # OSC
+    entered = current - tag.zones_inside
+    exited = tag.zones_inside - current
 
-    tag.zones_inside=current
-    return entered,exited
+    for zone_label in entered:
+        zone = zone_lookup[zone_label]
+
+        print(
+            f"[ZONE] Tag {tag_id} ENTERED "
+            f"{zone_label}"
+        )
+
+        # Tutorial zones should not trigger normal game-zone OSC.
+        if not zone.get("tutorial"):
+            zone_index = ZONES.index(zone)
+            send_zone_enter(tag_id, zone_index) # OSC
+
+    for zone_label in exited:
+        zone = next(
+            (item for item in ALL_ZONES
+                if item["label"] == zone_label
+            ),
+            None,
+        )
+
+        print(
+            f"[ZONE] Tag {tag_id} EXITED "
+            f"{zone_label}"
+        )
+
+        if zone is not None and not zone.get("tutorial"):
+            zone_index = ZONES.index(zone)
+            send_zone_exit(tag_id, zone_index) # OSC
+
+    tag.zones_inside = current
+
+    return entered, exited
+
 
 
 # ---------------------------------------------------------------------------
 #  Zone Grow Logic 
 # ---------------------------------------------------------------------------
 def update_zones(state):
-    for i,z in enumerate(ZONES):
-        if not z.get('safe') or not z.get('active',True):
+    for zone in ALL_ZONES:
+        if not zone.get("safe"):
             continue
 
-        # if Zone is captured, nothing happens
-        if z.get('captured'):
-            z['radius']=z['max_radius']
+        if not zone.get("active", True):
             continue
 
-        # Zone expands while occupied
-        if zone_is_occupied(z,state.tags):
-            z['radius']=min(z['max_radius'],z['radius']+z['expand_rate'])
-            if z['radius']>=z['max_radius']:
-                z['captured']=True
-                if not z['expanded_sent']:
-                    z['expanded_sent']=True
-                    send_zone_complete(i)
+        is_tutorial = zone.get("tutorial", False)
 
-        # else Zone shrinks (while not occupied)
+        # Captured zones remain at maximum size if not in tutorial mode
+        if zone.get("captured") and not is_tutorial:
+            zone["radius"] = zone["max_radius"]
+            continue
+
+        # Zone expands when tag enters
+        if zone_is_occupied(zone, state.tags):
+            zone["radius"] = min(
+                zone["max_radius"],
+                zone["radius"] + zone["expand_rate"],
+            )
+            # When zone reaches maximum, set state as 'captured'
+            if zone["radius"] >= zone["max_radius"]:
+                if not zone.get("tutorial", False):
+                    zone["captured"] = True
+
+                    if not zone["expanded_sent"]:
+                        zone["expanded_sent"] = True
+                        zone_index = ZONES.index(zone)
+                        send_zone_complete(zone_index) # OSC
+
+                # Only game zones send the complete-zone OSC cue.
+                if (not zone.get("tutorial") and not zone["expanded_sent"]):
+                    zone["expanded_sent"] = True
+                    zone_index = ZONES.index(zone)
+                    send_zone_complete(zone_index) # OSC
+        # Zone shrinks if tag not in zone
         else:
-            z['radius']=max(z['min_radius'],z['radius']-z['shrink_rate'])
+            zone["radius"] = max(zone["min_radius"],zone["radius"] - zone["shrink_rate"],)
 
 
 def all_safe_zones_captured():
