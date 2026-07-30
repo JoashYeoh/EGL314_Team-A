@@ -32,6 +32,7 @@ def tutorial_safe(label, center, colour):
         "tutorial": True,
         "expanded_sent": False,
         "captured": False,
+        "tutorial_max_sent": False,
     }
 
 

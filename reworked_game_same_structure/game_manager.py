@@ -1,7 +1,7 @@
 from threading import Timer
 from constants import *
 from zones import *
-from osc_sender import send_start_game, send_game_over, send_game_end_default_lighting, send_game_end_finale
+from osc_sender import send_tutorial_danger_zone, send_start_game, send_game_over, send_game_win, send_game_end_finale, send_off_all
 
 
 class GameManager:
@@ -20,27 +20,30 @@ class GameManager:
         self.tutorial_expanded_zones = set()
         self.tutorial_shrinking_zones = set()
         #self.tutorial_zone_2_entered = False
+        self.tutorial_step_2_start_radii = {}
 
         # Game-end Sequence
         self.game_end_sequence_started = False
         self.return_to_lobby_callback = None
+        send_off_all()
 
 
     def start_tutorial(self):
         reset_zones(self.state)
 
-        # Hide all game zones and danger zones.
+        # Hide normal game zones.
         for zone in ZONES:
             zone["active"] = False
 
-        # Start with Tutorial Zone 1 visible.
-        for index, zone in TUTORIAL_ZONES:
+        # Show both tutorial zones at minimum radius.
+        for zone in TUTORIAL_ZONES:
             zone["radius"] = zone["min_radius"]
             zone["captured"] = False
             zone["expanded_sent"] = False
+            zone["tutorial_max_sent"] = False
             zone["active"] = True
 
-        # Tutorial danger appears only in Step 3.
+        # Hide tutorial danger zone until Step 3.
         TUTORIAL_DANGER_ZONE["active"] = False
 
         self.tutorial_step = TUTORIAL_EXPAND
@@ -61,7 +64,53 @@ class GameManager:
         self.state.stop = False
         self.state.game_won = False
 
+        # flags for return to lobby button at end game
+        self.game_end_sequence_started = False
+        self.game_end_sequence_complete = False
+        self.return_to_lobby_callback = None
 
+
+    def update_tutorial(self):
+        if self.tutorial_step == TUTORIAL_EXPAND:
+            self._update_tutorial_expand_step()
+
+        elif self.tutorial_step == TUTORIAL_SHRINK:
+            self._update_tutorial_shrink_step()
+    
+
+    def _update_tutorial_expand_step(self):
+        expansion_threshold = 0.10
+
+        for zone in TUTORIAL_ZONES:
+            if (zone["radius"] >= zone["min_radius"] + expansion_threshold):
+                self.tutorial_expanded_zones.add(zone["label"])
+
+        # Either tutorial zone can complete Step 1.
+        self.tutorial_expand_done = bool(self.tutorial_expanded_zones)
+
+
+    def _update_tutorial_shrink_step(self):
+        shrink_threshold = 0.10
+
+        for zone in TUTORIAL_ZONES:
+            start_radius = self.tutorial_step_2_start_radii.get(
+                zone["label"],
+                zone["radius"],
+            )
+
+            if start_radius - zone["radius"] >= shrink_threshold:
+                self.tutorial_shrinking_zones.add(
+                    zone["label"]
+                )
+
+        self.tutorial_shrink_done = bool(
+            self.tutorial_shrinking_zones
+        )
+
+
+#--------------------------------------------------------
+# GAME
+#--------------------------------------------------------
     def start_game(self):
         reset_zones(self.state)
         initialise_danger_zones()
@@ -74,6 +123,11 @@ class GameManager:
         for zone in TUTORIAL_ZONES:
             zone["active"] = False
 
+        TUTORIAL_DANGER_ZONE["active"] = False
+
+        for tag in self.state.tags:
+            tag.zones_inside.clear()
+
         self.game_state = STATE_PLAYING
         self.game_running = True
         self.game_end_sequence_started = False
@@ -81,6 +135,9 @@ class GameManager:
         self.state.game_started = True
         self.state.stop = False
         self.state.game_won = False
+
+        self.game_end_sequence_started = False
+        self.game_end_sequence_complete = False
 
         send_start_game() # OSC
 
@@ -94,37 +151,29 @@ class GameManager:
             if tag.filt_position is not None:
                 self.process_zone_transitions(tag_id,tag)
 
-        # Process win condition (if all zones captured)
+        # Expand or shrink active zones.
         self.update_fn(self.state)
-        if self.game_state==STATE_PLAYING:
+
+        # Tutorial-specific checks.
+        if self.game_state == STATE_TUTORIAL:
+            self.update_tutorial()
+            return
+        
+        # Normal gameplay logic.
+        if self.game_state == STATE_PLAYING:
             update_danger_zones(self.state)
+
             if all_safe_zones_captured():
-                self.start_game_end_sequence()
+                self.start_game_end_sequence() # OSC
 
 
-    def process_zone_transitions(self,tag_id,tag):
-        entered,exited=self.transition_fn(tag_id,tag)
+    def process_zone_transitions(self, tag_id, tag):
+        entered, exited = self.transition_fn(self.state, tag_id, tag,)
 
-        if self.game_state != STATE_TUTORIAL:
+        if self.game_state == STATE_TUTORIAL:
             return
 
-        if (self.tutorial_step == TUTORIAL_ENTER and "TUTORIAL ZONE 1" in entered):
-            self.tutorial_enter_done = True
-
-        if (self.tutorial_step == TUTORIAL_EXIT and "TUTORIAL ZONE 2" in exited):
-            self.tutorial_exit_done = True
-            self.tutorial_zone_2_entered = True
-
-        if (self.tutorial_step == TUTORIAL_EXIT and self.tutorial_zone_2_entered and "TUTORIAL ZONE 2" in exited):
-            self.tutorial_exit_done = True
-
-        """if self.game_state==STATE_TUTORIAL:
-
-            if self.tutorial_step==TUTORIAL_ENTER and 0 in entered:
-                self.tutorial_enter_done = True
-
-            if self.tutorial_step==TUTORIAL_EXIT and 0 in exited:
-                self.tutorial_exit_done = True"""
+        # Any normal gameplay transition logic can remain below.
 
 
     def trigger_danger_clash(self):
@@ -170,27 +219,53 @@ class GameManager:
 
 
     def next_tutorial_step(self):
-        if (self.tutorial_step == TUTORIAL_ENTER and self.tutorial_enter_done):
-            # Hide the first tutorial zone.
-            TUTORIAL_ZONES[0]["active"] = False
+        if self.game_state != STATE_TUTORIAL:
+            return
 
-            # Reset and show the second tutorial zone.
-            TUTORIAL_ZONES[1]["radius"] = (TUTORIAL_ZONES[1]["min_radius"])
-            TUTORIAL_ZONES[1]["captured"] = False
-            TUTORIAL_ZONES[1]["active"] = True
+        # ------------------------------------------------------
+        # Step 1 → Step 2
+        # ------------------------------------------------------
+        if self.tutorial_step == TUTORIAL_EXPAND:
+            if not self.tutorial_expand_done:
+                return
 
-            # Clear old zone membership so the new zone gets
-            # a fresh enter event.
+            self.tutorial_step = TUTORIAL_SHRINK
+            self.tutorial_shrink_done = False
+            self.tutorial_shrinking_zones.clear()
+
+            # Record the current radius of both zones.
+            self.tutorial_step_2_start_radii = {
+                zone["label"]: zone["radius"]
+                for zone in TUTORIAL_ZONES
+            }
+
+            return
+
+        # ------------------------------------------------------
+        # Step 2 → Step 3
+        # ------------------------------------------------------
+        if self.tutorial_step == TUTORIAL_SHRINK:
+            if not self.tutorial_shrink_done:
+                return
+
+            # Hide both tutorial safe zones.
+            for zone in TUTORIAL_ZONES:
+                zone["active"] = False
+
+            # Show one tutorial danger zone.
+            TUTORIAL_DANGER_ZONE["active"] = True
+            send_tutorial_danger_zone()
+
             for tag in self.state.tags:
                 tag.zones_inside.clear()
 
-            self.tutorial_step = TUTORIAL_EXIT
+            self.tutorial_step = TUTORIAL_DANGER
+            return
 
-        elif (self.tutorial_step == TUTORIAL_EXIT and self.tutorial_exit_done):
-            TUTORIAL_ZONES[1]["active"] = False
-            self.tutorial_step = TUTORIAL_COMPLETE
-
-        elif self.tutorial_step == TUTORIAL_COMPLETE:
+        # ------------------------------------------------------
+        # Step 3 → Normal game
+        # ------------------------------------------------------
+        if self.tutorial_step == TUTORIAL_DANGER:
             self.start_game()
 
 
@@ -199,8 +274,11 @@ class GameManager:
             return
         
         self.game_end_sequence_started = True   # state changed when win condition met (all zones captured)
+        self.game_end_sequence_complete = False
+
         self.game_state = STATE_GAME_WON
         self.game_running = False
+
         self.state.game_started = False
         self.state.game_won = True
 
@@ -208,20 +286,54 @@ class GameManager:
             if z.get('is_danger'):
                 z['active']=False
 
-        send_game_end_default_lighting()
+        send_game_win() # OSC
         timer=Timer(GAME_END_SEQUENCE_DELAY,self.complete_game_end_sequence)
         timer.daemon=True; timer.start()
 
 
     def complete_game_end_sequence(self):
         send_game_end_finale()  # OSC
+        self.game_end_sequence_complete = True
+        print(
+            "[GAME] Final sequence completed. "
+            "Waiting for Return to Lobby button."
+        )
+
+
+    def return_to_lobby(self):
+        """
+        Called when the player presses the Return to Lobby button.
+        """
+
+        if self.game_state != STATE_GAME_WON:
+            print(
+                "[GAME] Return to lobby ignored because "
+                "the game is not in the won state."
+            )
+            return
+
+        print("[GAME] Returning to lobby by button press")
+
+        self.enter_lobby()
+
         if self.return_to_lobby_callback:
-            self.return_to_lobby_callback() # go back to lobby page
+            self.return_to_lobby_callback()
 
 
     def enter_lobby(self):
         self.game_state = STATE_LOBBY
         self.game_running = False
+
         self.state.game_started = False
         self.state.game_won = False
+        self.state.stop = False
+
+        self.game_end_sequence_started = False
+        self.game_end_sequence_complete = False
+
         reset_zones(self.state)
+
+        for tag in self.state.tags:
+            tag.zones_inside.clear()
+
+        print("[GAME] Entered lobby")

@@ -112,6 +112,12 @@ class ViewerApp:
         self.game_master_button = tk.Button(table, text="CLASH DANGER ZONE", bg="#cc0000", fg="white", activebackground="#ff3333", activeforeground="white", font=("Helvetica", 14, "bold"), padx=20, pady=10, command=self.on_game_master_button,)
         self.game_master_button.grid(row=0, column=5, rowspan=max(1, state.n_tags), padx=20,)
 
+        # -----------------------------------------------------------------------
+        # Return To Lobby Button
+        # -----------------------------------------------------------------------
+        self.return_lobby_button = tk.Button(self.root, text="Return to Lobby", font=("Arial", 20, "bold"), command=self.game_manager.return_to_lobby,)
+        self.return_lobby_button.place_forget()
+
         root.bind('<KeyPress-q>',lambda e:self.shutdown())  # keybind to shutdown game when keypress 'Q'
 
         if fullscreen:
@@ -124,6 +130,13 @@ class ViewerApp:
             return
         if not self.state.stop:
             with self.state.lock:self.game_manager.update()
+
+        if (self.game_manager.game_state == STATE_GAME_WON and self.game_manager.game_end_sequence_complete):
+            if not self.return_lobby_button.winfo_ismapped():
+                self.return_lobby_button.place(relx=0.5,rely=0.85,anchor="center",)
+        else:
+            if self.return_lobby_button.winfo_ismapped():
+                self.return_lobby_button.place_forget()
 
         self.draw_gameplay(); self.update_overlay()
         self.root.after(66,self.update_loop)
@@ -226,66 +239,78 @@ class ViewerApp:
 
     def draw_tutorial_hud(self):
         step = self.game_manager.tutorial_step
+
         self.tutorial_button.grid()
 
-        if step == TUTORIAL_ENTER:
-            done = self.game_manager.tutorial_enter_done
+        if step == TUTORIAL_EXPAND:
+            done = self.game_manager.tutorial_expand_done
 
             if done:
-                self.hud.set_text("STEP 1 COMPLETE\n"
-                    "Tutorial Zone 1 expands while occupied.\n"
-                    "Click NEXT."
+                self.hud.set_text(
+                    "STEP 1 COMPLETE\n"
+                    "Safe zones expand while occupied.\n"
+                    "Press NEXT to continue."
                 )
-                
+
+                self.tutorial_button.configure(
+                    text="NEXT",
+                    state="normal",
+                )
             else:
                 self.hud.set_text(
-                    "TUTORIAL STEP 1\n"
-                    "Bring the tag into Tutorial Zone 1."
+                    "TUTORIAL — STEP 1\n"
+                    "Step into either safe zone.\n"
+                    "Watch the zone expand."
                 )
 
-            self.tutorial_button.configure(
-                text="NEXT" if done else "ENTER TUTORIAL ZONE 1",
-                state="normal" if done else "disabled",
-            )
+                self.tutorial_button.configure(
+                    text="STEP INTO A ZONE",
+                    state="disabled",
+                )
 
-        elif step == TUTORIAL_EXIT:
-            entered = self.game_manager.tutorial_zone_2_entered
-            done = self.game_manager.tutorial_exit_done
+            self.hud.set_color("#00e5ff")
+
+        elif step == TUTORIAL_SHRINK:
+            done = self.game_manager.tutorial_shrink_done
 
             if done:
                 self.hud.set_text(
                     "STEP 2 COMPLETE\n"
-                    "The zone shrinks after the tag leaves.\n"
-                    "Click NEXT."
+                    "Safe zones shrink when unoccupied.\n"
+                    "Press NEXT to continue."
                 )
-            elif entered:
-                self.hud.set_text(
-                    "TUTORIAL STEP 2\n"
-                    "Now move out of Tutorial Zone 2."
+
+                self.tutorial_button.configure(
+                    text="NEXT",
+                    state="normal",
                 )
             else:
                 self.hud.set_text(
-                    "TUTORIAL STEP 2\n"
-                    "Enter Tutorial Zone 2 first."
+                    "TUTORIAL — STEP 2\n"
+                    "Now step out of the zone.\n"
+                    "Watch the zone shrink."
                 )
 
-            self.tutorial_button.configure(
-                text="NEXT" if done else "COMPLETE THE MOVEMENT",
-                state="normal" if done else "disabled",
+                self.tutorial_button.configure(
+                    text="STEP OUT OF THE ZONE",
+                    state="disabled",
+                )
+
+            self.hud.set_color("#ffb300")
+
+        elif step == TUTORIAL_DANGER:
+            self.hud.set_text(
+                "TUTORIAL — STEP 3\n"
+                "Beware of danger zones!\n"
+                "Avoid the red area."
             )
 
-        else:
-            self.hud.set_text(
-                "TUTORIAL COMPLETE\n"
-                "Capture all five game zones to win."
-            )
+            self.hud.set_color("#ff1744")
 
             self.tutorial_button.configure(
                 text="START GAME",
                 state="normal",
             )
-
-        self.hud.set_color("#00e5ff")
 
 
     def update_overlay(self):

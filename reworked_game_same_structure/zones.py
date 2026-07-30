@@ -1,6 +1,6 @@
 import random
 from constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
-from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_danger_movement
+from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_danger_movement,send_tutorial_zone_enter,send_tutorial_zone_exit,send_tutorial_zone_max
 
 
 # ---------------------------------------------------------------------------
@@ -53,13 +53,40 @@ def reset_zones(state):
         tag.zones_inside.clear()
 
 
-def process_zone_transitions(tag_id, tag):
+def get_zone_by_label(zone_label):
+    for zone in ALL_ZONES:
+        if zone["label"] == zone_label:
+            return zone
+
+    return None
+
+
+def zone_occupied_by_other_tag(zone, tags, current_tag):
+    """
+    Returns True when at least one tag other than current_tag
+    is currently inside the zone.
+    """
+    for other_tag in tags:
+        if other_tag is current_tag:
+            continue
+
+        if other_tag.filt_position is None:
+            continue
+
+        if point_in_zone(other_tag.filt_position, zone):
+            return True
+
+    return False
+
+
+def process_zone_transitions(state, tag_id, tag):
     current = set()
     zone_lookup = {}
 
     for zone in ALL_ZONES:
         if not zone.get("safe"):
             continue
+
         if not zone.get("active", True):
             continue
 
@@ -72,35 +99,81 @@ def process_zone_transitions(tag_id, tag):
     entered = current - tag.zones_inside
     exited = tag.zones_inside - current
 
+    # ------------------------------------------------------
+    # Zone entered by this tag
+    # ------------------------------------------------------
     for zone_label in entered:
-        zone = zone_lookup[zone_label]
+        zone = zone_lookup.get(zone_label)
+
+        if zone is None:
+            continue
 
         print(
             f"[ZONE] Tag {tag_id} ENTERED "
             f"{zone_label}"
         )
 
-        # Tutorial zones should not trigger normal game-zone OSC.
-        if not zone.get("tutorial"):
-            zone_index = ZONES.index(zone)
-            send_zone_enter(tag_id, zone_index) # OSC
+        occupied_by_other_tag = zone_occupied_by_other_tag(zone, state.tags, tag,)
 
-    for zone_label in exited:
-        zone = next(
-            (item for item in ALL_ZONES
-                if item["label"] == zone_label
-            ),
-            None,
+        # Only send the enter/expand cue when this tag is
+        # the first tag entering the zone.
+        if occupied_by_other_tag:
+            print(
+                f"[ZONE] {zone_label} was already occupied; "
+                "enter OSC suppressed"
+            )
+            continue
+
+        print(
+            f"[ZONE] {zone_label} became occupied"
         )
+
+        if zone.get("tutorial", False):
+            tutorial_zone_index = TUTORIAL_ZONES.index(zone)
+            send_tutorial_zone_enter(tag_id, tutorial_zone_index,) # OSC
+
+        else:
+            zone_index = ZONES.index(zone)
+            send_zone_enter(tag_id, zone_index,) # OSC
+
+    # ------------------------------------------------------
+    # Zone exited by this tag
+    # ------------------------------------------------------
+    for zone_label in exited:
+        zone = get_zone_by_label(zone_label)
+
+        if zone is None:
+            continue
 
         print(
             f"[ZONE] Tag {tag_id} EXITED "
             f"{zone_label}"
         )
 
-        if zone is not None and not zone.get("tutorial"):
+        occupied_by_other_tag = zone_occupied_by_other_tag(zone, state.tags, tag,)
+
+        # Only send the exit/shrink cue when this was the
+        # final tag leaving the zone.
+        if occupied_by_other_tag:
+            print(
+                f"[ZONE] {zone_label} is still occupied; "
+                "exit OSC suppressed"
+            )
+            continue
+
+        print(
+            f"[ZONE] {zone_label} became empty"
+        )
+
+        if zone.get("tutorial", False):
+            tutorial_zone_index = TUTORIAL_ZONES.index(zone)
+
+            send_tutorial_zone_exit(tag_id, tutorial_zone_index,) # OSC
+
+        else:
             zone_index = ZONES.index(zone)
-            send_zone_exit(tag_id, zone_index) # OSC
+
+            send_zone_exit(tag_id, zone_index,) # OSC
 
     tag.zones_inside = current
 
