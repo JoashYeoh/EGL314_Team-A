@@ -104,33 +104,37 @@ def send_zone_enter(tag_id, zone_index): #-- when tag enter zone triger multipla
 
     if zone_name == "ZONE A":
         osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 2")
-        osc_tx_reaper.send_message("/action/40958", 1)    #select track 20
-        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE B":
         osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 111 cue 2")
-        osc_tx_reaper.send_message("/action/40959", 1)    #select track 21
-        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE C":
         osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 112 cue 2")
-        osc_tx_reaper.send_message("/action/40960", 1)    #select track 22
-        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
     if zone_name == "ZONE D":
         osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 113 cue 2")
-        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
-        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 
     if zone_name == "ZONE E":
         osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 114 cue 2")
-        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
-        osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
     
     print(
         f"[OSC] Sent ENTER "
         f"Tag={tag_id} Zone={zone_name}"
     )
+
+    #----------------Reaper Commands-----------------
+    command_map = {
+        "ZONE A": "_RSde8c27471113c433ab8f75b7bb736ddb74db96c4",
+        "ZONE B": "_RS0e63e8c1c3d8c7701d535fb9c883459fe10d58a9",
+        "ZONE C": "_RSeb4866b1080a552c2fa226b68ed79b9423865544",
+        "ZONE D": "_RSc670292ff79a3224a36ea021449d2eb77c90b9c1",
+        "ZONE E": "_RS7e9f7762e2fc6fbf6bf57765532c5a28416af815",  # Change this to the actual reaper command ID
+    }
+    command = command_map.get(zone_name)
+    if command is not None:
+        osc_tx_reaper.send_message(f"/action/{command}", 1)
+    print(f"[OSC REAPER] Zone Exit: {zone_name} track fading out")
+    print(f"[OSC REAPER] /action/{command}")
 
 
 def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
@@ -138,33 +142,37 @@ def send_zone_exit(tag_id, zone_index): #-- when tag exit zone triger multiplay
 
     if zone_name == "ZONE A":
         osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 110 cue 1")
-        osc_tx_reaper.send_message("/action/40958", 1)    #select track 20
-        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
-
+        
     if zone_name == "ZONE B":
         osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 111 cue 1")
-        osc_tx_reaper.send_message("/action/40959", 1)    #select track 21
-        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE C":
         osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 112 cue 1")
-        osc_tx_reaper.send_message("/action/40960", 1)    #select track 22
-        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
-    
+        
     if zone_name == "ZONE D":
         osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 113 cue 1")
-        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
-        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
 
     if zone_name == "ZONE E":
         osc_tx_gma3.send_message("/gma3/cmd", "Go- Sequence 114 cue 1")
-        osc_tx_reaper.send_message("/action/40961", 1)    #select track 23
-        osc_tx_reaper.send_message("/action/40730", 1)  #selected track mute
-
+        
     print(
         f"[OSC] Sent EXIT "
         f"Tag={tag_id} Zone={zone_name}"
     )
+
+    #----------------Reaper Commands-----------------
+    command_map = {
+        "ZONE A": "_RS96f4032a72f7526436170776848754bc047bc4b0",
+        "ZONE B": "_RS8a0090cf315a283032f73526614a2b9b270db77d",
+        "ZONE C": "_RS8e7e21b5dac0c5b2603073e94fdacb248b6212a8",
+        "ZONE D": "_RS4ad29f7140dd40094aff3a9424c3d09b277525b2",
+        "ZONE E": "_RS55d0260ebe69ccc552a007c201f6c1fadc475179",  # Change this to the actual reaper command ID
+    }
+    command = command_map.get(zone_name)
+    if command is not None:
+        osc_tx_reaper.send_message(f"/action/{command}", 1)
+    print(f"[OSC REAPER] Zone Exit: {zone_name} track fading out")
+    print(f"[OSC REAPER] /action/{command}")
 
 
 def send_zone_cue(zone, cue):
@@ -272,14 +280,33 @@ def send_game_end_finale():
 # ---------------------------------------------------------------------------
 def send_zone_complete(zone_index):
     zone_name = ZONES[zone_index]["label"]
+
+    #----------------GrandMA3 Commands-----------------
     sequence_map = {
         "ZONE A": 110,
         "ZONE B": 111,
         "ZONE C": 112,
         "ZONE D": 113,
-        "ZONE E": 114,  # Change this to the actual GrandMA sequence for Zone E.
+        "ZONE E": 114,  # Change this to the actual GrandMA sequence
     }
     sequence = sequence_map.get(zone_name)
     if sequence is not None:
         osc_tx_gma3.send_message("/gma3/cmd", f"Goto Cue 4 Sequence {sequence}")
-    print(f"[OSC] Zone completed: {zone_name}")
+    print(f"[OSC MA3] Zone completed: {zone_name} cue go")
+
+    #----------------Reaper Commands-----------------
+    command_map = {
+        "ZONE A": "_RS96f4032a72f7526436170776848754bc047bc4b0",
+        "ZONE B": "_RS8a0090cf315a283032f73526614a2b9b270db77d",
+        "ZONE C": "_RS8e7e21b5dac0c5b2603073e94fdacb248b6212a8",
+        "ZONE D": "_RS4ad29f7140dd40094aff3a9424c3d09b277525b2",
+        "ZONE E": "_RS55d0260ebe69ccc552a007c201f6c1fadc475179",  # Change this to the actual reaper command ID
+    }
+    command = command_map.get(zone_name)
+    if command is not None:
+        osc_tx_reaper.send_message(f"/action/{command}", 1)
+    print(f"[OSC REAPER] Zone completed: {zone_name} track fading out")
+    print(f"[OSC REAPER] /action/{command}")
+
+
+    

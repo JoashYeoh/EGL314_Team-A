@@ -194,35 +194,49 @@ def update_zones(state):
 
         is_tutorial = zone.get("tutorial", False)
 
-        # Captured zones remain at maximum size if not in tutorial mode
+        # Captured game zones remain at maximum size.
         if zone.get("captured") and not is_tutorial:
             zone["radius"] = zone["max_radius"]
             continue
 
-        # Zone expands when tag enters
-        if zone_is_occupied(zone, state.tags):
+        occupied = zone_is_occupied(
+            zone,
+            state.tags,
+        )
+
+        if occupied:
             zone["radius"] = min(
                 zone["max_radius"],
                 zone["radius"] + zone["expand_rate"],
             )
-            # When zone reaches maximum, set state as 'captured'
-            if zone["radius"] >= zone["max_radius"]:
-                if not zone.get("tutorial", False):
-                    zone["captured"] = True
 
-                    if not zone["expanded_sent"]:
-                        zone["expanded_sent"] = True
-                        zone_index = ZONES.index(zone)
-                        send_zone_complete(zone_index) # OSC
+            # Game-zone capture.
+            if (
+                zone["radius"] >= zone["max_radius"]
+                and not is_tutorial
+            ):
+                zone["captured"] = True
 
-                # Only game zones send the complete-zone OSC cue.
-                if (not zone.get("tutorial") and not zone["expanded_sent"]):
+                # Send only once.
+                if not zone["expanded_sent"]:
                     zone["expanded_sent"] = True
+
                     zone_index = ZONES.index(zone)
-                    send_zone_complete(zone_index) # OSC
-        # Zone shrinks if tag not in zone
+
+                    send_zone_complete(
+                        zone_index
+                    )
+
+                    print(
+                        f"[ZONE CAPTURED] "
+                        f"{zone['label']}"
+                    )
+
         else:
-            zone["radius"] = max(zone["min_radius"],zone["radius"] - zone["shrink_rate"],)
+            zone["radius"] = max(
+                zone["min_radius"],
+                zone["radius"] - zone["shrink_rate"],
+            )
 
 
 def all_safe_zones_captured():

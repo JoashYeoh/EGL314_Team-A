@@ -81,7 +81,9 @@ send_message("/action/40810", 1)    #select track 7
 send_message("/action/40730", 1)  #selected track mute"""
 
 
-send_message("/action/1068", 1) #toggle repeat
+"""send_message("/action/1068", 1) #toggle repeat
 send_message("/action/41761", 1) #jump to region
 send_message("/action/43102", 1) #set loop points to region
 send_message("/action/1007", 1) #play
+"""
+send_message("/action/_RS55d0260ebe69ccc552a007c201f6c1fadc475179", 1)
