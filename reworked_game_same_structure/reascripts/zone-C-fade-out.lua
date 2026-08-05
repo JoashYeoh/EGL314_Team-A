@@ -1,4 +1,4 @@
-local track_num = 22
+local track_num = 13
 local track = reaper.GetTrack(0, track_num-1)    -- track 20 (in this case)
 
 if not track then return end

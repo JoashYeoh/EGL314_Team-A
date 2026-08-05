@@ -109,8 +109,13 @@ class ViewerApp:
         # -----------------------------------------------------------------------
         # Game Master control button
         # -----------------------------------------------------------------------
+        # danger zone clash
         self.game_master_button = tk.Button(table, text="CLASH DANGER ZONE", bg="#cc0000", fg="white", activebackground="#ff3333", activeforeground="white", font=("Helvetica", 14, "bold"), padx=20, pady=10, command=self.on_game_master_button,)
         self.game_master_button.grid(row=0, column=5, rowspan=max(1, state.n_tags), padx=20,)
+
+        # manual zone E
+        self.zone_e_button = tk.Button(table, text="EXPAND ZONE E", bg="#ffb74d", fg="black", activebackground="#ffd180", font=("Helvetica", 14, "bold"), padx=20, pady=10, command=self.on_zone_e_button,)
+        self.zone_e_button.grid(row=0, column=6, rowspan=max(1, state.n_tags), padx=20,)
 
         # -----------------------------------------------------------------------
         # Return To Lobby Button
@@ -172,8 +177,36 @@ class ViewerApp:
         if self.game_manager.game_state == STATE_PLAYING:
             self.game_manager.trigger_danger_clash()
 
+            if self.game_manager.game_phase == GAME_PHASE_CAPTURE_ABCD:
+                completed = sum(
+                    1
+                    for zone in ZONES
+                    if zone.get("label") in {
+                        "ZONE A",
+                        "ZONE B",
+                        "ZONE C",
+                        "ZONE D",
+                    }
+                    and zone.get("captured")
+                )
+
+                self.hud.set_text(
+                    "PHASE 1 — CAPTURE ZONES A-D\n"
+                    f"Completed: {completed} / 4"
+                )
+
+            else:
+                self.hud.set_text(
+                    "PHASE 2 — ZONE E UNLOCKED\n"
+                    "Game Master: start Zone E expansion."
+                )
+
         elif self.game_manager.game_state == STATE_GAME_OVER:
             self.game_manager.retry_game()
+
+
+    def on_zone_e_button(self):
+        self.game_manager.trigger_zone_e_expansion()
 
 
     def draw_gameplay(self):
@@ -185,21 +218,43 @@ class ViewerApp:
         now=time.time()
         state=self.game_manager.game_state
 
+        zone_e = next((zone for zone in ZONES if zone.get("label") == "ZONE E"), None,)
+
         if state==STATE_TUTORIAL:
             self.draw_tutorial_hud()
+            self.game_master_button.grid_remove()
+            self.zone_e_button.grid_remove()
 
         elif state==STATE_PLAYING:
             completed=sum(1 for z in ZONES if z.get('safe') and z.get('captured'))
             self.hud.set_text(f'CAPTURE ALL FIVE ZONES\nCompleted: {completed} / 5')
             self.hud.set_color('white')
             self.tutorial_button.grid_remove()
+            self.game_master_button.grid()
             self.game_master_button.configure(text="CLASH DANGER ZONE", bg="#cc0000", fg="white", state="normal",)
+
+            # -----------------------------------------
+            # Zone E manual button state
+            # -----------------------------------------
+            self.zone_e_button.grid()
+            if zone_e is None:
+                self.zone_e_button.configure(text="ZONE E NOT FOUND", state="disabled")
+
+            elif zone_e.get("captured", False):
+                self.zone_e_button.configure(text="ZONE E CAPTURED", bg="#66bb6a", fg="black", state="disabled")
+
+            elif zone_e.get("manual_expanding", False):
+                self.zone_e_button.configure( text="ZONE E EXPANDING", bg="#ffcc80", fg="black", state="disabled")
+
+            else:
+                self.zone_e_button.configure(text="EXPAND ZONE E", bg="#ffb74d", fg="black", state="normal")
 
         elif state == STATE_GAME_OVER:
             self.hud.set_text("DANGER ZONE CLASH\n Game stopped.")
             self.hud.set_color("red")
             self.tutorial_button.grid_remove()
             self.game_master_button.configure(text="RETRY GAME", bg="#ffb300", fg="black", state="normal",)
+            self.zone_e_button.configure(text="EXPAND ZONE E", state="disabled")
 
         elif state==STATE_GAME_WON:
             self.hud.set_text('YOU WIN!\nFinal sequence is running.')

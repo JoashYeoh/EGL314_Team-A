@@ -69,7 +69,7 @@ TUTORIAL_DANGER_ZONE = {
 # ---------------------------------------------------------------------------
 ZONE_HIT_TOLERANCE = 0.0
 
-def safe(label, center, colour):
+def safe(label, center, colour, manual):
     return {
         "center": center,
         "radius": 0.30,
@@ -82,15 +82,18 @@ def safe(label, center, colour):
         "active": True,
         "safe": True,
         "expanded_sent": False,
-        "captured": False
+        "captured": False,
+        #zone E manual control
+        "manual": manual,
+        "manual_expanding": False,
     }
 
 ZONES = [
-    safe("ZONE A", (3.50, 5.15), "#00e5ff"), #top left
-    safe("ZONE B", (6.00, 5.15), "#ff40c3"), #top right
-    safe("ZONE C", (6.00, 2.65), "#66ff66"), #top left
-    safe("ZONE D", (3.5, 2.65), "#c266ff"), #top left
-    safe("ZONE E", (4.75, 3.9), "#bdbdbd"), #center
+    safe("ZONE A", (3.50, 5.15), "#00e5ff", manual=False), #top left
+    safe("ZONE B", (6.00, 5.15), "#ff40c3", manual=False), #top right
+    safe("ZONE C", (6.00, 2.65), "#66ff66", manual=False), #top left
+    safe("ZONE D", (3.5, 2.65), "#c266ff", manual=False), #top left
+    safe("ZONE E", (4.75, 3.9), "#bdbdbd", manual=True), #center
 
 
     # --- DANGER ZONE 1: Vertical (Up/Down) within Anchors ---
@@ -156,6 +159,9 @@ STATE_PLAYING="playing"
 STATE_GAME_OVER="game_over"
 STATE_GAME_WON="game_won"
 
+GAME_PHASE_CAPTURE_ABCD = "capture_abcd"
+GAME_PHASE_CAPTURE_E = "capture_e"
+
 """TUTORIAL_ENTER="enter"
 TUTORIAL_EXIT="exit"
 TUTORIAL_COMPLETE="complete"""
@@ -172,7 +178,7 @@ GAME_END_SEQUENCE_DELAY = 15.0
 # ---------------------------------------------------------------------------
 # OSC -- when enter zone and exit zone
 # ---------------------------------------------------------------------------
-OSC_REAPER_TARGET_IP = "192.168.1.108"    # IP of laptop running REAPER
+OSC_REAPER_TARGET_IP = "192.168.254.12"    # IP of laptop running REAPER
 OSC_REAPER_TARGET_PORT = 8000
 
 OSC_GMA3_TARGET_IP = "192.168.254.252"    # IP of laptop running GMA3

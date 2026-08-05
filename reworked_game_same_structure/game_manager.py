@@ -1,7 +1,7 @@
 from threading import Timer
 from constants import *
 from zones import *
-from osc_sender import send_tutorial_danger_zone, send_start_game, send_game_over, send_game_win, send_game_end_finale, send_off_all
+from osc_sender import send_start_tutorial, send_tutorial_danger_zone, send_start_game, send_game_over, send_game_win, send_game_end_finale, send_off_all, send_zone_e_manual_start,send_phase_one_complete
 
 
 class GameManager:
@@ -14,6 +14,9 @@ class GameManager:
         self.game_state = STATE_LOBBY
         self.game_running = False
 
+        self.game_phase = GAME_PHASE_CAPTURE_ABCD
+        self.phase_one_complete = False
+
         self.tutorial_step = TUTORIAL_EXPAND
         self.tutorial_enter_done = False
         self.tutorial_exit_done = False
@@ -25,11 +28,12 @@ class GameManager:
         # Game-end Sequence
         self.game_end_sequence_started = False
         self.return_to_lobby_callback = None
-        send_off_all()
+        send_off_all() # OSC
 
 
     def start_tutorial(self):
         reset_zones(self.state)
+        send_start_tutorial()
 
         # Hide normal game zones.
         for zone in ZONES:
@@ -139,6 +143,16 @@ class GameManager:
         self.game_end_sequence_started = False
         self.game_end_sequence_complete = False
 
+        self.game_phase = GAME_PHASE_CAPTURE_ABCD
+        self.phase_one_complete = False
+
+        zone_e = get_zone_by_label("ZONE E")
+
+        if zone_e is not None:
+            zone_e["manual_expanding"] = False
+            zone_e["captured"] = False
+            zone_e["radius"] = zone_e["min_radius"]
+
         send_start_game() # OSC
 
 
@@ -163,8 +177,24 @@ class GameManager:
         if self.game_state == STATE_PLAYING:
             update_danger_zones(self.state)
 
-            if all_safe_zones_captured():
-                self.start_game_end_sequence() # OSC
+            # --------------------------------------------------
+            # Phase 1: capture Zones A-D
+            # --------------------------------------------------
+            if self.game_phase == GAME_PHASE_CAPTURE_ABCD:
+                if zones_a_to_d_captured():
+                    self.complete_phase_one()
+
+            # --------------------------------------------------
+            # Phase 2: manually capture Zone E
+            # --------------------------------------------------
+            elif self.game_phase == GAME_PHASE_CAPTURE_E:
+                zone_e = get_zone_by_label("ZONE E")
+
+                if (
+                    zone_e is not None
+                    and zone_e.get("captured", False)
+                ):
+                    self.start_game_end_sequence() # OSC
 
 
     def process_zone_transitions(self, tag_id, tag):
@@ -203,6 +233,67 @@ class GameManager:
             zone["active"] = False
 
         send_game_over() # OSC
+
+
+    def complete_phase_one(self):
+        if self.phase_one_complete:
+            return
+
+        self.phase_one_complete = True
+        self.game_phase = GAME_PHASE_CAPTURE_E
+
+        print(
+            "[GAME] Zones A-D captured. "
+            "Zone E is now unlocked."
+        )
+
+        send_phase_one_complete() # OSC
+
+
+    def trigger_zone_e_expansion(self):
+        """
+        Called by the Game Master's Zone E button.
+        Starts Zone E expansion once.
+        """
+
+        if self.game_state != STATE_PLAYING:
+            print(
+                "[GAME MASTER] Zone E trigger ignored "
+                "because the game is not playing."
+            )
+            return
+
+        if self.game_phase != GAME_PHASE_CAPTURE_E:
+            print(
+                "[GAME MASTER] Zone E is locked. "
+                "Capture Zones A-D first."
+            )
+            return
+
+        zone_e = get_zone_by_label("ZONE E")
+
+        if zone_e is None:
+            print("[GAME MASTER] Zone E was not found")
+            return
+
+        if zone_e.get("captured", False):
+            print(
+                "[GAME MASTER] Zone E is already captured"
+            )
+            return
+
+        if zone_e.get("manual_expanding", False):
+            print(
+                "[GAME MASTER] Zone E is already expanding"
+            )
+            return
+
+        zone_e["manual_expanding"] = True
+        send_zone_e_manual_start() # OSC
+
+        print(
+            "[GAME MASTER] Zone E expansion started"
+        )
 
 
     def retry_game(self):
@@ -254,7 +345,7 @@ class GameManager:
 
             # Show one tutorial danger zone.
             TUTORIAL_DANGER_ZONE["active"] = True
-            send_tutorial_danger_zone()
+            send_tutorial_danger_zone() # OSC
 
             for tag in self.state.tags:
                 tag.zones_inside.clear()
@@ -286,18 +377,23 @@ class GameManager:
             if z.get('is_danger'):
                 z['active']=False
 
-        send_game_win() # OSC
-        timer=Timer(GAME_END_SEQUENCE_DELAY,self.complete_game_end_sequence)
-        timer.daemon=True; timer.start()
+        # Immediately trigger the final sequences.
+        send_game_win() # OSC 
+        send_game_end_finale() # OSC
+
+        print(
+            "[GAME] Zone E captured. "
+            "Final sequence triggered immediately."
+        )
 
 
-    def complete_game_end_sequence(self):
+    """def complete_game_end_sequence(self):
         send_game_end_finale()  # OSC
         self.game_end_sequence_complete = True
         print(
             "[GAME] Final sequence completed. "
             "Waiting for Return to Lobby button."
-        )
+        )"""
 
 
     def return_to_lobby(self):

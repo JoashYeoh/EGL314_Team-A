@@ -1,7 +1,7 @@
 import sys
 import tkinter as tk
 
-from osc_sender import send_start_lobby, send_start_tutorial, send_start_game
+from osc_sender import send_start_lobby
 
 
 #----------------------------------------------------------------------------
@@ -43,13 +43,9 @@ class TutorialWindow:
 
     def start_tutorial(self):
         self.game_manager.start_tutorial(); self.open_viewer()
-        # OSC
-        send_start_tutorial()
-
 
     def start_game(self):
         self.game_manager.start_game(); self.open_viewer()
-        send_start_game()
 
 
     def open_viewer(self):

@@ -3,7 +3,7 @@ from pythonosc import udp_client
 import time
 
 # ───────── CONFIGURE THIS ─────────
-receiver_ip = "192.168.1.108"		# client IP (e.g. laptop with Reaper) 
+receiver_ip = "192.168.254.12"		# client IP (e.g. laptop with Reaper) 
 receiver_port = 8000          # client listening port number (e.g. Reaper listening port number)	
 # ──────────────────────────────────
 
@@ -86,4 +86,4 @@ send_message("/action/41761", 1) #jump to region
 send_message("/action/43102", 1) #set loop points to region
 send_message("/action/1007", 1) #play
 """
-send_message("/action/_RS55d0260ebe69ccc552a007c201f6c1fadc475179", 1)
+send_message("/action/_RSac0c791dee544908892efcd8c4318fc649f223c1", 1)

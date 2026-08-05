@@ -1,6 +1,6 @@
 import random
 from constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
-from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_danger_movement,send_tutorial_zone_enter,send_tutorial_zone_exit,send_tutorial_zone_max
+from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_tutorial_zone_enter,send_tutorial_zone_exit,send_tutorial_zone_max
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +41,8 @@ def reset_zone_list(zone_list):
         zone["captured"] = False
         zone["expanded_sent"] = False
         zone["active"] = False
+        # Reset manual zone E
+        zone["manual_expanding"] = False
 
 
 def reset_zones(state):
@@ -88,6 +90,9 @@ def process_zone_transitions(state, tag_id, tag):
             continue
 
         if not zone.get("active", True):
+            continue
+
+        if zone.get("manual", False):
             continue
 
         zone_label = zone["label"]
@@ -193,16 +198,50 @@ def update_zones(state):
             continue
 
         is_tutorial = zone.get("tutorial", False)
+        is_manual = zone.get("manual", False)
 
-        # Captured game zones remain at maximum size.
+        # Captured game zones remain at maximum.
         if zone.get("captured") and not is_tutorial:
             zone["radius"] = zone["max_radius"]
             continue
 
-        occupied = zone_is_occupied(
-            zone,
-            state.tags,
-        )
+        # --------------------------------------------------
+        # Manual Zone E
+        # --------------------------------------------------
+        if is_manual:
+            # Do nothing until the Game Master presses
+            # the Zone E expansion button.
+            if not zone.get("manual_expanding", False):
+                zone["radius"] = zone["min_radius"]
+                continue
+
+            # Once triggered, expand automatically.
+            zone["radius"] = min(zone["max_radius"], zone["radius"] + zone["expand_rate"],)
+
+            if zone["radius"] >= zone["max_radius"]:
+                zone["radius"] = zone["max_radius"]
+                zone["captured"] = True
+                zone["manual_expanding"] = False
+
+                if not zone["expanded_sent"]:
+                    zone["expanded_sent"] = True
+
+                    zone_index = ZONES.index(zone)
+
+                    send_zone_complete(zone_index) # OSC
+
+                    print(
+                        f"[ZONE CAPTURED] "
+                        f"{zone['label']}"
+                    )
+
+            # Important: skip occupancy logic for Zone E.
+            continue
+
+        # --------------------------------------------------
+        # Normal tag-controlled zones
+        # --------------------------------------------------
+        occupied = zone_is_occupied(zone, state.tags,)
 
         if occupied:
             zone["radius"] = min(
@@ -210,27 +249,18 @@ def update_zones(state):
                 zone["radius"] + zone["expand_rate"],
             )
 
-            # Game-zone capture.
             if (
                 zone["radius"] >= zone["max_radius"]
                 and not is_tutorial
             ):
                 zone["captured"] = True
 
-                # Send only once.
                 if not zone["expanded_sent"]:
                     zone["expanded_sent"] = True
 
                     zone_index = ZONES.index(zone)
 
-                    send_zone_complete(
-                        zone_index
-                    )
-
-                    print(
-                        f"[ZONE CAPTURED] "
-                        f"{zone['label']}"
-                    )
+                    send_zone_complete(zone_index) # OSC
 
         else:
             zone["radius"] = max(
@@ -241,6 +271,21 @@ def update_zones(state):
 
 def all_safe_zones_captured():
     return all(z.get('captured',False) for z in safe_zones())
+
+
+def zones_a_to_d_captured():
+    required_labels = {
+        "ZONE A",
+        "ZONE B",
+        "ZONE C",
+        "ZONE D",
+    }
+
+    return all(
+        zone.get("captured", False)
+        for zone in ZONES
+        if zone.get("label") in required_labels
+    )
 
 
 # ---------------------------------------------------------------------------
