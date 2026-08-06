@@ -1,6 +1,6 @@
 import random
 from constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
-from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_tutorial_zone_enter,send_tutorial_zone_exit,send_tutorial_zone_max
+from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_tutorial_zone_enter,send_tutorial_zone_exit
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +90,9 @@ def process_zone_transitions(state, tag_id, tag):
             continue
 
         if not zone.get("active", True):
+            continue
+
+        if (zone.get("captured", False) and not zone.get("tutorial", False)):
             continue
 
         if zone.get("manual", False):
@@ -200,8 +203,9 @@ def update_zones(state):
         is_tutorial = zone.get("tutorial", False)
         is_manual = zone.get("manual", False)
 
-        # Captured game zones remain at maximum.
-        if zone.get("captured") and not is_tutorial:
+        # Captured game zones stay at maximum size
+        # and no longer react to tag occupancy.
+        if zone.get("captured", False) and not is_tutorial:
             zone["radius"] = zone["max_radius"]
             continue
 
@@ -209,25 +213,33 @@ def update_zones(state):
         # Manual Zone E
         # --------------------------------------------------
         if is_manual:
-            # Do nothing until the Game Master presses
-            # the Zone E expansion button.
+            # Wait until the Game Master presses the button.
             if not zone.get("manual_expanding", False):
                 zone["radius"] = zone["min_radius"]
                 continue
 
-            # Once triggered, expand automatically.
-            zone["radius"] = min(zone["max_radius"], zone["radius"] + zone["expand_rate"],)
+            # Expand automatically once triggered.
+            zone["radius"] = min(
+                zone["max_radius"],
+                zone["radius"] + zone["expand_rate"],
+            )
 
             if zone["radius"] >= zone["max_radius"]:
                 zone["radius"] = zone["max_radius"]
                 zone["captured"] = True
                 zone["manual_expanding"] = False
 
+                # Remove stale membership so no exit OSC
+                # is sent after the zone becomes captured.
+                zone_label = zone["label"]
+
+                for tag in state.tags:
+                    tag.zones_inside.discard(zone_label)
+
                 if not zone["expanded_sent"]:
                     zone["expanded_sent"] = True
 
                     zone_index = ZONES.index(zone)
-
                     send_zone_complete(zone_index) # OSC
 
                     print(
@@ -235,13 +247,13 @@ def update_zones(state):
                         f"{zone['label']}"
                     )
 
-            # Important: skip occupancy logic for Zone E.
+            # Do not run normal occupancy logic for Zone E.
             continue
 
         # --------------------------------------------------
         # Normal tag-controlled zones
         # --------------------------------------------------
-        occupied = zone_is_occupied(zone, state.tags,)
+        occupied = zone_is_occupied(zone, state.tags)
 
         if occupied:
             zone["radius"] = min(
@@ -249,24 +261,46 @@ def update_zones(state):
                 zone["radius"] + zone["expand_rate"],
             )
 
+            # Normal game zone captured.
             if (
                 zone["radius"] >= zone["max_radius"]
                 and not is_tutorial
             ):
+                zone["radius"] = zone["max_radius"]
                 zone["captured"] = True
+
+                # Remove stale membership so no false exit OSC
+                # happens on the next update.
+                zone_label = zone["label"]
+
+                for tag in state.tags:
+                    tag.zones_inside.discard(zone_label)
 
                 if not zone["expanded_sent"]:
                     zone["expanded_sent"] = True
 
                     zone_index = ZONES.index(zone)
+                    send_zone_complete(zone_index)
 
-                    send_zone_complete(zone_index) # OSC
+                    print(
+                        f"[ZONE CAPTURED] "
+                        f"{zone['label']}"
+                    )
 
         else:
+            # Tutorial zones and uncaptured game zones shrink.
             zone["radius"] = max(
                 zone["min_radius"],
                 zone["radius"] - zone["shrink_rate"],
             )
+
+        # --------------------------------------------------
+        # Tutorial max-radius OSC
+        # --------------------------------------------------
+        if is_tutorial:
+            if (zone["radius"] >= zone["max_radius"] and not zone.get("tutorial_max_sent", False)):
+                zone["tutorial_max_sent"] = True
+                tutorial_zone_index = TUTORIAL_ZONES.index(zone)
 
 
 def all_safe_zones_captured():
