@@ -232,7 +232,7 @@ def send_phase_one_complete():
     print("[OSC] Zones A-D captured — starting Phase 2")
 
     # GrandMA:
-    osc_tx_gma3.send_message("/gma3/cmd", "Off Sequence 106")
+    osc_tx_gma3.send_message("/gma3/cmd", "Go Macro 5")
     # Reaper
     # Jump to Ending AI Voice Marker (station 1 complete)
     osc_tx_reaper.send_message("/action/40169", 1)   #jump marker 9
@@ -242,7 +242,7 @@ def send_phase_one_complete():
 
 
 def send_game_win():
-    osc_tx_gma3.send_message("/gma3/cmd", "Go Macro 5")
+    osc_tx_gma3.send_message("/gma3/cmd", "Go Macro 6")
 
     print(
         f"[OSC GMA3] Game-end default lighting: "
