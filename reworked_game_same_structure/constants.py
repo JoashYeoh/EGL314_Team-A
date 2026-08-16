@@ -162,15 +162,9 @@ STATE_GAME_WON="game_won"
 GAME_PHASE_CAPTURE_ABCD = "capture_abcd"
 GAME_PHASE_CAPTURE_E = "capture_e"
 
-"""TUTORIAL_ENTER="enter"
-TUTORIAL_EXIT="exit"
-TUTORIAL_COMPLETE="complete"""
-
 TUTORIAL_EXPAND = "tutorial_expand"
 TUTORIAL_SHRINK = "tutorial_shrink"
 TUTORIAL_DANGER = "tutorial_danger"
-
-GAME_END_SEQUENCE_DELAY = 15.0
 
 
 

@@ -22,7 +22,6 @@ class GameManager:
         self.tutorial_exit_done = False
         self.tutorial_expanded_zones = set()
         self.tutorial_shrinking_zones = set()
-        #self.tutorial_zone_2_entered = False
         self.tutorial_step_2_start_radii = {}
 
         # Game-end Sequence
@@ -372,6 +371,7 @@ class GameManager:
 
         self.state.game_started = False
         self.state.game_won = True
+        self.game_end_sequence_complete = True
 
         for z in ZONES:
             if z.get('is_danger'):
@@ -385,15 +385,6 @@ class GameManager:
             "[GAME] Zone E captured. "
             "Final sequence triggered immediately."
         )
-
-
-    """def complete_game_end_sequence(self):
-        send_game_end_finale()  # OSC
-        self.game_end_sequence_complete = True
-        print(
-            "[GAME] Final sequence completed. "
-            "Waiting for Return to Lobby button."
-        )"""
 
 
     def return_to_lobby(self):
