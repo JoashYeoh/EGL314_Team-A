@@ -3,7 +3,7 @@ import time
 
 from dataclasses import dataclass, field
 
-from reworked_game_same_structure.game.kalman import Kalman2D
+from kalman import Kalman2D
 
 
 # ---------------------------------------------------------------------------

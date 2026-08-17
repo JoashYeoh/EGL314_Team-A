@@ -4,15 +4,15 @@ from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
 from pythonosc import udp_client
 
-from reworked_game_same_structure.game.constants import *
+from constants import *
 
-from reworked_game_same_structure.game.trilateration import trilaterate_2d
+from trilateration import trilaterate_2d
 
-from reworked_game_same_structure.game.shared_state import SharedState
+from shared_state import SharedState
 
 """from zones import point_in_zone"""
 
-from reworked_game_same_structure.game.osc_sender import *
+from osc_sender import *
 
 
 # ---------------------------------------------------------------------------

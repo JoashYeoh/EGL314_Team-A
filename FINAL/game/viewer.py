@@ -16,8 +16,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Rectangle
 
-from reworked_game_same_structure.game.constants import *
-from reworked_game_same_structure.game.shared_state import SharedState
+from constants import *
+from shared_state import SharedState
 
 
 

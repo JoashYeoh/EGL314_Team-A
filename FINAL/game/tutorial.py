@@ -1,7 +1,7 @@
 import sys
 import tkinter as tk
 
-from reworked_game_same_structure.game.osc_sender import send_start_lobby
+from osc_sender import send_start_lobby
 
 
 #----------------------------------------------------------------------------

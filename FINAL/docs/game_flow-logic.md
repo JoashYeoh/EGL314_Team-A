@@ -1,4 +1,14 @@
+# Game Flow Documentation
+
+## Overview:
+
+
+
+
+
 # Game Logic Documentation
+
+<!--## Game Master Controls-->
 
 ## Overview:
 This UWB Interactive Game is a multiplayer location-based game in which players physically move around a designated play area to interact with virtual game elements displayed on screen.

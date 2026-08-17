@@ -2,14 +2,14 @@
 import argparse,threading,tkinter as tk
 from pythonosc import dispatcher as osc_dispatcher
 from pythonosc import osc_server
-from reworked_game_same_structure.game.constants import *
-from reworked_game_same_structure.game.shared_state import SharedState
-from reworked_game_same_structure.game.viewer import ViewerApp
-from reworked_game_same_structure.game.tutorial import TutorialWindow
-from reworked_game_same_structure.game.game_manager import GameManager
-from reworked_game_same_structure.game.zones import update_zones,process_zone_transitions
-from reworked_game_same_structure.game.osc_handler import make_osc_handler
-from reworked_game_same_structure.game.osc_sender import send_start_game
+from constants import *
+from shared_state import SharedState
+from viewer import ViewerApp
+from tutorial import TutorialWindow
+from game_manager import GameManager
+from zones import update_zones,process_zone_transitions
+from osc_handler import make_osc_handler
+from osc_sender import send_start_game
 
 def main():
     ap=argparse.ArgumentParser()

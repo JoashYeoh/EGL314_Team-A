@@ -2,7 +2,7 @@ from threading import Timer
 
 from pythonosc import udp_client
 
-from reworked_game_same_structure.game.constants import *
+from constants import *
 
 
 

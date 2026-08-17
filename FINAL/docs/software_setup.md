@@ -70,26 +70,31 @@ sudo apt-get install -y libopenblas-dev python3-pil.imagetk
 
 ---
 
-## 2. `uart.py` Set-Up
+## 2. `uart-diagnostic.py` Set-Up
 ### Set up of default OSC Host IP and Port (receiver - Pi running `game.py`)
-Before running `uart.py` on the **Sensor Pi**
-At line 50 and 51 of `uart.py` change the default host IP, and the port that host is receiving osc message at accordingly.
+Before running `uart-diagnostic.py` on the **Sensor Pi**
+At line 50 and 51 of `uart-diagnostic.py` change the default host IP, and the port that host is receiving osc message at accordingly.
 ```python
 DEFAULT_HOST = "X.X.X.X"
 DEFAULT_PORT = 5005
 ```
 
 ### Host IP and Port Override via CLI
-When running `uart.py` you can overide the defalt Host IP and Port.
+When running `uart-diagnostic.py` you can overide the defalt Host IP and Port.
 ```python
-python3 uart.py --host 192.168.1.XX --port 5005
+python3 uart-diagnostic.py --host 192.168.1.XX --port 5005
 ```
 
 ### Configuring Number of Tags to Capture via CLI
 ```python
-python3 uart.py --tags X
+python3 uart-diagnostic.py --tags X
 ```
 **Important note: the value of `X` has to be the same as that set at `game.py`.*
+
+### Tracking Live Data into a CSV for Diagnostic
+```python
+pyhton3 uart-diagnostic.py --tags x --diagnostic
+```
 
 
 ---
@@ -176,10 +181,8 @@ python3 game.py --simulate
 Simulation mode can be used to test:
 1. Safe-zone entry and exit.
 2. Zone expansion and shrinking.
-3. Danger-zone collisions.
-4. Level progression.
-5. Game-won and game-over conditions.
-6. OSC cues sent to REAPER and grandMA3.
+3. Game-won and game-over conditions.
+4. OSC cues sent to REAPER and grandMA3.
 
 *^ Note: The simulated tag simply acts as an actual tag.*
 
@@ -208,20 +211,19 @@ python3 game.py --help
 ### 3.6 Module Responsibilities
 Although the application is launched through `game.py`, its functionality is distributed across the **following modules**:
 
-| Module | Responsibility |
-| --- | --- |
-| `game.py` | Initializes and launches the game application |
-| `constants.py` | Stores network addresses, ports, zone definitions, and shared constants |
-| `game_manager.py` | Controls game states, level progression, and win or loss conditions |
-| `level_config.py` | Stores the configuration and objectives for each game level |
-| `shared_state.py` | Stores shared game and tag-tracking information |
-| `osc_handler.py` | Receives and processes OSC tracking data |
-| `osc_sender.py` | Sends OSC cues to REAPER and grandMA3 |
-| `trilateration.py` | Calculates tag positions from UWB anchor distances |
-| `kalman.py` | Smooths calculated tag positions using a Kalman filter |
-| `zones.py` | Handles safe zones, danger zones, and zone interactions |
-| `tutorial.py` | Controls the tutorial stage and transition into the game |
-| `viewer.py` | Displays the game window, tracked tags, zones, and HUD |
+| **Module** | **Responsibility** |
+|---|---|
+| `game.py` | Main entry point; initialises the game, OSC server, state, and UI. |
+| `constants.py` | Stores game configuration, zones, anchors, states, and OSC settings. |
+| `shared_state.py` | Stores shared runtime data for tags and game states. |
+| `game_manager.py` | Manages game flow, tutorial, phases, win/loss, and resets. |
+| `viewer.py` | Displays the game map, zones, tags, HUD, and Game Master controls. |
+| `tutorial.py` | Provides the lobby and Tutorial/Instant Play selection. |
+| `zones.py` | Handles zone occupancy, expansion, shrinking, capture, and danger zones. |
+| `osc_handler.py` | Receives UWB distance data and updates calculated tag positions. |
+| `osc_sender.py` | Sends game, lighting, and audio cues to grandMA3 and REAPER via OSC. |
+| `trilateration.py` | Calculates 2D tag positions from UWB anchor distances. |
+| `kalman.py` | Filters calculated tag positions to reduce tracking noise. |
 
 *Note: More info on how each script is dependent on each other can be found [here]().*
 

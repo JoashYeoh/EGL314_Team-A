@@ -1,7 +1,7 @@
 from threading import Timer
-from reworked_game_same_structure.game.constants import *
-from reworked_game_same_structure.game.zones import *
-from reworked_game_same_structure.game.osc_sender import send_start_tutorial, send_tutorial_danger_zone, send_start_game, send_game_over, send_game_win, send_game_end_finale, send_off_all, send_zone_e_manual_start,send_phase_one_complete
+from constants import *
+from zones import *
+from osc_sender import send_start_tutorial, send_tutorial_danger_zone, send_start_game, send_game_over, send_game_win, send_game_end_finale, send_off_all, send_zone_e_manual_start,send_phase_one_complete
 
 
 class GameManager:

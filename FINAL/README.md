@@ -7,8 +7,9 @@
     * [1.2. docs/ ](#12-docs)
     * [1.3. game/ ](#13-game)
     * [1.4. module_config-files/ ](#14-module_config-files)
-    * [1.5 README.md ](#15-READMEmd)
-    * [1.6 uart.py ](#16-uartpy)
+    * [1.5. uart/ ](#15-uart)
+    * [1.6. reascripts/ ](#16-reascripts)
+    * [1.7. README.md ](#17-READMEmd)
 * [2. Project Overview](#2-project-overview)
 * [3. Core System Architecture](#3-Core-System-Architecture)
 
@@ -28,7 +29,7 @@
         ├── assets/                    # assets used in documentation
         ├── architecture.md            # system architecture overview
         ├── calibration.md             # uwb anchor calibration guide
-        ├── game_logic.md              # explaination of python scripts' logic/flow
+        ├── game_flow-logic.md         # explaination of python scripts' logic/flow
         ├── hardware_setup.md          # guide on phyiscal set-up of game
         ├── osc_reference.md           # guide to osc implementation
         ├── setup_and_run.md           # guide to run game.py
@@ -55,7 +56,16 @@
         ├── bu03_multi_config.py       # set ID/role per board
         ├── bu03_inspect.py            # read back saved config
         └── viewer_calibrate.py        # per-anchor offset measurement
-    └── uart.py        # script to run on Sensor Pi to pull UART data
+    ├── reascripts/
+        ├── mute-tracks11-14.lua       # custom script to mute tracks 11-14
+        ├── set-repeat.lua             # custom script to set repeat so 
+        ├── siera-station-1-completion.lua             # custom script to trigger the end sequence on Reaper
+        ├── siera-station-1-intro.lua             # custom script to trigger the intro sequence on Reaper
+    ├── uart/
+        ├── 4-tag.txt                   # example output of uart.py when checking for live data of 4 tags to "diagnose"
+        ├── 5-tag.txt                   # example output of uart.py when checking for live data of 5 tags to "diagnose"
+        └── uart-diagnostic.py          # uart.py but with an additional diagnostic feasutre to record down in csv live data
+    └── README.md                       # the file oyu are reading now
 ```
 
 ### 1.1. assets/
@@ -80,7 +90,21 @@ Contains:
 
 
 ### 1.3. game/
-Within this dir, there are respective dirs that contain specific example osc command scripts to the corresponding softwares.
+Within this dir, there are the refactorised code of the game.py python script
+
+| **Script** | **Purpose** |
+|---|---|
+| `game.py` | Main entry point; initialises the game, OSC server, state, and UI. |
+| `constants.py` | Stores game configuration, zones, anchors, states, and OSC settings. |
+| `shared_state.py` | Stores shared runtime data for tags and game states. |
+| `game_manager.py` | Manages game flow, tutorial, phases, win/loss, and resets. |
+| `viewer.py` | Displays the game map, zones, tags, HUD, and Game Master controls. |
+| `tutorial.py` | Provides the lobby and Tutorial/Instant Play selection. |
+| `zones.py` | Handles zone occupancy, expansion, shrinking, capture, and danger zones. |
+| `osc_handler.py` | Receives UWB distance data and updates calculated tag positions. |
+| `osc_sender.py` | Sends game, lighting, and audio cues to grandMA3 and REAPER via OSC. |
+| `trilateration.py` | Calculates 2D tag positions from UWB anchor distances. |
+| `kalman.py` | Filters calculated tag positions to reduce tracking noise. |
 
 
 ### 1.4 module_config-files/
@@ -95,12 +119,17 @@ These are the scripts used during deployment and setup of anchors and tags.
 | `viewer_calibrate.py`  | Calibration and coordinate verification |
 
 
-### 1.5 README.md
+### 1.5 uart/
+In this dir, you can find the python script that run on the uart Pi, that is responsible of sending tag position data via OSC to the game Pi.
+
+
+### 1.6 reascripts/
+In this dir, you can find the *reascripts* (`lua`) used to create custom commands in Reaper.
+
+
+### 1.7 README.md
 This is the current file that you are reading. An overview of this checkpoint of the project.
 
-
-### 1.6 uart.py
-This is the script run on the uart Pi, that is responsible of sending tag position data via OSC to the game Pi.
 
 
 

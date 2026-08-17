@@ -1,6 +1,6 @@
 import random
-from reworked_game_same_structure.game.constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
-from reworked_game_same_structure.game.osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_tutorial_zone_enter,send_tutorial_zone_exit
+from constants import TUTORIAL_ZONES,ZONES,ALL_ZONES,DANGER_BOUNDS,ZONE_HIT_TOLERANCE
+from osc_sender import send_zone_enter,send_zone_exit,send_zone_complete,send_tutorial_zone_enter,send_tutorial_zone_exit
 
 
 # ---------------------------------------------------------------------------
