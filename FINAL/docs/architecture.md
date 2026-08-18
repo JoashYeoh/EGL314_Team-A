@@ -40,7 +40,7 @@ flowchart LR
 Once the distance data reaches the **Game Pi**, it passes through several software modules responsible for converting the UWB measurements into gameplay actions.
 
 ```mermaid
-flowchart LR
+flowchart
     A[OSC Distance Data] --> B[osc_handler.py]
     B --> C[trilateration.py]
     C --> D[kalman.py]
@@ -92,7 +92,6 @@ When the first tag enters a safe zone, the zone becomes occupied and begins expa
 The zone ***only becomes unoccupied when the final tag leaves***. This prevents a zone from shrinking while another player is still standing inside it.
 
 
-
 ## 4. External Show-Control Pipeline
 ### Commands Triggering 'REAPER' and 'GrandMA3' via OSC
 ```mermaid
@@ -104,17 +103,17 @@ Through `game.py` **game logic**, it would determine whether to trigger certain 
 For example, when a tag is within a zone, it **triggers a series of cues**, by **sending an osc command to REAPER**.
 
 ```python
-osc_tx_reaper.send_message("/action/40958", 1)  #select track 20
+osc_tx_reaper.send_message("/action/40949", 1)  #select track 11
 osc_tx_reaper.send_message("/action/40731", 1)  #selected track toggle unmute
 ```
-*^ this selects track 20 and unmutes it on **REAPER**.*
+*^ this selects track 11 and unmutes it on **REAPER**.*
 
 Similarly, when a tag is within a zone, it **triggers a cue for lights** by **sending an osc command to GrandMA3**
 
 ```python
-osc_tx_gma3.send_message("/gma3/cmd", f"Goto Cue {cue} Sequence 2")
+osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 110 cue 2")
 ```
-*^ this triggers cue number x in Sequence 2 on **GrandMA3**.*
+*^ this triggers cue number 2 in Sequence 110 on **GrandMA3**.*
 
 
 
