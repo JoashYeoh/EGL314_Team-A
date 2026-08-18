@@ -187,7 +187,7 @@ send_tutorial_danger_zone()
 | 1 | `Go Macro 3` | Trigger Macro 3 | Triggers the Macro 3 in GrandMA which in turn triggeres a series of sequences |
 
 **Game trigger:**
-Called when the tutorial progresses to the danger-zone stage.**Purpose:**
+Called when the tutorial progresses to the danger-zone stage.  **Purpose:**
 Triggers the lighting state used to demonstrate the danger zone before normal gameplay begins.
 
 
@@ -205,7 +205,7 @@ send_start_game()
 | 1 | `Goto Sequence 106 cue 1` | Triggeres cue 106 on GrandMA3 |
 
 **Game trigger:**
-Called when the tutorial progresses to the danger-zone stage.**Purpose:**
+Called when the tutorial progresses to the danger-zone stage.  **Purpose:**
 Triggers the lighting state used to demonstrate the danger zone before normal gameplay begins.
 
 
@@ -227,7 +227,7 @@ send_start_game()
 | 1 | `Goto Sequence 110 cue 2` | Triggeres cue 1 on GrandMA3 |
 
 **Game trigger:**
-Called when the tag enters the zone. 
+Called when the tag enters the zone.  
 **Purpose:**
 Triggers the lighting and audio cue when tag entres the zone.
 
@@ -248,7 +248,7 @@ send_start_game()
 | 1 | `Go- Sequence 110 cue 1` | Triggeres Go- cue 1 on GrandMA3 |
 
 **Game trigger:**
-Called when the tag exits the zone. 
+Called when the tag exits the zone.   
 **Purpose:**
 Triggers the lighting and audio cue when tag exits the zone.
 
@@ -295,7 +295,7 @@ send_phase_one_complete()
 | 1 | `Go Macro 5` | Triggers macro 5 on GrandMA3 to trigger middle zone lighting |
 
 **Game trigger:**
-This is triggered when all the zones are fully expanded.
+This is triggered when all the zones are fully expanded.  
 **Purpose:**
 This is to triggere the ending of phase 1 of the game, and allowing game master to transit to the phase 2 (finalie/transition to station 2)
 
@@ -316,6 +316,6 @@ send_game_end_finale()
 | 1 | `Go Macro 6` | Triggers macro 6 on GrandMA3 to trigger middle zone lighting | 
 
 **Game trigger:**
-This is triggered when the game master presses the "expand zone E" button 
+This is triggered when the game master presses the "expand zone E" button   
 **Purpose:**
 Triggers the lighting and audio cue when next station item is placed in the zone.
