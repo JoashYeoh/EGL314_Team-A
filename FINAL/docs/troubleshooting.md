@@ -18,6 +18,8 @@ This section lists common issues that may occur while setting up or running the 
 * UWB tag is powered off.
 * Incorrect serial port selected.
 * Sensor Raspberry Pi is not running `uart.py`.
+* Incorrect baud rate configured.
+* Serial port cannot be opened.
 
 ### Solution
 
@@ -25,6 +27,8 @@ This section lists common issues that may occur while setting up or running the 
 * Verify that all UART connections are secure.
 * Confirm that the correct serial port is configured.
 * Restart `uart.py` on the sensor Raspberry Pi.
+* Verify the configured baud rate.
+* Ensure no other application is using the serial port.
 
 ---
 
@@ -40,6 +44,7 @@ This section lists common issues that may occur while setting up or running the 
 * Incorrect IP address.
 * Incorrect OSC port.
 * Network connection between the Raspberry Pis has failed.
+* Firewall is blocking UDP traffic.
 
 ### Solution
 
@@ -47,6 +52,8 @@ This section lists common issues that may occur while setting up or running the 
 * Verify the destination IP address in `uart.py`.
 * Confirm that both programs are using the same OSC port.
 * Test connectivity using the `ping` command.
+* Verify firewall settings.
+* If communication stopped during gameplay, restart both applications after restoring the network connection.
 
 ---
 
@@ -71,6 +78,7 @@ This section lists common issues that may occur while setting up or running the 
 * Ensure anchors are mounted securely.
 * Remove large metal objects that may interfere with the signal.
 * Recalibrate the system before starting the game.
+* Ensure anchors have a clear line of sight to the UWB tag whenever possible.
 
 ---
 
@@ -92,6 +100,7 @@ This section lists common issues that may occur while setting up or running the 
 * Ensure the play area has minimal obstacles.
 * Check that the Kalman filter is enabled.
 * Reduce sources of wireless interference where possible.
+* Wait a few seconds after startup for the Kalman filter to stabilize.
 
 ---
 
@@ -212,6 +221,7 @@ pip install <package_name>
 * Too many background applications.
 * High rendering load.
 * Insufficient Raspberry Pi resources.
+* Network congestion may delay OSC updates
 
 ### Solution
 
@@ -219,6 +229,49 @@ pip install <package_name>
 * Restart the Raspberry Pi.
 * Reduce debugging output if enabled.
 * Ensure only the required programs are running.
+
+---
+
+## 11. Serial Port Cannot Be Opened
+
+### Symptoms
+
+* `uart.py` exits immediately.
+* A `PermissionError` or `SerialException` is displayed.
+
+### Possible Causes
+
+* Incorrect serial device selected.
+* Another application is using the serial port.
+* Insufficient permissions.
+
+### Solution
+
+* Verify that the correct serial device is configured.
+* Close any application currently using the serial port.
+* Check user permissions and reconnect the device if necessary.
+
+---
+
+## 12. Game Starts but Immediately Crashes
+
+### Symptoms
+
+* `game.py` closes unexpectedly.
+* A Python traceback is displayed.
+
+### Possible Causes
+
+* Missing configuration file.
+* Invalid configuration values.
+* Software error.
+
+### Solution
+
+* Review the error message displayed in the terminal.
+* Verify that all required configuration files exist.
+* Correct any invalid configuration values.
+* Restart the application.
 
 ---
 
@@ -233,4 +286,7 @@ Before each game session, verify the following:
 * `uart.py` is running on the sensor Raspberry Pi.
 * `game.py` is running on the game Raspberry Pi.
 * OSC IP address and port are correct.
+* The correct serial port and baud rate are configured.
+* No other application is using the serial port.
+* All required Python packages are installed.
 * The game arena is free from large obstacles that may interfere with UWB signals.
