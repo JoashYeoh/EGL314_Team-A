@@ -121,7 +121,7 @@ flowchart TD
 ### 4.1 Lobby Start
 #### Python function
 ```python
-send_start_lobby()
+send_zone_enter()
 ```
 #### REAPER commands
 | Order | OSC Address | Action | Game Result |
@@ -201,7 +201,7 @@ send_start_game()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Goto Sequence 106 cue 1` | Triggeres cue 1 on GrandMA3 |
+| 1 | `Goto Sequence 106 cue 1` | Triggeres cue 106 on GrandMA3 |
 **Game trigger:**
 Called when the tutorial progresses to the danger-zone stage.**Purpose:**
 Triggers the lighting state used to demonstrate the danger zone before normal gameplay begins.
@@ -209,9 +209,53 @@ Triggers the lighting state used to demonstrate the danger zone before normal ga
 
 ---
 ## 6. Safe-Zone OSC
-## 7. Game Phase OSC
-## 8. Danger-Zone OSC
-## 9. Game Over OSC
-## 10. Game Win & Finale OSC
-## 11. Master Function Reference
-## 12. Cue Programming Worksheet
+### 6.1 Zone Enter Sequences
+#### Python function
+```python
+send_start_game()
+```
+#### REAPER commands
+| Order | OSC Address | Action | Game Result |
+|---:|---|---|---|
+| 1 | `/action/40949` | Select track 11 | Select the track with zone A track |
+| 2 | `/action/40731` | Selected track toggle unmute | Hear the zone track |
+#### grandMA3 commands
+| Order | Command | Purpose |
+|---:|---|---|
+| 1 | `Goto Sequence 110 cue 2` | Triggeres cue 1 on GrandMA3 |
+**Game trigger:**
+Called when the tag enters the zone. 
+**Purpose:**
+Triggers the lighting and audio cue when tag entres the zone.
+
+
+### 6.2 Zone Exit Sequences
+#### Python function
+```python
+send_start_game()
+```
+#### REAPER commands
+| Order | OSC Address | Action | Game Result |
+|---:|---|---|---|
+| 1 | `/action/40949` | Select track 11 | Select the track with zone A track |
+| 2 | `/action/40730` | Selected track toggle mute | Don't hear the zone track |
+#### grandMA3 commands
+| Order | Command | Purpose |
+|---:|---|---|
+| 1 | `Go- Sequence 110 cue 1` | Triggeres Go- cue 1 on GrandMA3 |
+**Game trigger:**
+Called when the tag exits the zone. 
+**Purpose:**
+Triggers the lighting and audio cue when tag exits the zone.
+
+
+---
+## 7. Danger-Zone OSC
+
+
+---
+## 8. Game Over OSC
+
+
+---
+## 9. Game Win & Finale OSC
