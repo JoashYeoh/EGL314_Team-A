@@ -35,23 +35,33 @@ This are the stl files that we used for the arms, phone holder, screws and the s
 [SPECIAL HOLDER](<assets/SPECIAL HOLDER.3mf>)
 
 
-## Tag holder design
-1. Here is how our tag's powerbank was stored. The bag below is our "tag holder" design. Inside the bag would not only store the powerbank but also the other teams design.
-![alt text](<assets/tag&pbinbag.jpg>)
+## Tag holder design and placement
+1. Here is how our tag's powerbank was stored. The pillar below is our "tag holder" design. Inside the pillar, there will be different section to store both the powerbank and the tag.
+![alt text](<assets/pillar_body.jpg>)
 
-2. There is then a stick spray painted in black, attached to the bag using cable ties for better security. The tag is then fastened to the top of the stick using some screws. Here it is concealed in the black spray painted cylinder for a better look and to replicate the idea of the bag used in ghostbusters.
-![alt text](<assets/tagconcealed.jpg>)
+2. 
+- This is the head of the pillar which stores the tag inside the neck area displayed as a cylinder shape below the golden sphere. 
 
-3. Here is how the tag looks like attached to the top of the stick before any concealer or spray paint used. 
-![alt text](<assets/defaultbagdesign.jpg>)
+- The cable connected from the tag to the powerbank then runs down the pillar to the base where the powerbank rests at. 
 
-4. We also spent some time to 3D print a torchlight that was used to simulate the experience of our game better. Here is how it looks like.
-![alt text](<assets/torchdesign.jpg>)
-![alt text](<assets/torchdesign2.jpg>)
- For more information on **Torchlight design**, vist [link](https://makerworld.com/en/models/2142601-nuclear-torch#profileId-2320995)
+- Screws were also used to help secure the head of the pillar to the body itself for durability purposes. 
+![alt text](<assets/pillar_head.jpg>)
 
-5. Finished look of our player wearing the bag and holding the torchlight.
-![alt text](<assets/playerlook.jpg>)
+3. This is the base of the pillar attached to the body of the pillar using super glue.
+![alt text](<assets/pillar_body.jpg>)
+
+## Tag holder design and materials used 
+- In terms of materials & design, the pillar body's material was a PVC pipe bought externally and only the head and the base of the pillar was 3D printed internally. Below is an image showing our reference idea on how the pillar would look like. This idea was derived from ChatGPT.
+![alt text](<assets/Reference_idea.png>)
+
+- The design of the pillar is two blue paint stripes running down the pillar on opposite sides with a touch of golden paint on the sphere to imitate a futuristic design. Here are the images of the spray paint and screws we used to assemble and design the pillars.
+![alt text](<assets/spray paint and screws.jpg>)
+
+- Once again the spray paint was bought externally and the idea was derived from ChatGPT. The image below was our reference idea which we made tweaks to.
+![alt text](<assets/reference design idea.jpg>)
+
+5. Here is the finished look of the pillars being implemented into the game arena.
+![alt text](<assets/overall_game.jpg>)
 
 
 
