@@ -271,8 +271,44 @@ Triggers the lighting and audio cue when tag exits the zone.
 
 
 ---
-## 8. Game Over OSC
+## 8. Game Win & Finale OSC
+### Phase 1 Complete
+#### Python function
+```python
+send_phase_one_complete()
+```
+#### REAPER commands
+| Order | OSC Address | Action | Game Result |
+|---:|---|---|---|
+| 1 | `/action/40169` | jump marker 9 | Zone E audio cue |
+| 1 | `/action/40944` | select track 8 | selects the audio track |
+| 1 | `/action/40731` | selected track unmute | Hear the Zone E audio cue |
+| 2 | `/action/1007` | Play | Starts playback |
+#### grandMA3 commands
+| Order | Command | Purpose |
+|---:|---|---|
+| 1 | `Go Macro 5` | Triggers macro 5 on GrandMA3 to trigger middle zone lighting |
+**Game trigger:**
+This is triggered when all the zones are fully expanded.
+**Purpose:**
+This is to triggere the ending of phase 1 of the game, and allowing game master to transit to the phase 2 (finalie/transition to station 2)
 
 
----
-## 9. Game Win & Finale OSC
+### Phase 2 Zone E (Middle Zone prior to final phase)
+#### Python function
+```python
+send_game_win()
+send_game_end_finale()
+```
+#### REAPER commands
+| Order | OSC Address | Action | Game Result |
+|---:|---|---|---|
+| 1 | `/action/40166` | jump marker 6 | Phase 2 end (transition to zone ) audio cue |
+#### grandMA3 commands
+| Order | Command | Purpose |
+|---:|---|---|
+| 1 | `Go Macro 6` | Triggers macro 6 on GrandMA3 to trigger middle zone lighting |
+**Game trigger:**
+This is triggered when the game master presses the "expand zone E" button 
+**Purpose:**
+Triggers the lighting and audio cue when next station item is placed in the zone.
