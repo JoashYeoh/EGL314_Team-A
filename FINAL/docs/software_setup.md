@@ -70,10 +70,10 @@ sudo apt-get install -y libopenblas-dev python3-pil.imagetk
 
 ---
 
-## 2. `uart-diagnostic.py` Set-Up
+## 2. `uart-diagnostic.py`/`uart.py` Set-Up
 ### Set up of default OSC Host IP and Port (receiver - Pi running `game.py`)
 Before running `uart-diagnostic.py` on the **Sensor Pi**
-At line 50 and 51 of `uart-diagnostic.py` change the default host IP, and the port that host is receiving osc message at accordingly.
+At line 74 and 75 of `uart-diagnostic.py` change the default host IP, and the port that host is receiving osc message at accordingly.
 ```python
 DEFAULT_HOST = "X.X.X.X"
 DEFAULT_PORT = 5005

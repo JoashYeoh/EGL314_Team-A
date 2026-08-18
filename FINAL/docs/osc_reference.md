@@ -20,7 +20,7 @@ The OSC communication layer serves two purposes:
 ---
 
 ### Sensor Pi -> Game Pi
-The `uart.py` script reads UART data from the AI Thinker BU03 UWB receiver and forwards the processed distance measurements to the Game Pi via OSC.
+The `uart-diagnostic`/`uart.py` script reads UART data from the AI Thinker BU03 UWB receiver and forwards the processed distance measurements to the Game Pi via OSC.
 
 | **OSC Address**   | **Arguments**    | **Description**    | **Trigger**        |
 |-------------------|------------------|--------------------|--------------------|
@@ -74,7 +74,7 @@ The OSC address contains the **REAPER action ID**. The value `1` triggers the ac
 
 ### grandMA3 message format
 ```python
-osc_tx_gma3.send_message("/gma3/cmd", "Goto Cue 1 Sequence 78") # Go+ Cue 1 Sequence 78
+osc_tx_gma3.send_message("/gma3/cmd", "Go Macro 2") # Triggers Macro 2 on GrandMA3
 ```
 The OSC address remains `/gma3/cmd`, while the **OSC value contains the grandMA3 command**.
 
@@ -108,8 +108,15 @@ Finale lighting and audio
 
 ---
 
-## 4. Game Start Sequences
-### 4.1 Background Music
+
+## 4. Lobby & Tutorial OSC
+
+
+---
+
+
+## 5. Game Start Sequences
+### 5.1 Background Music
 #### Python function
 ```python
 send_bgm()
@@ -130,7 +137,7 @@ Called when background music should begin before or during the introductory stag
 
 ---
 
-### 4.2 Start-Up Lighting Sequence
+### 5.2 Start-Up Lighting Sequence
 #### Python function
 ```python
 send_start_sequence()
@@ -154,7 +161,7 @@ The lighting system is **reset to the required starting state** before the tutor
 
 ---
 
-### 4.3 Tutorial Cue
+### 5.3 Tutorial Cue
 #### Python function
 ```python
 send_tutorial_cue()
@@ -172,7 +179,7 @@ grandMA3 runs Sequence 8, which contains the lighting programmed for the tutoria
 
 ---
 
-### 4.4 Start Game
+### 5.4 Start Game
 #### Python function
 ```python
 send_start_game()
@@ -202,7 +209,7 @@ The **pre-game lighting and soundtrack is stopped** and **REAPER begins playing 
 
 ---
 
-## 5. Safe-Zone Audio
+## 6. Safe-Zone Audio
 Each safe zone is assigned a dedicated REAPER track.
 
 | Zone | REAPER Track | Select Track Action |
@@ -212,7 +219,7 @@ Each safe zone is assigned a dedicated REAPER track.
 | Zone C | Track 22 | `/action/40960` |
 | Zone D | Track 23 | `/action/40961` |
 
-### 5.1 Player Enters a Zone
+### 6.1 Player Enters a Zone
 #### Python function
 ```python
 send_zone_enter(tag_id, zone_index)
@@ -239,7 +246,7 @@ The **audio layer** associated with the occupied zone **becomes audible (unmute)
 
 ---
 
-### 5.2 Player Exits a Zone
+### 6.2 Player Exits a Zone
 #### Python function
 ```python
 send_zone_exit(tag_id, zone_index)
@@ -266,7 +273,7 @@ The **audio layer** associated with the zone **is muted** after the player leave
 
 ---
 
-## 6. Safe-Zone Lighting Cues
+## . Safe-Zone Lighting Cues
 ### Python function
 ```python
 send_zone_cue(zone, cue)
