@@ -61,7 +61,9 @@ This are the stl files that we used for the arms, phone holder, screws and the s
 ![alt text](<assets/reference design idea.jpg>)
 
 5. Here is the finished look of the pillars being implemented into the game arena.
+![alt text](<assets/Overview.jpg>)
 ![alt text](<assets/overall_game.jpg>)
+
 
 
 

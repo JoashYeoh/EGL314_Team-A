@@ -100,8 +100,6 @@ Zone E serves as the final objective of the game and becomes available only afte
 
 Unlike the other Safe Zones, Zone E is not captured through player occupancy. Instead, its expansion is initiated manually by the Game Master. Once activated, Zone E expands automatically until it reaches its maximum size, completing the game and triggering the victory sequence.
 
-In ViewerApp, it should look like the picture below.
-
 Physically, the picture below is what the players should see.
 ![Alt text](assets/zoneE.jpg)
 #### Behaviour
@@ -121,7 +119,7 @@ The pillar is used to discover and capture Safe Zones by placing it within their
 
 The image below shows a player carrying the pillar during gameplay.
 
-![Expansion and shrinking of Safe Zone](assets/Adobe Express - zoneexpand.gif)
+![Expansion and shrinking of Safe Zone](assets/zoneexpand.gif)
 
 
 ## Win Condition
