@@ -202,7 +202,8 @@ send_start_game()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Goto Sequence 106 cue 1` | Triggeres cue 106 on GrandMA3 | show light |
+| 1 | `Goto Sequence 106 cue 1` | Triggeres cue 106 on GrandMA3 |
+
 **Game trigger:**
 Called when the tutorial progresses to the danger-zone stage.**Purpose:**
 Triggers the lighting state used to demonstrate the danger zone before normal gameplay begins.
@@ -223,7 +224,8 @@ send_start_game()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Goto Sequence 110 cue 2` | Triggeres cue 1 on GrandMA3 | trigger zone enter audio |
+| 1 | `Goto Sequence 110 cue 2` | Triggeres cue 1 on GrandMA3 |
+
 **Game trigger:**
 Called when the tag enters the zone. 
 **Purpose:**
@@ -243,7 +245,8 @@ send_start_game()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Go- Sequence 110 cue 1` | Triggeres Go- cue 1 on GrandMA3 | mute zone audio so can't hear |
+| 1 | `Go- Sequence 110 cue 1` | Triggeres Go- cue 1 on GrandMA3 |
+
 **Game trigger:**
 Called when the tag exits the zone. 
 **Purpose:**
@@ -264,7 +267,8 @@ send_start_game()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Go Sequence 115` | Triggeres sequence 115 (danger zone) cue on GrandMA3 | trigger lighting when zone is hit |
+| 1 | `Go Sequence 115` | Triggeres sequence 115 (danger zone) cue on GrandMA3 |
+
 **Game trigger:**
 This is triggered when the ghame master presses the "hit danger zone" button.  
 **Purpose:**
@@ -288,7 +292,8 @@ send_phase_one_complete()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Go Macro 5` | Triggers macro 5 on GrandMA3 to trigger middle zone lighting | Ending phase 1 lighting |
+| 1 | `Go Macro 5` | Triggers macro 5 on GrandMA3 to trigger middle zone lighting |
+
 **Game trigger:**
 This is triggered when all the zones are fully expanded.
 **Purpose:**
@@ -308,7 +313,8 @@ send_game_end_finale()
 #### grandMA3 commands
 | Order | Command | Purpose |
 |---:|---|---|
-| 1 | `Go Macro 6` | Triggers macro 6 on GrandMA3 to trigger middle zone lighting | Zone E expanding |
+| 1 | `Go Macro 6` | Triggers macro 6 on GrandMA3 to trigger middle zone lighting | 
+
 **Game trigger:**
 This is triggered when the game master presses the "expand zone E" button 
 **Purpose:**
