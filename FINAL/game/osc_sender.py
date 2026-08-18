@@ -24,7 +24,6 @@ def send_start_lobby(): #--game_manager.py
     osc_tx_reaper.send_message("/action/_RS4cb981b7c961f3b84673b9007ab7caa7bb13a182", 1) #set repeat
     osc_tx_reaper.send_message("/action/41764", 1)  #jump to region 4
     osc_tx_reaper.send_message("/action/43102", 1)  #set loop points to region
-    #osc_tx_reaper.send_message("/action/40165", 1)   #jump marker 5
     osc_tx_reaper.send_message("/action/1007", 1) #play
     osc_tx_reaper.send_message("/action/_RS0a8bd5995464dc985213e2e1071132a46345050e", 1) #mute track 11-14
 
@@ -102,13 +101,11 @@ def send_tutorial_zone_exit(tag_id, zone_label):
 def send_tutorial_zone_max(zone_index, zone_label):
     zone_name = TUTORIAL_ZONES[zone_label]["label"]
     if zone_name == "TUTORIAL ZONE 1":
-        #osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 107 cue 2")
         osc_tx_reaper.send_message("/action/40949", 1)    #select track 11
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track toggle mute
         return
 
     if zone_name == "TUTORIAL ZONE 2":
-        #osc_tx_gma3.send_message("/gma3/cmd", "Goto Sequence 108 cue 2")
         osc_tx_reaper.send_message("/action/40950", 1)    #select track 12
         osc_tx_reaper.send_message("/action/40730", 1)  #selected track toggle mute
         return

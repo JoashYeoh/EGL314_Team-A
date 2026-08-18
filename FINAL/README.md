@@ -64,7 +64,8 @@
     ├── uart/
         ├── 4-tag.txt                   # example output of uart.py when checking for live data of 4 tags to "diagnose"
         ├── 5-tag.txt                   # example output of uart.py when checking for live data of 5 tags to "diagnose"
-        └── uart-diagnostic.py          # uart.py but with an additional diagnostic feasutre to record down in csv live data
+        ├── uart-diagnostic.py          # uart.py but with an additional diagnostic feasutre to record down in csv live data
+        └── uart.py                     # the script that sends distance data to game.py
     └── README.md                       # the file oyu are reading now
 ```
 
