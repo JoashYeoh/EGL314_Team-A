@@ -251,6 +251,23 @@ Triggers the lighting and audio cue when tag exits the zone.
 
 ---
 ## 7. Danger-Zone OSC
+#### Python function
+```python
+send_game_over()
+```
+#### REAPER commands
+| Order | OSC Address | Action | Game Result |
+|---:|---|---|---|
+| 1 | `/action/40163` | Jump to marker 3 | Hear the game loss BGM |
+| 2 | `/action/1007` | Play | Starts playback |
+#### grandMA3 commands
+| Order | Command | Purpose |
+|---:|---|---|
+| 1 | `Go Sequence 115` | Triggeres Sequence 115 on MA |
+**Game trigger:**
+Called when the tag exits the zone. 
+**Purpose:**
+Triggers the lighting and audio cue when tag exits the zone.
 
 
 ---
