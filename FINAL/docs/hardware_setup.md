@@ -35,33 +35,83 @@ This are the stl files that we used for the arms, phone holder, screws and the s
 [SPECIAL HOLDER](<assets/SPECIAL HOLDER.3mf>)
 
 
-## Tag holder design and placement
-1. Here is how our tag's powerbank was stored. The pillar below is our "tag holder" design. Inside the pillar, there will be different section to store both the powerbank and the tag.
-![alt text](<assets/pillar_body.jpg>)
+# Tag Holder Design and Placement
 
-2. 
-- This is the head of the pillar which stores the tag inside the neck area displayed as a cylinder shape below the golden sphere. 
+The tag holder was designed to securely house the UWB tag and its power bank while maintaining a clean appearance suitable for the game environment.
 
-- The cable connected from the tag to the powerbank then runs down the pillar to the base where the powerbank rests at. 
+---
 
-- Screws were also used to help secure the head of the pillar to the body itself for durability purposes. 
-![alt text](<assets/pillar_head.jpg>)
+## Overall Design
 
-3. This is the base of the pillar attached to the body of the pillar using super glue.
-![alt text](<assets/pillar_body.jpg>)
+The tag holder consists of three main components:
 
-## Tag holder design and materials used 
-- In terms of materials & design, the pillar body's material was a PVC pipe bought externally and only the head and the base of the pillar was 3D printed internally. Below is an image showing our reference idea on how the pillar would look like. This idea was derived from ChatGPT.
-![alt text](<assets/Reference_idea.png>)
+- Pillar body
+- Pillar head
+- Pillar base
 
-- The design of the pillar is two blue paint stripes running down the pillar on opposite sides with a touch of golden paint on the sphere to imitate a futuristic design. Here are the images of the spray paint and screws we used to assemble and design the pillars.
+The pillar body contains separate compartments to house both the UWB tag and the power bank.
+
+![Tag Holder Body](assets/pillar_body.jpg)
+
+---
+
+## Pillar Head
+
+* The pillar head was designed to securely hold the UWB tag inside the cylindrical neck section located beneath the decorative gold sphere.
+
+* The power cable from the UWB tag runs through the centre of the pillar and connects to the power bank located in the base.
+
+* Screws were used to fasten the pillar head to the pillar body, providing additional structural strength and durability.
+
+![Pillar Head](assets/pillar_head1.jpg)
+
+---
+
+## Pillar Base
+
+* The pillar base provides support for the entire structure and houses the power bank.
+
+* It was attached to the PVC pillar body using super glue to create a secure permanent connection.
+
+![Pillar Base](assets/pillar_base.jpg)
+
+---
+
+# Materials and Appearance
+
+## Materials Used
+
+The tag holder was constructed using a combination of commercially available and custom-manufactured components.
+
+- PVC pipe was used for the pillar body.
+- The pillar head and pillar base were designed and 3D printed.
+- Screws were used to secure the pillar head.
+- Super glue was used to attach the pillar base.
+
+The overall concept for the pillar was inspired by an initial design generated using ChatGPT, which was later modified to meet the project requirements.
+
+![Reference Design](assets/Reference_idea.png)
+
+---
+
+## Exterior Design
+
+* To give the pillars a futuristic appearance, two blue stripes were painted along opposite sides of the PVC body, while the decorative sphere was spray-painted gold.
+
+* The spray paint and screws used during assembly are shown below.
+
+* The colour scheme was inspired by another concept generated using ChatGPT, which was further refined for the final design.
+
 ![alt text](<assets/spray paint and screws.jpg>)
+---
 
-- Once again the spray paint was bought externally and the idea was derived from ChatGPT. The image below was our reference idea which we made tweaks to.
-![alt text](<assets/reference design idea.jpg>)
+# Final Implementation
 
-5. Here is the finished look of the pillars being implemented into the game arena.
-![alt text](<assets/overall_game.jpg>)
+The completed pillars were installed around the game arena, providing both structural support for the UWB tags and an improved visual appearance that complemented the game environment.
+
+![Installed Pillars](assets/Overview.jpg)
+
+![Game Arena](assets/overall_game.jpg)
 
 
 
